@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.data.seeders.user_seeder import UserSeeder
+from src.utils.user_seeder import UserSeeder
 from src.api.middleware.my_auth_middleware import MyAuthMiddleware
 from src.api.rest.routes.auth_route import router as auth_router
 from src.api.rest.routes.otp_router import router as otp_router
