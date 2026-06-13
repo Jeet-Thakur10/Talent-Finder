@@ -71,20 +71,24 @@ export function ResetPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow">
-        <h1 className="mb-6 text-center text-2xl font-bold">
-          Reset Password
-        </h1>
+    <div className="auth-shell">
+      <div className="auth-card">
+        <div className="auth-kicker">Talent Finder</div>
+
+        <h1 className="auth-title">Choose a new password</h1>
+
+        <p className="auth-subtitle">
+          Create a fresh password to finish securing your account.
+        </p>
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4"
+          className="auth-form"
         >
-          <div>
+          <div className="auth-field">
             <label
               htmlFor="new-password"
-              className="mb-1 block text-sm font-medium"
+              className="auth-label"
             >
               New Password
             </label>
@@ -99,12 +103,12 @@ export function ResetPasswordPage() {
                 )
               }
               placeholder="Enter new password"
-              className="w-full rounded border px-3 py-2"
+              className="auth-input"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-500">
+            <p className="auth-error">
               {error}
             </p>
           )}
@@ -112,7 +116,7 @@ export function ResetPasswordPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+            className="auth-button"
           >
             {isSubmitting
               ? "Resetting..."
