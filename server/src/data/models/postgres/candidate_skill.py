@@ -1,5 +1,3 @@
-"""SQLAlchemy JD Skill model."""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,32 +9,30 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.data.clients.postgres import Base
 
 if TYPE_CHECKING:
-    from src.data.models.postgres.job_description import JobDescription
+    from src.data.models.postgres.candidate import Candidate
 
 
-class JDSkill(Base):
-    __tablename__ = "jd_skills"
+class CandidateSkill(Base):
+    __tablename__ = "candidate_skills"
 
     id: Mapped[UUID] = mapped_column(
         primary_key=True,
         default=uuid4,
     )
-
-    jd_id: Mapped[UUID] = mapped_column(
-        ForeignKey("job_descriptions.id"),
+    candidate_id: Mapped[UUID] = mapped_column(
+        ForeignKey("candidates.id"),
         nullable=False,
     )
-
     skill_name: Mapped[str] = mapped_column(
         String,
         nullable=False,
     )
-
-    is_mandatory: Mapped[bool] = mapped_column(
+    is_primary: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
+        default=True,
     )
 
-    job_description: Mapped[JobDescription] = relationship(
+    candidate: Mapped[Candidate] = relationship(
         back_populates="skills",
     )

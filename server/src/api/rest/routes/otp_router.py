@@ -1,10 +1,14 @@
 
 from fastapi import APIRouter, Depends
 
-from src.core.services.otp_service import OTPService
 from src.api.rest.dependencies import get_otp_service
-from src.schemas.otp_schema import ForgotPasswordResponse, ForgotPasswordRequest, VerifyOTPRequest, VerifyOTPResponse
-
+from src.core.services.otp_service import OTPService
+from src.schemas.otp_schema import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+    VerifyOTPRequest,
+    VerifyOTPResponse,
+)
 
 router = APIRouter(prefix="/otp", tags=["OTP"])
 
@@ -42,4 +46,4 @@ async def verify_otp(
 
     return VerifyOTPResponse(
         reset_token=reset_token,
-    )   
+    )

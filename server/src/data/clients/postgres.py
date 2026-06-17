@@ -1,5 +1,9 @@
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import DeclarativeBase
 
 from src.config.settings import settings
 
@@ -10,9 +14,10 @@ engine = create_async_engine(
 )
 
 async_session_local = async_sessionmaker(
-    bind=engine, 
-    class_=AsyncSession, 
+    bind=engine,
+    class_=AsyncSession,
     expire_on_commit=False # prevents objects from being unusable after commit
 )
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass

@@ -1,4 +1,3 @@
-```
 base-rest-service-template/
  ├── src/
  │   ├── api/

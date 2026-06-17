@@ -1,0 +1,270 @@
+from datetime import UTC, datetime
+from uuid import UUID
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.constants.job_description_constants import DRAFT
+from src.core.exceptions.job_description_exception import (
+    InvalidEmploymentType,
+    InvalidJobDescriptionStatus,
+    JobDescriptionNotFound,
+    RecruiterAccessRequired,
+)
+from src.data.models.postgres.jd_skill import JDSkill
+from src.data.models.postgres.job_description import JobDescription
+from src.data.repositories.job_description_repository import (
+    JobDescriptionRepository,
+)
+from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
+from src.schemas.job_description_schema import (
+    EmploymentTypeResponse,
+    JDSkillResponse,
+    JobDescriptionCreateRequest,
+    JobDescriptionResponse,
+    JobDescriptionStatusResponse,
+)
+
+
+class JobDescriptionService:
+
+    def __init__(self, db: AsyncSession):
+        self.job_description_repository = (
+            JobDescriptionRepository(db)
+        )
+
+    async def create_job_description(
+            self,
+            data: JobDescriptionCreateRequest,
+            current_user: AuthenticatedUserContext) -> JobDescriptionResponse:
+
+        if current_user.role != UserRole.recruiter:
+            raise RecruiterAccessRequired(
+                details="Only recruiters can create job descriptions.",
+                error_code="RECRUITER_ACCESS_REQUIRED",
+            )
+
+        employment_type = (
+            await self.job_description_repository.get_employment_type_by_id(
+                data.employment_type_id,
+            )
+        )
+
+        if not employment_type:
+            raise InvalidEmploymentType(
+                details=f"Employment type '{data.employment_type_id}' does not exist"
+            )
+        draft_status = (
+            await self.job_description_repository.get_status_by_code(
+                DRAFT,
+            )
+        )
+
+        if not draft_status:
+            raise InvalidJobDescriptionStatus(
+                details=f"Status '{DRAFT}' does not exist",
+            )
+
+        now = datetime.now(UTC)
+
+        job_description = JobDescription(
+            recruiter_id=current_user.user_id,
+
+            title=data.title,
+            department=data.department,
+
+            job_purpose=data.job_purpose,
+            responsibilities=data.responsibilities,
+
+            min_experience=data.min_experience,
+            max_experience=data.max_experience,
+
+            location=data.location,
+
+            employment_type_id=employment_type.id,
+
+            education_requirement=data.education_requirement,
+
+            preferred_qualifications=data.preferred_qualifications,
+
+            status_id=draft_status.id,
+
+            created_at=now,
+            updated_at=now,
+        )
+
+        job_description = (
+            await self.job_description_repository.create_job_description(
+                job_description,
+            )
+        )
+
+        skills = [
+            JDSkill(
+                jd_id=job_description.id,
+                skill_name=skill.skill_name,
+                is_mandatory=skill.is_mandatory,
+            )
+            for skill in data.skills
+        ]
+
+        await self.job_description_repository.create_skills(
+            skills,
+        )
+
+        return JobDescriptionResponse(
+            id=job_description.id,
+            title=job_description.title,
+            department=job_description.department,
+            job_purpose=job_description.job_purpose,
+            responsibilities=job_description.responsibilities,
+            min_experience=job_description.min_experience,
+            max_experience=job_description.max_experience,
+            location=job_description.location,
+            education_requirement=job_description.education_requirement,
+            preferred_qualifications=job_description.preferred_qualifications,
+            employment_type_id=job_description.employment_type_id,
+            status_id=job_description.status_id,
+            created_at=job_description.created_at,
+            updated_at=job_description.updated_at,
+            skills=[
+                JDSkillResponse(
+                    id=skill.id,
+                    skill_name=skill.skill_name,
+                    is_mandatory=skill.is_mandatory,
+                )
+                for skill in skills
+            ],
+        )
+
+    async def get_job_descriptions(
+            self,
+            current_user: AuthenticatedUserContext) -> list[JobDescriptionResponse]:
+        if current_user.role != UserRole.recruiter:
+            raise RecruiterAccessRequired(
+                details="Only recruiters can view job descriptions.",
+                error_code="RECRUITER_ACCESS_REQUIRED",
+            )
+
+        job_descriptions = (
+            await self.job_description_repository
+            .get_job_descriptions_by_recruiter(
+                current_user.user_id,
+            )
+        )
+
+        responses = []
+
+        for jd in job_descriptions:
+
+            responses.append(
+                JobDescriptionResponse(
+                    id=jd.id,
+                    title=jd.title,
+                    department=jd.department,
+                    job_purpose=jd.job_purpose,
+                    responsibilities=jd.responsibilities,
+                    min_experience=jd.min_experience,
+                    max_experience=jd.max_experience,
+                    location=jd.location,
+                    education_requirement=jd.education_requirement,
+                    preferred_qualifications=jd.preferred_qualifications,
+                    employment_type_id=jd.employment_type_id,
+                    status_id=jd.status_id,
+                    created_at=jd.created_at,
+                    updated_at=jd.updated_at,
+                    skills=[
+                        JDSkillResponse(
+                            id=skill.id,
+                            skill_name=skill.skill_name,
+                            is_mandatory=skill.is_mandatory,
+                        )
+                        for skill in jd.skills
+                    ],
+                )
+            )
+
+        return responses
+
+    async def get_job_description(
+        self,
+        job_description_id: UUID,
+        current_user: AuthenticatedUserContext,
+    ) -> JobDescriptionResponse:
+        if current_user.role != UserRole.recruiter:
+            raise RecruiterAccessRequired(
+                details="Only recruiters can view job descriptions.",
+                error_code="RECRUITER_ACCESS_REQUIRED",
+            )
+
+        job_description = await (
+            self.job_description_repository
+            .get_job_description_by_id(
+                job_description_id,
+            )
+        )
+        if not job_description:
+            raise JobDescriptionNotFound(
+                error_code="JOB_DESCRIPTION_NOT_FOUND",
+            )
+
+        if job_description.recruiter_id != current_user.user_id:
+            raise JobDescriptionNotFound(
+                error_code="JOB_DESCRIPTION_NOT_FOUND",
+            )
+
+        return JobDescriptionResponse(
+            id=job_description.id,
+            title=job_description.title,
+            department=job_description.department,
+            job_purpose=job_description.job_purpose,
+            responsibilities=job_description.responsibilities,
+            min_experience=job_description.min_experience,
+            max_experience=job_description.max_experience,
+            location=job_description.location,
+            education_requirement=job_description.education_requirement,
+            preferred_qualifications=job_description.preferred_qualifications,
+            employment_type_id=job_description.employment_type_id,
+            status_id=job_description.status_id,
+            created_at=job_description.created_at,
+            updated_at=job_description.updated_at,
+            skills=[
+                JDSkillResponse(
+                    id=skill.id,
+                    skill_name=skill.skill_name,
+                    is_mandatory=skill.is_mandatory,
+                )
+                for skill in job_description.skills
+            ],
+        )
+
+    async def get_employment_types(
+        self,
+    ) -> list[EmploymentTypeResponse]:
+
+        employment_types = (
+            await self.job_description_repository.get_employment_types()
+        )
+
+        return [
+            EmploymentTypeResponse.model_validate(
+                employment_type
+            )
+            for employment_type in employment_types
+        ]
+
+
+    async def get_job_description_statuses(
+        self,
+    ) -> list[JobDescriptionStatusResponse]:
+
+        statuses = (
+            await self.job_description_repository
+            .get_job_description_statuses()
+        )
+
+        return [
+            JobDescriptionStatusResponse.model_validate(
+                status
+            )
+            for status in statuses
+        ]

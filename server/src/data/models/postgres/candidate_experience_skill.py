@@ -1,42 +1,32 @@
-"""SQLAlchemy JD Skill model."""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, ForeignKey, String
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.clients.postgres import Base
 
 if TYPE_CHECKING:
-    from src.data.models.postgres.job_description import JobDescription
+    from src.data.models.postgres.candidate_experience import CandidateExperience
 
 
-class JDSkill(Base):
-    __tablename__ = "jd_skills"
+class CandidateExperienceSkill(Base):
+    __tablename__ = "candidate_experience_skills"
 
     id: Mapped[UUID] = mapped_column(
         primary_key=True,
         default=uuid4,
     )
-
-    jd_id: Mapped[UUID] = mapped_column(
-        ForeignKey("job_descriptions.id"),
+    experience_id: Mapped[UUID] = mapped_column(
+        ForeignKey("candidate_experiences.id"),
         nullable=False,
     )
-
     skill_name: Mapped[str] = mapped_column(
         String,
         nullable=False,
     )
-
-    is_mandatory: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-    )
-
-    job_description: Mapped[JobDescription] = relationship(
+    experience: Mapped[CandidateExperience] = relationship(
         back_populates="skills",
     )
