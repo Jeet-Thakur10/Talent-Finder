@@ -66,7 +66,7 @@ class ScoringService:
         await self.repository.store_parsed_candidate_profile(
             parsed_candidate,
             data.resume_text,
-            "temp_hash6",
+            "temp_hash5",
         )
 
         return parsed_candidate
@@ -76,13 +76,16 @@ class ScoringService:
         self,
         job_description_id: UUID,
         current_user: AuthenticatedUserContext,
+        candidate_ids: list[UUID] | None = None,
     ) -> CandidateBatchScoreOutput:
         job_description = await self._get_authorized_job_description(
             job_description_id,
             current_user,
         )
 
-        candidates = await self.repository.get_candidates_for_job_description()
+        candidates = await self.repository.get_candidates_for_job_description(
+            candidate_ids=candidate_ids,
+        )
 
         scoring_job = self._build_job_description_scoring_input(
             job_description,
@@ -115,6 +118,27 @@ class ScoringService:
 
         return CandidateBatchScoreOutput(
             scores=candidate_scores,
+        )
+
+    async def pipeline_prescore_and_score(
+        self,
+        job_description_id: UUID,
+        current_user: AuthenticatedUserContext,
+        k: int,
+    ) -> CandidateBatchScoreOutput:
+        prescore_output = await self.prescore_candidates_for_job_description(
+            job_description_id,
+        )
+
+        top_candidate_ids = [
+            score.candidate_id
+            for score in prescore_output.scores[:k]
+        ]
+
+        return await self.score_candidates_for_job_description(
+            job_description_id,
+            current_user,
+            candidate_ids=top_candidate_ids,
         )
 
     async def prescore_candidates_for_job_description(

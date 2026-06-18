@@ -118,16 +118,26 @@ class ScoringRepository:
     
     async def get_candidates_for_job_description(
         self,
+        candidate_ids: list[UUID] | None = None,
     ) -> list[Candidate]:
-        result = await self.db.execute(
-            select(Candidate)
-            .options(
-                selectinload(Candidate.skills),
-                selectinload(Candidate.experiences).selectinload(
-                    CandidateExperience.skills,
-                ),
-                selectinload(Candidate.educations),
+        if candidate_ids is not None and not candidate_ids:
+            return []
+
+        query = select(Candidate).options(
+            selectinload(Candidate.skills),
+            selectinload(Candidate.experiences).selectinload(
+                CandidateExperience.skills,
+            ),
+            selectinload(Candidate.educations),
+        )
+
+        if candidate_ids is not None:
+            query = query.where(
+                Candidate.id.in_(candidate_ids),
             )
+
+        result = await self.db.execute(
+            query,
         )
 
         return list(result.scalars().unique().all())

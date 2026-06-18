@@ -68,3 +68,24 @@ async def prescore_candidates_for_job_description(
         job_description_id,
     )
 
+
+@router.post(
+    "/{job_description_id}/pipeline",
+    response_model=CandidateBatchScoreOutput,
+)
+async def pipeline_prescore_and_score(
+    job_description_id: UUID,
+    k: int = 10,
+    current_user: AuthenticatedUserContext = Depends(
+        get_authenticated_user_context,
+    ),
+    service: ScoringService = Depends(
+        get_scoring_service,
+    ),
+) -> CandidateBatchScoreOutput:
+    return await service.pipeline_prescore_and_score(
+        job_description_id,
+        current_user,
+        k,
+    )
+
