@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.constants.job_description_constants import (
@@ -97,6 +97,13 @@ async def seed_job_description_statuses(
     await db.commit()
 
 async def seed_master_data(db: AsyncSession) -> None:
+    # Update table schemas if needed
+    await db.execute(text("""
+        ALTER TABLE job_descriptions 
+        ADD COLUMN IF NOT EXISTS hiring_manager_id UUID REFERENCES users(id)
+    """))
+    await db.commit()
+
     await seed_employment_types(db)
     await seed_job_description_statuses(db)
 

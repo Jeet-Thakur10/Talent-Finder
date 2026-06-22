@@ -4,6 +4,7 @@ from src.api.rest.dependencies import get_job_description_service
 from src.core.services.job_description_service import JobDescriptionService
 from src.schemas.job_description_schema import (
     EmploymentTypeResponse,
+    HiringManagerResponse,
     JobDescriptionStatusResponse,
 )
 
@@ -35,3 +36,15 @@ async def get_job_description_statuses(
     ),
 ):
     return await service.get_job_description_statuses()
+
+
+@router.get(
+    "/hiring-managers",
+    response_model=list[HiringManagerResponse],
+)
+async def get_hiring_managers(
+    service: JobDescriptionService = Depends(
+        get_job_description_service,
+    ),
+):
+    return await service.get_hiring_managers()

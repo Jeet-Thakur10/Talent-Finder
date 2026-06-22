@@ -1,83 +1,85 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { Link, useNavigate } from "react-router-dom";
-
+import type { JobDescription } from "../services/dashboard.types";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { authService } from "../../auth/services/auth.service";
-import { dashboardService } from "../services/dashboard.service";
-import type { JobDescription } from "../services/dashboard.types";
-import { scoringService } from "../../scoring/services/scoring.service";
-import type { CandidateListItem } from "../../scoring/services/scoring.types";
+import { CampaignsTable } from "./CampaignsTable";
+import { CandidateDrawer } from "./CandidateDrawer";
+import { CandidateResultsTable } from "./CandidateResultsTable";
+import { DashboardHeader } from "./DashboardHeader";
+import { DashboardMetrics } from "./DashboardMetrics";
+import { DashboardSidebar } from "./DashboardSidebar";
+import { JobDescriptionForm } from "./JobDescriptionForm";
+import { JobDescriptionDrawer } from "./JobDescriptionDrawer";
+import { useRecruiterDashboard } from "../hooks/useRecruiterDashboard";
+
+function formatStageLabel(stage: string) {
+  return stage
+    .toLowerCase()
+    .split("_")
+    .map(
+      (token) =>
+        token.charAt(0).toUpperCase() +
+        token.slice(1),
+    )
+    .join(" ");
+}
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const [activeJobForDetails, setActiveJobForDetails] = useState<JobDescription | null>(null);
   const {
     user,
     logout,
   } = useAuth();
-  const [jobDescriptions, setJobDescriptions] =
-    useState<JobDescription[]>([]);
-  const [selectedJobId, setSelectedJobId] =
-    useState<string | null>(null);
-  const [candidates, setCandidates] =
-    useState<CandidateListItem[]>([]);
-  const [isLoadingJobs, setIsLoadingJobs] =
-    useState(true);
-  const [isLoadingCandidates, setIsLoadingCandidates] =
-    useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const loadJobDescriptions = async () => {
-      try {
-        setIsLoadingJobs(true);
-        const jobs =
-          await dashboardService.listJobDescriptions();
-
-        setJobDescriptions(jobs);
-        setSelectedJobId(
-          jobs[0]?.id ?? null,
-        );
-      } catch {
-        setError(
-          "Unable to load job descriptions right now.",
-        );
-      } finally {
-        setIsLoadingJobs(false);
-      }
-    };
-
-    void loadJobDescriptions();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedJobId) {
-      return;
-    }
-
-    const loadCandidates = async () => {
-      try {
-        setIsLoadingCandidates(true);
-        const items =
-          await scoringService.listCandidatesForJob(
-            selectedJobId,
-          );
-
-        setCandidates(items);
-      } catch {
-        setCandidates([]);
-      } finally {
-        setIsLoadingCandidates(false);
-      }
-    };
-
-    void loadCandidates();
-  }, [selectedJobId]);
-
-  const selectedJob =
-    jobDescriptions.find(
-      (job) => job.id === selectedJobId,
-    ) ?? null;
+  const {
+    PIPELINE_TOP_K,
+    activeCandidateBoard,
+    activeNavView,
+    breadcrumbItems,
+    canvasView,
+    candidateResultsByJob,
+    confirmPipeline,
+    dismissPipelinePreview,
+    employmentTypes,
+    error,
+    formValues,
+    hiringManagers,
+    isLoading,
+    isLoadingBoard,
+    isRunningPipeline,
+    isSavingJob,
+    isSavingNotes,
+    isSharingShortlist,
+    jobDescriptions,
+    matchedCountByJob,
+    metrics,
+    notesDraft,
+    openCampaignBoard,
+    openCandidateDrawer,
+    pipelinePreview,
+    refreshCandidatesForJob,
+    resetDrawer,
+    removeSkillField,
+    saveRecruiterNotes,
+    selectedCandidateIds,
+    selectedCandidates,
+    selectedJob,
+    setActiveNavView,
+    setCanvasView,
+    setFormValues,
+    setNotesDraft,
+    saveJobAsDraft,
+    initializeDraftEdit,
+    shareShortlistWithHiringManager,
+    startJobCreation,
+    submitJobForPreview,
+    talentPool,
+    toggleCandidateSelection,
+    updateSkillArray,
+    addSkillField,
+  } = useRecruiterDashboard();
 
   const handleLogout = async () => {
     try {
@@ -94,265 +96,420 @@ export function DashboardPage() {
   };
 
   return (
-    <div className="workspace-shell">
-      <div className="workspace-header">
-        <div>
-          <div className="auth-kicker">
-            Talent Finder
+    <div className="dashboard-shell">
+      <DashboardSidebar
+        activeNavView={activeNavView}
+        onLogout={handleLogout}
+        onSelectNav={(view) => {
+          setActiveJobForDetails(null);
+          setActiveNavView(view);
+          setCanvasView(
+            view === "talent-pool"
+              ? "campaigns"
+              : "campaigns",
+          );
+        }}
+        user={user}
+      />
+
+      <main className="dashboard-main">
+        <DashboardHeader
+          breadcrumbs={breadcrumbItems}
+          onBreadcrumbClick={(crumb) => {
+            if (crumb === "Job Campaigns") {
+              setActiveJobForDetails(null);
+              setCanvasView("campaigns");
+              setActiveNavView("job-campaigns");
+            }
+          }}
+        />
+
+        {error && (
+          <div className="workspace-alert">
+            {error}
           </div>
+        )}
 
-          <h1 className="workspace-title">
-            Scoring Dashboard
-          </h1>
+        {activeNavView ===
+        "talent-pool" ? (
+          <section className="surface-card">
+            <div className="section-header">
+              <div>
+                <h1 className="workspace-title">
+                  Talent Pool
+                </h1>
 
-          <p className="workspace-subtitle">
-            Welcome {user?.name}. Select a
-            job description and move directly
-            into the resume scoring workflow.
-          </p>
-        </div>
-
-        <button
-          onClick={handleLogout}
-          className="workspace-ghost-button"
-        >
-          Logout
-        </button>
-      </div>
-
-      {error && (
-        <div className="workspace-alert">
-          {error}
-        </div>
-      )}
-
-      <div className="workspace-grid">
-        <section className="surface-card">
-          <div className="section-header">
-            <div>
-              <h2 className="section-title">
-                Job Descriptions
-              </h2>
-
-              <p className="section-copy">
-                Existing requisitions from the
-                backend JD service.
-              </p>
+                <p className="workspace-subtitle">
+                  Recruiter-wide candidate coverage pulled from scored campaign results.
+                </p>
+              </div>
             </div>
 
-            <span className="count-chip">
-              {jobDescriptions.length}
-            </span>
-          </div>
+            <CandidateResultsTable
+              candidates={talentPool}
+              isLoading={isLoading}
+              onOpenCandidate={(candidateId) => {
+                const campaignJobId = Object.keys(candidateResultsByJob).find((jobId) =>
+                  candidateResultsByJob[jobId].some((c) => c.candidate_id === candidateId)
+                );
+                if (campaignJobId) {
+                  void openCandidateDrawer(candidateId, campaignJobId);
+                }
+              }}
+              isGlobalPoolView={true}
+            />
+          </section>
+        ) : (
+          <>
+            <DashboardMetrics
+              activeJds={metrics.activeJds}
+              pendingShortlists={
+                metrics.pendingShortlists
+              }
+            />
 
-          {isLoadingJobs ? (
-            <p className="empty-copy">
-              Loading job descriptions...
-            </p>
-          ) : jobDescriptions.length === 0 ? (
-            <p className="empty-copy">
-              No job descriptions exist yet.
-            </p>
-          ) : (
-            <div className="job-list">
-              {jobDescriptions.map((job) => (
-                <button
-                  key={job.id}
-                  type="button"
-                  onClick={() =>
-                    setSelectedJobId(job.id)
+            {canvasView === "campaigns" && (
+              <CampaignsTable
+                candidateResultsByJob={
+                  candidateResultsByJob
+                }
+                jobDescriptions={
+                  jobDescriptions
+                }
+                matchedCountByJob={
+                  matchedCountByJob
+                }
+                hiringManagers={hiringManagers}
+                onCreateJobDescription={() => {
+                  setActiveJobForDetails(null);
+                  startJobCreation();
+                }}
+                onOpenCampaign={(job) => {
+                  setActiveJobForDetails(null);
+                  void openCampaignBoard(
+                    job,
+                  );
+                }}
+              />
+            )}
+
+            {canvasView === "create" && (
+              <div className="stack-list">
+                <JobDescriptionForm
+                  employmentTypes={
+                    employmentTypes
                   }
-                  className={`job-card ${
-                    selectedJobId === job.id
-                      ? "job-card-active"
-                      : ""
-                  }`}
-                >
-                  <div className="job-card-header">
-                    <div>
-                      <h3 className="job-card-title">
-                        {job.title}
-                      </h3>
+                  hiringManagers={hiringManagers}
+                  formValues={formValues}
+                  isSubmitting={
+                    isSavingJob
+                  }
+                  onAddSkillField={
+                    addSkillField
+                  }
+                  onChange={(field, value) =>
+                    setFormValues(
+                      (
+                        currentValues,
+                      ) => ({
+                        ...currentValues,
+                        [field]: value,
+                      }),
+                    )
+                  }
+                  onRemoveSkillField={
+                    removeSkillField
+                  }
+                  onSkillArrayChange={
+                    updateSkillArray
+                  }
+                  onSubmit={() => {
+                    void submitJobForPreview();
+                  }}
+                  onSaveAsDraft={() => {
+                    void saveJobAsDraft();
+                  }}
+                />
 
-                      <p className="job-card-meta">
-                        {job.department ??
-                          "General"}{" "}
-                        • {job.location}
+                {pipelinePreview && (
+                  <section className="confirmation-panel">
+                    <div className="auth-kicker">
+                      Step 2. Token Saver Confirmation Gate
+                    </div>
+
+                    <h2 className="section-title">
+                      The system has matched{" "}
+                      {
+                        pipelinePreview.matched_candidate_count
+                      }{" "}
+                      candidates for this profile. Would you like to proceed to scoring?
+                    </h2>
+
+                    <p className="section-copy">
+                      Confirming this step will run the pre-scoring and deep-scoring pipeline for the top{" "}
+                      {PIPELINE_TOP_K} candidates.
+                    </p>
+
+                    <div className="button-row">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void confirmPipeline();
+                        }}
+                        disabled={
+                          isRunningPipeline
+                        }
+                        className="workspace-primary-button"
+                      >
+                        {isRunningPipeline
+                          ? "Scoring Candidates..."
+                          : "Proceed to Score"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={
+                          dismissPipelinePreview
+                        }
+                        className="workspace-ghost-button"
+                      >
+                        Go Back & Edit
+                      </button>
+                    </div>
+                  </section>
+                )}
+              </div>
+            )}
+
+            {canvasView === "board" && (
+              <div className="board-layout">
+                <section className="surface-card">
+                  <div className="section-header">
+                    <div>
+                      <h1 className="workspace-title">
+                        {selectedJob?.title ??
+                          "Scored Candidates"}
+                      </h1>
+
+                      <p className="workspace-subtitle">
+                        Ranked candidates, explainable scores, and pipeline actions for this campaign.
                       </p>
                     </div>
 
-                    <span className="score-pill score-pill-muted">
-                      {job.min_experience}
-                      {" - "}
-                      {job.max_experience} yrs
-                    </span>
-                  </div>
-
-                  <p className="job-card-copy">
-                    {job.job_purpose}
-                  </p>
-
-                  <div className="chip-row">
-                    {job.skills
-                      .slice(0, 4)
-                      .map((skill) => (
-                        <span
-                          key={skill.id}
-                          className={`skill-chip ${
-                            skill.is_mandatory
-                              ? "skill-chip-primary"
-                              : "skill-chip-secondary"
-                          }`}
-                        >
-                          {skill.skill_name}
-                        </span>
-                      ))}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="surface-card surface-card-hero">
-          {selectedJob ? (
-            <>
-              <div className="section-header">
-                <div>
-                  <h2 className="section-title">
-                    {selectedJob.title}
-                  </h2>
-
-                  <p className="section-copy">
-                    {selectedJob.location} •{" "}
-                    {selectedJob.min_experience}
-                    {" - "}
-                    {selectedJob.max_experience}
-                    {" years"}
-                  </p>
-                </div>
-
-                <Link
-                  to={`/dashboard/job-descriptions/${selectedJob.id}/import`}
-                  className="workspace-primary-button"
-                >
-                  Import Resume
-                </Link>
-              </div>
-
-              <div className="detail-grid">
-                <div className="detail-block">
-                  <div className="detail-label">
-                    Purpose
-                  </div>
-
-                  <p className="detail-copy">
-                    {selectedJob.job_purpose}
-                  </p>
-                </div>
-
-                <div className="detail-block">
-                  <div className="detail-label">
-                    Education
-                  </div>
-
-                  <p className="detail-copy">
-                    {
-                      selectedJob.education_requirement
-                    }
-                  </p>
-                </div>
-
-                <div className="detail-block detail-block-full">
-                  <div className="detail-label">
-                    Responsibilities
-                  </div>
-
-                  <p className="detail-copy">
-                    {
-                      selectedJob.responsibilities
-                    }
-                  </p>
-                </div>
-              </div>
-
-              <div className="section-header section-header-tight">
-                <div>
-                  <h3 className="section-title">
-                    Scored Candidates
-                  </h3>
-
-                  <p className="section-copy">
-                    Resume imports and
-                    deterministic scores for the
-                    selected job.
-                  </p>
-                </div>
-              </div>
-
-              {isLoadingCandidates ? (
-                <p className="empty-copy">
-                  Loading scored candidates...
-                </p>
-              ) : candidates.length === 0 ? (
-                <p className="empty-copy">
-                  No candidates have been scored
-                  for this job yet.
-                </p>
-              ) : (
-                <div className="candidate-list">
-                  {candidates.map((candidate) => (
-                    <div
-                      key={candidate.candidate_id}
-                      className="candidate-row"
-                    >
-                      <div>
-                        <h4 className="candidate-name">
-                          {
-                            candidate.full_name
+                    <div className="button-row">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          resetDrawer();
+                          const isDraft = selectedJob ? (candidateResultsByJob[selectedJob.id] ?? []).length === 0 : false;
+                          if (isDraft && selectedJob) {
+                            initializeDraftEdit(selectedJob);
                           }
-                        </h4>
+                          setActiveJobForDetails(selectedJob);
+                        }}
+                        className="workspace-primary-button"
+                      >
+                        Preview Again
+                      </button>
+                    </div>
+                  </div>
 
-                        <p className="candidate-meta">
-                          {candidate.current_title ??
-                            "Imported candidate"}
+                  {selectedJob && (
+                    <div className="detail-grid">
+                      <div className="detail-block">
+                        <div className="detail-label">
+                          Summary
+                        </div>
+
+                        <p className="detail-copy">
+                          {
+                            selectedJob.job_purpose
+                          }
                         </p>
                       </div>
 
-                      <div className="candidate-actions">
-                        <span className="score-pill">
-                          {Math.round(
-                            candidate.final_score,
-                          )}
-                          %
-                        </span>
+                      <div className="detail-block">
+                        <div className="detail-label">
+                          Campaign Status
+                        </div>
 
-                        <Link
-                          to={`/dashboard/job-descriptions/${selectedJob.id}/candidates/${candidate.candidate_id}`}
-                          className="workspace-inline-link"
-                        >
-                          Details
-                        </Link>
-
-                        <Link
-                          to={`/dashboard/job-descriptions/${selectedJob.id}/candidates/${candidate.candidate_id}/score`}
-                          className="workspace-inline-link"
-                        >
-                          Score
-                        </Link>
+                        <p className="detail-copy">
+                          {selectedCandidates.some((c) => c.stage === "FINALIZED")
+                            ? "Finalized"
+                            : selectedCandidates.length > 0
+                            ? "Scored"
+                            : "Draft"}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="empty-copy">
-              Select a job description to begin.
+                  )}
+
+                  <div className="section-header section-header-tight">
+                    <div>
+                      <h2 className="section-title">
+                        Candidate Evaluation Board
+                      </h2>
+
+                      <p className="section-copy">
+                        Click a candidate to open the slide-out profile drawer and update recruiter notes.
+                      </p>
+                    </div>
+
+                    {selectedJob && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void refreshCandidatesForJob(
+                            selectedJob.id,
+                          );
+                        }}
+                        className="workspace-ghost-button"
+                      >
+                        Refresh Board
+                      </button>
+                    )}
+                  </div>
+
+                  <CandidateResultsTable
+                    candidates={
+                      selectedCandidates
+                    }
+                    isLoading={isLoading}
+                    onOpenCandidate={(
+                      candidateId,
+                    ) => {
+                      setActiveJobForDetails(null);
+                      void openCandidateDrawer(
+                        candidateId,
+                      );
+                    }}
+                    onToggleCandidate={
+                      toggleCandidateSelection
+                    }
+                    selectedCandidateIds={
+                      selectedCandidateIds
+                    }
+                  />
+                </section>
+
+                <CandidateDrawer
+                  board={
+                    activeCandidateBoard
+                  }
+                  isLoading={isLoadingBoard}
+                  notesDraft={notesDraft}
+                  onClose={resetDrawer}
+                  onNotesChange={
+                    setNotesDraft
+                  }
+                  onSaveNotes={() => {
+                    void saveRecruiterNotes();
+                  }}
+                  isSavingNotes={
+                    isSavingNotes
+                  }
+                />
+
+                <JobDescriptionDrawer
+                  job={activeJobForDetails}
+                  onClose={() => setActiveJobForDetails(null)}
+                  isDraft={activeJobForDetails ? (candidateResultsByJob[activeJobForDetails.id] ?? []).length === 0 : false}
+                  employmentTypes={employmentTypes}
+                  hiringManagers={hiringManagers}
+                  formValues={formValues}
+                  isSubmitting={isSavingJob}
+                  onAddSkillField={addSkillField}
+                  onChange={(field, value) =>
+                    setFormValues((currentValues) => ({
+                      ...currentValues,
+                      [field]: value,
+                    }))
+                  }
+                  onRemoveSkillField={removeSkillField}
+                  onSkillArrayChange={updateSkillArray}
+                  onSubmit={() => {
+                    void submitJobForPreview();
+                  }}
+                />
+
+                {pipelinePreview && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+                    <div className="surface-card w-full max-w-lg p-8 shadow-2xl relative">
+                      <div className="text-indigo-600 font-semibold mb-2 uppercase tracking-wider text-xs">
+                        Token Saver Confirmation Gate
+                      </div>
+
+                      <h2 className="section-title text-xl font-bold mb-4">
+                        The system has matched {pipelinePreview.matched_candidate_count} candidates for this profile. Would you like to proceed to scoring?
+                      </h2>
+
+                      <p className="section-copy text-sm mb-6">
+                        Confirming this step will run the pre-scoring and deep-scoring pipeline for the top {PIPELINE_TOP_K} candidates.
+                      </p>
+
+                      <div className="button-row flex justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={dismissPipelinePreview}
+                          className="workspace-ghost-button"
+                        >
+                          Go Back & Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await confirmPipeline();
+                            setActiveJobForDetails(null);
+                          }}
+                          disabled={isRunningPipeline}
+                          className="workspace-primary-button"
+                        >
+                          {isRunningPipeline ? "Scoring Candidates..." : "Proceed to Score"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </main>
+
+      {activeNavView !== "talent-pool" && selectedCandidateIds.length > 0 && (
+        <div className="action-bar">
+          <div>
+            <div className="action-bar-title">
+              {selectedCandidateIds.length} candidate
+              {selectedCandidateIds.length > 1
+                ? "s"
+                : ""}{" "}
+              selected
+            </div>
+
+            <p className="candidate-meta">
+              Transition selected candidates to{" "}
+              {formatStageLabel(
+                "FINALIZED",
+              )} and share the shortlist with the hiring manager.
             </p>
-          )}
-        </section>
-      </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              void shareShortlistWithHiringManager();
+            }}
+            disabled={isSharingShortlist}
+            className="workspace-primary-button"
+          >
+            {isSharingShortlist
+              ? "Sharing Shortlist..."
+              : "Share Shortlist with Hiring Manager"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

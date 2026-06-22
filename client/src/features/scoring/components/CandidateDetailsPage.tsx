@@ -76,17 +76,8 @@ export function CandidateDetailsPage() {
             to="/dashboard"
             className="workspace-ghost-button"
           >
-            Dashboard
+            Back to Dashboard
           </Link>
-
-          {jobId && candidateId && (
-            <Link
-              to={`/dashboard/job-descriptions/${jobId}/candidates/${candidateId}/score`}
-              className="workspace-primary-button"
-            >
-              View Score
-            </Link>
-          )}
         </div>
       </div>
 

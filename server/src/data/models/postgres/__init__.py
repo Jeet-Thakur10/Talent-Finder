@@ -9,6 +9,7 @@ from .jd_skill import JDSkill
 from .job_description import JobDescription
 
 from .job_description_status import JobDescriptionStatus
+from .pipeline import Pipeline
 from .user import User
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "CandidateExperienceSkill",
     "CandidateEducation",
     "CandidateJobScore",
+    "Pipeline",
 ]

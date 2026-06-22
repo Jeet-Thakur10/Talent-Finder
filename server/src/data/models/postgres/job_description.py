@@ -18,6 +18,7 @@ from src.data.models.postgres.job_description_status import (
 if TYPE_CHECKING:
     from src.data.models.postgres.candidate_job_score import CandidateJobScore
     from src.data.models.postgres.jd_skill import JDSkill
+    from src.data.models.postgres.pipeline import Pipeline
     from src.data.models.postgres.user import User
 
 class JobDescription(Base):
@@ -88,6 +89,11 @@ class JobDescription(Base):
         nullable=False,
     )
 
+    hiring_manager_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -100,6 +106,11 @@ class JobDescription(Base):
 
     recruiter: Mapped[User] = relationship(
         back_populates="job_descriptions",
+        foreign_keys=[recruiter_id],
+    )
+
+    hiring_manager: Mapped[User | None] = relationship(
+        foreign_keys=[hiring_manager_id],
     )
 
     skills: Mapped[list[JDSkill]] = relationship(
@@ -115,6 +126,10 @@ class JobDescription(Base):
         back_populates="job_descriptions",
     )
     candidate_scores: Mapped[list[CandidateJobScore]] = relationship(
+        back_populates="job_description",
+        cascade="all, delete-orphan",
+    )
+    pipeline_entries: Mapped[list[Pipeline]] = relationship(
         back_populates="job_description",
         cascade="all, delete-orphan",
     )

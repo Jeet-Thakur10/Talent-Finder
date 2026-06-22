@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -10,6 +10,7 @@ from src.data.models.postgres.job_description import JobDescription
 from src.data.models.postgres.job_description_status import (
     JobDescriptionStatus,
 )
+from src.data.models.postgres.user import User
 
 class JobDescriptionRepository:
 
@@ -49,6 +50,19 @@ class JobDescriptionRepository:
 
         return job_description
 
+    async def save_job_description(
+        self,
+        job_description: JobDescription,
+    ) -> JobDescription:
+
+        await self.db.flush()
+        await self.db.refresh(
+            job_description,
+            attribute_names=["skills"],
+        )
+
+        return job_description
+
     async def create_skills(self, skills: list[JDSkill]) -> None:
 
         self.db.add_all(skills)
@@ -69,6 +83,17 @@ class JobDescriptionRepository:
         )
 
         return result.scalar_one_or_none()
+
+    async def delete_skills_for_job_description(
+        self,
+        job_description_id: UUID,
+    ) -> None:
+
+        await self.db.execute(
+            delete(JDSkill).where(
+                JDSkill.jd_id == job_description_id,
+            )
+        )
 
     async def get_job_descriptions_by_recruiter(
             self, recruiter_id: UUID) -> list[JobDescription]:
@@ -100,6 +125,15 @@ class JobDescriptionRepository:
     ) -> list[JobDescriptionStatus]:
         result = await self.db.execute(
             select(JobDescriptionStatus)
+        )
+
+        return list(result.scalars().all())
+
+    async def get_hiring_managers(self) -> list[User]:
+        result = await self.db.execute(
+            select(User).where(
+                User.role == "hiring_manager",
+            )
         )
 
         return list(result.scalars().all())

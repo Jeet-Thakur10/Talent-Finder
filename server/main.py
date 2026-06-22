@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from sqlalchemy import text
 from src.api.rest.routes.auth_route import router as auth_router
 from src.api.rest.routes.job_description_route import router as job_description_router
 from src.api.rest.routes.lookup_route import router as lookup_router
@@ -39,8 +40,8 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
 
     async with async_session_local() as db:
-        await UserSeeder.seed(db)
         await seed_master_data(db)
+        await UserSeeder.seed(db)
 
     yield
     await engine.dispose()

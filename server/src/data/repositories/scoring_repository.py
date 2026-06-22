@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -17,6 +17,7 @@ from src.data.models.postgres.candidate_experience_skill import (
 )
 from src.data.models.postgres.candidate_skill import CandidateSkill
 from src.data.models.postgres.job_description import JobDescription
+from src.data.models.postgres.pipeline import Pipeline
 from src.schemas.scoring_schema import (
     CandidateScoreOutput,
     ParsedCandidateProfile,
@@ -141,6 +142,183 @@ class ScoringRepository:
         )
 
         return list(result.scalars().unique().all())
+
+    async def get_candidate_by_id(
+        self,
+        candidate_id: UUID,
+    ) -> Candidate | None:
+        result = await self.db.execute(
+            select(Candidate)
+            .options(
+                selectinload(Candidate.skills),
+                selectinload(Candidate.experiences).selectinload(
+                    CandidateExperience.skills,
+                ),
+                selectinload(Candidate.educations),
+            )
+            .where(
+                Candidate.id == candidate_id,
+            )
+        )
+
+        return result.scalar_one_or_none()
+
+    async def get_candidate_scores_for_job_description(
+        self,
+        job_description_id: UUID,
+    ) -> list[CandidateJobScore]:
+
+        result = await self.db.execute(
+            select(CandidateJobScore)
+            .options(
+                selectinload(CandidateJobScore.candidate).selectinload(
+                    Candidate.skills,
+                ),
+            )
+            .where(
+                CandidateJobScore.job_description_id == job_description_id,
+            )
+            .order_by(
+                desc(CandidateJobScore.final_score),
+                desc(CandidateJobScore.updated_at),
+            )
+        )
+
+        return list(result.scalars().all())
+
+    async def get_candidate_job_score(
+        self,
+        job_description_id: UUID,
+        candidate_id: UUID,
+    ) -> CandidateJobScore | None:
+        result = await self.db.execute(
+            select(CandidateJobScore)
+            .where(
+                CandidateJobScore.job_description_id == job_description_id,
+                CandidateJobScore.candidate_id == candidate_id,
+            )
+        )
+
+        return result.scalar_one_or_none()
+
+    async def get_pipeline_entry(
+        self,
+        job_description_id: UUID,
+        candidate_id: UUID,
+    ) -> Pipeline | None:
+        result = await self.db.execute(
+            select(Pipeline).where(
+                Pipeline.jd_id == job_description_id,
+                Pipeline.candidate_id == candidate_id,
+            )
+        )
+
+        return result.scalar_one_or_none()
+
+    async def bulk_get_pipeline_entries_for_job(
+        self,
+        job_description_id: UUID,
+    ) -> list[Pipeline]:
+        result = await self.db.execute(
+            select(Pipeline).where(
+                Pipeline.jd_id == job_description_id,
+            )
+        )
+
+        return list(result.scalars().all())
+
+    async def upsert_pipeline_entries(
+        self,
+        job_description_id: UUID,
+        candidate_ids: list[UUID],
+        stage: str = "PRE_SCORED",
+    ) -> None:
+        if not candidate_ids:
+            return
+
+        now = datetime.now(UTC)
+
+        for candidate_id in candidate_ids:
+            existing = await self.get_pipeline_entry(
+                job_description_id,
+                candidate_id,
+            )
+
+            if existing:
+                existing.stage = stage
+            else:
+                self.db.add(
+                    Pipeline(
+                        candidate_id=candidate_id,
+                        jd_id=job_description_id,
+                        stage=stage,
+                        created_at=now,
+                    )
+                )
+
+        await self.db.flush()
+
+    async def update_pipeline_notes(
+        self,
+        job_description_id: UUID,
+        candidate_id: UUID,
+        recruiter_notes: str | None,
+    ) -> Pipeline:
+        pipeline_entry = await self.get_pipeline_entry(
+            job_description_id,
+            candidate_id,
+        )
+
+        if pipeline_entry is None:
+            pipeline_entry = Pipeline(
+                candidate_id=candidate_id,
+                jd_id=job_description_id,
+                stage="PRE_SCORED",
+                recruiter_notes=recruiter_notes,
+                created_at=datetime.now(UTC),
+            )
+            self.db.add(pipeline_entry)
+        else:
+            pipeline_entry.recruiter_notes = recruiter_notes
+
+        await self.db.flush()
+        await self.db.refresh(pipeline_entry)
+
+        return pipeline_entry
+
+    async def bulk_update_pipeline_stage(
+        self,
+        job_description_id: UUID,
+        candidate_ids: list[UUID],
+        stage: str,
+    ) -> list[Pipeline]:
+        updated_entries: list[Pipeline] = []
+
+        for candidate_id in candidate_ids:
+            pipeline_entry = await self.get_pipeline_entry(
+                job_description_id,
+                candidate_id,
+            )
+
+            if pipeline_entry is None:
+                pipeline_entry = Pipeline(
+                    candidate_id=candidate_id,
+                    jd_id=job_description_id,
+                    stage=stage,
+                    created_at=datetime.now(UTC),
+                )
+                self.db.add(pipeline_entry)
+            else:
+                pipeline_entry.stage = stage
+
+            updated_entries.append(pipeline_entry)
+
+        await self.db.flush()
+
+        for pipeline_entry in updated_entries:
+            await self.db.refresh(pipeline_entry)
+
+        return updated_entries
     
     async def upsert_candidate_scores(
         self,
@@ -257,3 +435,5 @@ class ScoringRepository:
                         updated_at=now,
                     )
                 )
+
+        await self.db.flush()

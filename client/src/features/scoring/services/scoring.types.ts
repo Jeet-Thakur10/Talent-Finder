@@ -1,21 +1,18 @@
 export interface CandidateSkill {
   id: string;
   skill_name: string;
-  normalized_skill_name: string;
   is_primary: boolean;
 }
 
 export interface CandidateExperienceSkill {
   id: string;
   skill_name: string;
-  normalized_skill_name: string;
 }
 
 export interface CandidateExperience {
   id: string;
   company_name: string | null;
   title: string;
-  normalized_title: string;
   description: string | null;
   start_date: string | null;
   end_date: string | null;
@@ -27,7 +24,6 @@ export interface CandidateEducation {
   id: string;
   institution_name: string | null;
   degree: string;
-  normalized_degree_level: string | null;
   field_of_study: string | null;
   start_date: string | null;
   end_date: string | null;
@@ -39,7 +35,6 @@ export interface CandidateDetails {
   email: string | null;
   phone: string | null;
   current_title: string | null;
-  normalized_title: string | null;
   location: string | null;
   summary: string | null;
   source_type: string;
