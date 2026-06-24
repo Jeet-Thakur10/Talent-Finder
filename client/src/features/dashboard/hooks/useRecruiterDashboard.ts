@@ -586,6 +586,74 @@ export function useRecruiterDashboard() {
     }
   };
 
+  const updateJobSkills = async (jobId: string, skills: JDSkill[]) => {
+    try {
+      setIsSavingJob(true);
+      setError("");
+
+      const job = jobDescriptions.find((j) => j.id === jobId);
+      if (!job) {
+        throw new Error("Job not found");
+      }
+
+      const payload: JobDescriptionPayload = {
+        title: job.title,
+        department: job.department,
+        job_purpose: job.job_purpose,
+        responsibilities: job.responsibilities,
+        min_experience: job.min_experience,
+        max_experience: job.max_experience,
+        location: job.location,
+        employment_type_id: job.employment_type_id,
+        education_requirement: job.education_requirement,
+        preferred_qualifications: job.preferred_qualifications,
+        hiring_manager_id: job.hiring_manager_id,
+        skills,
+      };
+
+      const savedJob = await dashboardService.updateJobDescription(
+        jobId,
+        payload,
+      );
+
+      upsertJobDescription(savedJob);
+      return savedJob;
+    } catch {
+      setError("Unable to update the job description skills.");
+      throw new Error("Failed to update skills");
+    } finally {
+      setIsSavingJob(false);
+    }
+  };
+
+  const triggerScoringPreview = async (jobId: string) => {
+    try {
+      setIsSavingJob(true);
+      setError("");
+
+      const preview = await dashboardService.previewPipeline(
+        jobId,
+        {
+          k: PIPELINE_TOP_K,
+        },
+      );
+
+      setMatchedCountByJob(
+        (currentCounts) => ({
+          ...currentCounts,
+          [jobId]: preview.matched_candidate_count,
+        }),
+      );
+      setPipelinePreview(preview);
+      setSelectedJobId(jobId);
+      setDraftJobId(jobId);
+    } catch {
+      setError("Unable to generate scoring preview.");
+    } finally {
+      setIsSavingJob(false);
+    }
+  };
+
   const initializeDraftEdit = (job: JobDescription) => {
     setSelectedJobId(job.id);
     setDraftJobId(job.id);
@@ -626,7 +694,7 @@ export function useRecruiterDashboard() {
           [jobId]: response.candidates,
         }),
       );
-      setPipelinePreview(response);
+      setPipelinePreview(null);
       setCanvasView("board");
     } catch {
       setError(
@@ -875,5 +943,7 @@ export function useRecruiterDashboard() {
     updateSkillArray,
     addSkillField,
     confirmPipeline,
+    updateJobSkills,
+    triggerScoringPreview,
   };
 }

@@ -121,6 +121,18 @@ export function JobDescriptionForm({
   onSubmit,
   onSaveAsDraft,
 }: JobDescriptionFormProps) {
+  const isSaveDraftDisabled = isSubmitting || !formValues.title.trim();
+
+  const isFormValid =
+    formValues.title.trim() !== "" &&
+    formValues.summary.trim() !== "" &&
+    formValues.min_experience.trim() !== "" &&
+    formValues.location.trim() !== "" &&
+    formValues.education_requirement.trim() !== "" &&
+    formValues.mandatory_skills.some((skill) => skill.trim() !== "");
+
+  const isPreviewDisabled = isSubmitting || !isFormValid;
+
   return (
     <div className="surface-card">
       <div className="section-header">
@@ -432,8 +444,8 @@ export function JobDescriptionForm({
           <button
             type="button"
             onClick={onSubmit}
-            disabled={isSubmitting}
-            className="workspace-primary-button"
+            disabled={isPreviewDisabled}
+            className="workspace-primary-button disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting
               ? "Saving Preview..."
@@ -443,8 +455,8 @@ export function JobDescriptionForm({
           <button
             type="button"
             onClick={onSaveAsDraft}
-            disabled={isSubmitting}
-            className="workspace-ghost-button"
+            disabled={isSaveDraftDisabled}
+            className="workspace-ghost-button disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Save as Draft
           </button>
