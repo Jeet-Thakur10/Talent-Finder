@@ -6,6 +6,9 @@ import { VerifyOtpPage } from "../../features/auth/components/VerifyOtpPage";
 import { ResetPasswordPage } from "../../features/auth/components/ResetPasswordPage";
 import { ProtectedRoute } from "../../features/auth/components/ProtectedRoute";
 import { DashboardPage } from "../../features/dashboard/components/DashboardPage";
+import { CandidateDetailsPage } from "../../features/scoring/components/CandidateDetailsPage";
+import { CandidateScorePage } from "../../features/scoring/components/CandidateScorePage";
+import { ResumeImportPage } from "../../features/scoring/components/ResumeImportPage";
 
 import { PublicRoute } from "../../features/auth/components/PublicRoute";
 import { useAuth } from "../../features/auth/hooks/useAuth";
@@ -79,6 +82,33 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard/job-descriptions/:jobId/import"
+        element={
+          <ProtectedRoute>
+            <ResumeImportPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard/job-descriptions/:jobId/candidates/:candidateId"
+        element={
+          <ProtectedRoute>
+            <CandidateDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard/job-descriptions/:jobId/candidates/:candidateId/score"
+        element={
+          <ProtectedRoute>
+            <CandidateScorePage />
           </ProtectedRoute>
         }
       />

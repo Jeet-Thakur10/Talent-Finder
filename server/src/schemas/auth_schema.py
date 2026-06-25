@@ -1,12 +1,12 @@
 """Authentication request/response schemas."""
 
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     recruiter = "recruiter"
     hiring_manager = "hiring_manager"
 
@@ -15,7 +15,6 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
-    
     @field_validator("email")
     @classmethod
     def validate_email(cls, value: str) -> str:
