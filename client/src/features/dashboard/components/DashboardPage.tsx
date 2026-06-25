@@ -79,6 +79,8 @@ export function DashboardPage() {
     toggleCandidateSelection,
     updateSkillArray,
     addSkillField,
+    updateJobSkills,
+    triggerScoringPreview,
   } = useRecruiterDashboard();
 
   const handleLogout = async () => {
@@ -232,51 +234,43 @@ export function DashboardPage() {
                 />
 
                 {pipelinePreview && (
-                  <section className="confirmation-panel">
-                    <div className="auth-kicker">
-                      Step 2. Token Saver Confirmation Gate
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+                    <div className="surface-card w-full max-w-lg p-8 shadow-2xl relative text-left">
+                      <div className="text-indigo-600 font-semibold mb-2 uppercase tracking-wider text-xs">
+                        Token Saver Confirmation Gate
+                      </div>
+
+                      <h2 className="section-title text-xl font-bold mb-4">
+                        The system has matched {pipelinePreview.matched_candidate_count} candidates for this profile. Would you like to proceed to scoring?
+                      </h2>
+
+                      <p className="section-copy text-sm mb-6">
+                        Confirming this step will run the pre-scoring and deep-scoring pipeline for the top {PIPELINE_TOP_K} candidates.
+                      </p>
+
+                      <div className="button-row flex justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={dismissPipelinePreview}
+                          className="workspace-ghost-button"
+                        >
+                          Go Back & Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await confirmPipeline();
+                            dismissPipelinePreview();
+                          }}
+                          disabled={isRunningPipeline}
+                          className="workspace-primary-button disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isRunningPipeline ? "Scoring Candidates..." : "Proceed to Score"}
+                        </button>
+                      </div>
                     </div>
-
-                    <h2 className="section-title">
-                      The system has matched{" "}
-                      {
-                        pipelinePreview.matched_candidate_count
-                      }{" "}
-                      candidates for this profile. Would you like to proceed to scoring?
-                    </h2>
-
-                    <p className="section-copy">
-                      Confirming this step will run the pre-scoring and deep-scoring pipeline for the top{" "}
-                      {PIPELINE_TOP_K} candidates.
-                    </p>
-
-                    <div className="button-row">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void confirmPipeline();
-                        }}
-                        disabled={
-                          isRunningPipeline
-                        }
-                        className="workspace-primary-button"
-                      >
-                        {isRunningPipeline
-                          ? "Scoring Candidates..."
-                          : "Proceed to Score"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={
-                          dismissPipelinePreview
-                        }
-                        className="workspace-ghost-button"
-                      >
-                        Go Back & Edit
-                      </button>
-                    </div>
-                  </section>
+                  </div>
                 )}
               </div>
             )}
@@ -430,11 +424,19 @@ export function DashboardPage() {
                   onSubmit={() => {
                     void submitJobForPreview();
                   }}
+                  onSaveJobSkills={async (jobId, skills) => {
+                    const updated = await updateJobSkills(jobId, skills);
+                    setActiveJobForDetails(updated);
+                  }}
+                  onTriggerScoringPreview={async (jobId) => {
+                    await triggerScoringPreview(jobId);
+                    setActiveJobForDetails(null);
+                  }}
                 />
 
                 {pipelinePreview && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-                    <div className="surface-card w-full max-w-lg p-8 shadow-2xl relative">
+                    <div className="surface-card w-full max-w-lg p-8 shadow-2xl relative text-left">
                       <div className="text-indigo-600 font-semibold mb-2 uppercase tracking-wider text-xs">
                         Token Saver Confirmation Gate
                       </div>
@@ -461,9 +463,10 @@ export function DashboardPage() {
                           onClick={async () => {
                             await confirmPipeline();
                             setActiveJobForDetails(null);
+                            dismissPipelinePreview();
                           }}
                           disabled={isRunningPipeline}
-                          className="workspace-primary-button"
+                          className="workspace-primary-button disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isRunningPipeline ? "Scoring Candidates..." : "Proceed to Score"}
                         </button>

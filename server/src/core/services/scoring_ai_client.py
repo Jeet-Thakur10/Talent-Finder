@@ -482,6 +482,7 @@ class CandidatePrescoringClient:
             messages,
         )
 
+# not used here.
 
 class SemanticEmbeddingClient:
     def __init__(self) -> None:

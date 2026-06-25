@@ -193,6 +193,12 @@ class ScoringService:
             job_description_id,
             sourced_candidates,
         )
+        print("\n" + "="*40 + "\nPrescore Output (Sorted)\n" + "="*40)
+        for idx, score in enumerate(prescore_output.scores):
+            # Resolve name from sourced_candidates
+            c_name = next((c.full_name for c in sourced_candidates if c.id == score.candidate_id), "Unknown")
+            print(f"{idx+1}. {c_name} (ID: {score.candidate_id}) -> Score: {score.score}")
+        print("="*40 + "\n")
 
         top_candidate_ids = [
             score.candidate_id
@@ -204,6 +210,18 @@ class ScoringService:
             current_user,
             candidate_ids=top_candidate_ids,
         )
+        print("\n" + "="*40 + "\nDeep Score Output\n" + "="*40)
+        for idx, score in enumerate(deep_score_output.scores):
+            c_name = next((c.full_name for c in sourced_candidates if c.id == score.candidate_id), "Unknown")
+            print(f"{idx+1}. Name: {c_name} (ID: {score.candidate_id})")
+            print(f"   Final Score: {score.final_score} | Confidence: {score.confidence}%")
+            print(f"   Breakdown -> Skills: {score.skills_score} | Exp: {score.experience_score} | Recency: {score.recency_score} | Role Fit: {score.role_fit_score} | Edu: {score.education_score}")
+            print(f"   Matched Mandatory Skills: {score.matched_mandatory_skills}")
+            print(f"   Missing Mandatory Skills: {score.missing_mandatory_skills}")
+            explanation_summary = score.explanation.get("summary") if isinstance(score.explanation, dict) else getattr(score.explanation, "summary", "")
+            print(f"   Explanation Summary: {explanation_summary}")
+            print("-" * 20)
+        print("="*40 + "\n")
 
         candidate_lookup = {
             candidate.id: candidate
@@ -488,6 +506,13 @@ class ScoringService:
             for candidate in candidates
         ]
 
+        print("\n" + "="*40 + "\nPrescoring LLM Input\n" + "="*40)
+        print(f"Compressed JD Profile:\n{compressed_jd.profile_text}\n")
+        print("Compressed Candidates Profiles sent to LLM:")
+        for cc in compressed_candidates:
+            print(f"- ID: {cc.candidate_id}\nProfile Text:\n{cc.profile_text}\n" + "-"*20)
+        print("="*40 + "\n")
+
         score_results = await self.prescoring_client.prescore_candidates(
             compressed_candidates,
             compressed_jd,
@@ -497,7 +522,6 @@ class ScoringService:
             key=lambda score: score.score,
             reverse=True,
         )
-
         return score_results
 
     async def _source_candidates_for_job_description(
@@ -574,6 +598,10 @@ class ScoringService:
             sourced_candidates.append(
                 candidate,
             )
+        print("\n" + "="*40 + "\nSourced Candidates\n" + "="*40)
+        for idx, candidate in enumerate(sourced_candidates):
+            print(f"{idx+1}. Name: {candidate.full_name} | ID: {candidate.id} | Email: {candidate.email} | Exp: {candidate.total_experience_months} months")
+        print("="*40 + "\n")
 
         return sourced_candidates
 
