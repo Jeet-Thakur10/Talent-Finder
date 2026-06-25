@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import date, datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -189,6 +190,121 @@ class CandidateBatchScoreOutput(BaseModel):
     scores: list[CandidateScoreOutput]
 
 
+class CandidateSkillResponse(BaseModel):
+    id: UUID
+    skill_name: str
+    is_primary: bool
+
+
+class CandidateExperienceSkillResponse(BaseModel):
+    id: UUID
+    skill_name: str
+
+
+class CandidateExperienceResponse(BaseModel):
+    id: UUID
+    company_name: str | None = None
+    title: str
+    description: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    is_current: bool = False
+    skills: list[CandidateExperienceSkillResponse] = Field(
+        default_factory=list,
+    )
+
+
+class CandidateEducationResponse(BaseModel):
+    id: UUID
+    institution_name: str | None = None
+    degree: str
+    field_of_study: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+
+
+class CandidateDetailsResponse(BaseModel):
+    id: UUID
+    full_name: str
+    email: str | None = None
+    phone: str | None = None
+    current_title: str | None = None
+    location: str | None = None
+    summary: str | None = None
+    source_type: str
+    total_experience_months: int
+    created_at: datetime
+    updated_at: datetime
+    skills: list[CandidateSkillResponse] = Field(
+        default_factory=list,
+    )
+    experiences: list[CandidateExperienceResponse] = Field(
+        default_factory=list,
+    )
+    educations: list[CandidateEducationResponse] = Field(
+        default_factory=list,
+    )
+
+
+class PipelineStageUpdateRequest(BaseModel):
+    stage: str = Field(min_length=1)
+    candidate_ids: list[UUID] = Field(
+        min_length=1,
+    )
+
+
+class PipelineNotesUpdateRequest(BaseModel):
+    recruiter_notes: str | None = None
+
+
+class PipelineSnapshotResponse(BaseModel):
+    id: UUID
+    candidate_id: UUID
+    jd_id: UUID
+    stage: str
+    recruiter_notes: str | None = None
+    hiring_manager_notes: str | None = None
+    created_at: datetime
+
+
+class CandidateScoreBreakdownResponse(BaseModel):
+    final_score: float
+    skill_score: float
+    experience_score: float
+    recency_score: float
+    role_fit_score: float
+    education_score: float
+    confidence: float
+    explanation: CandidateScoreExplanation | dict[str, object]
+
+
+class CandidateEvaluationBoardResponse(BaseModel):
+    candidate: CandidateDetailsResponse
+    pipeline: PipelineSnapshotResponse | None = None
+    score: CandidateScoreBreakdownResponse | None = None
+
+
+class CandidateScoreDetailBreakdown(BaseModel):
+    skills: float
+    experience: float
+    recency: float
+    role_fit: float
+    education: float
+
+
+class CandidateScoreResponse(BaseModel):
+    candidate_id: UUID
+    job_description_id: UUID
+    final_score: float
+    confidence: float
+    breakdown: CandidateScoreDetailBreakdown
+    matched_mandatory_skills: list[str]
+    matched_optional_skills: list[str]
+    missing_mandatory_skills: list[str]
+    explanation: CandidateScoreExplanation | dict[str, object]
+    updated_at: datetime
+
+
 # prescoring schema
 class CompressedCandidate(BaseModel):
     candidate_id: UUID
@@ -207,3 +323,36 @@ class CandidatePrescoreOutput(BaseModel):
 
 class CandidatePrescoreBatchOutput(BaseModel):
     scores: list[CandidatePrescoreOutput]
+
+
+class PipelineExecutionRequest(BaseModel):
+    confirm: bool = False
+    k: int = Field(default=10, ge=1, le=25)
+
+
+class PipelineCandidateResult(BaseModel):
+    candidate_id: UUID
+    full_name: str
+    current_title: str | None = None
+    location: str | None = None
+    total_experience_months: int
+    prescore_score: int | None = None
+    prescore_rank: int | None = None
+    final_score: float | None = None
+    confidence: float | None = None
+    matched_mandatory_skills: list[str] = Field(default_factory=list)
+    matched_optional_skills: list[str] = Field(default_factory=list)
+    missing_mandatory_skills: list[str] = Field(default_factory=list)
+    stage: str = "PRE_SCORED"
+    recruiter_notes: str | None = None
+    hiring_manager_notes: str | None = None
+    updated_at: datetime | None = None
+
+
+class PipelineExecutionResponse(BaseModel):
+    stage: Literal["preview", "completed"]
+    matched_candidate_count: int
+    top_k: int
+    candidates: list[PipelineCandidateResult] = Field(
+        default_factory=list,
+    )

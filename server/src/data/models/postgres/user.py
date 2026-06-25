@@ -49,4 +49,5 @@ class User(Base):
 
     job_descriptions: Mapped[list[JobDescription]] = relationship(
         back_populates="recruiter",
+        primaryjoin="User.id == JobDescription.recruiter_id",
     )

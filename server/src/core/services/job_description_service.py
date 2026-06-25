@@ -18,9 +18,11 @@ from src.data.repositories.job_description_repository import (
 from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
 from src.schemas.job_description_schema import (
     EmploymentTypeResponse,
+    HiringManagerResponse,
     JDSkillResponse,
     JobDescriptionCreateRequest,
     JobDescriptionResponse,
+    JobDescriptionUpdateRequest,
     JobDescriptionStatusResponse,
 )
 
@@ -87,6 +89,7 @@ class JobDescriptionService:
             preferred_qualifications=data.preferred_qualifications,
 
             status_id=draft_status.id,
+            hiring_manager_id=data.hiring_manager_id,
 
             created_at=now,
             updated_at=now,
@@ -124,6 +127,7 @@ class JobDescriptionService:
             preferred_qualifications=job_description.preferred_qualifications,
             employment_type_id=job_description.employment_type_id,
             status_id=job_description.status_id,
+            hiring_manager_id=job_description.hiring_manager_id,
             created_at=job_description.created_at,
             updated_at=job_description.updated_at,
             skills=[
@@ -133,6 +137,116 @@ class JobDescriptionService:
                     is_mandatory=skill.is_mandatory,
                 )
                 for skill in skills
+            ],
+        )
+
+    async def update_job_description(
+        self,
+        job_description_id: UUID,
+        data: JobDescriptionUpdateRequest,
+        current_user: AuthenticatedUserContext,
+    ) -> JobDescriptionResponse:
+        if current_user.role != UserRole.recruiter:
+            raise RecruiterAccessRequired(
+                details="Only recruiters can update job descriptions.",
+                error_code="RECRUITER_ACCESS_REQUIRED",
+            )
+
+        job_description = await (
+            self.job_description_repository
+            .get_job_description_by_id(
+                job_description_id,
+            )
+        )
+
+        if not job_description:
+            raise JobDescriptionNotFound(
+                error_code="JOB_DESCRIPTION_NOT_FOUND",
+            )
+
+        if job_description.recruiter_id != current_user.user_id:
+            raise JobDescriptionNotFound(
+                error_code="JOB_DESCRIPTION_NOT_FOUND",
+            )
+
+        employment_type = (
+            await self.job_description_repository.get_employment_type_by_id(
+                data.employment_type_id,
+            )
+        )
+
+        if not employment_type:
+            raise InvalidEmploymentType(
+                details=f"Employment type '{data.employment_type_id}' does not exist"
+            )
+
+        job_description.title = data.title
+        job_description.department = data.department
+        job_description.job_purpose = data.job_purpose
+        job_description.responsibilities = data.responsibilities
+        job_description.min_experience = data.min_experience
+        job_description.max_experience = data.max_experience
+        job_description.location = data.location
+        job_description.employment_type_id = employment_type.id
+        job_description.education_requirement = (
+            data.education_requirement
+        )
+        job_description.preferred_qualifications = (
+            data.preferred_qualifications
+        )
+        job_description.hiring_manager_id = data.hiring_manager_id
+        job_description.updated_at = datetime.now(UTC)
+
+        await self.job_description_repository.delete_skills_for_job_description(
+            job_description.id,
+        )
+
+        job_description.skills = [
+            JDSkill(
+                jd_id=job_description.id,
+                skill_name=skill.skill_name,
+                is_mandatory=skill.is_mandatory,
+            )
+            for skill in data.skills
+        ]
+
+        updated_job_description = await (
+            self.job_description_repository.save_job_description(
+                job_description,
+            )
+        )
+
+        return self._build_job_description_response(
+            updated_job_description,
+        )
+
+    def _build_job_description_response(
+        self,
+        job_description: JobDescription,
+    ) -> JobDescriptionResponse:
+        return JobDescriptionResponse(
+            id=job_description.id,
+            title=job_description.title,
+            department=job_description.department,
+            job_purpose=job_description.job_purpose,
+            responsibilities=job_description.responsibilities,
+            min_experience=job_description.min_experience,
+            max_experience=job_description.max_experience,
+            location=job_description.location,
+            education_requirement=job_description.education_requirement,
+            preferred_qualifications=job_description.preferred_qualifications,
+            employment_type_id=job_description.employment_type_id,
+            status_id=job_description.status_id,
+            hiring_manager_id=job_description.hiring_manager_id,
+            created_at=job_description.created_at,
+            updated_at=job_description.updated_at,
+            skills=[
+                JDSkillResponse(
+                    id=skill.id,
+                    skill_name=skill.skill_name,
+                    is_mandatory=skill.is_mandatory,
+                )
+                for skill in job_description.skills
             ],
         )
 
@@ -170,6 +284,7 @@ class JobDescriptionService:
                     preferred_qualifications=jd.preferred_qualifications,
                     employment_type_id=jd.employment_type_id,
                     status_id=jd.status_id,
+                    hiring_manager_id=jd.hiring_manager_id,
                     created_at=jd.created_at,
                     updated_at=jd.updated_at,
                     skills=[
@@ -212,29 +327,8 @@ class JobDescriptionService:
                 error_code="JOB_DESCRIPTION_NOT_FOUND",
             )
 
-        return JobDescriptionResponse(
-            id=job_description.id,
-            title=job_description.title,
-            department=job_description.department,
-            job_purpose=job_description.job_purpose,
-            responsibilities=job_description.responsibilities,
-            min_experience=job_description.min_experience,
-            max_experience=job_description.max_experience,
-            location=job_description.location,
-            education_requirement=job_description.education_requirement,
-            preferred_qualifications=job_description.preferred_qualifications,
-            employment_type_id=job_description.employment_type_id,
-            status_id=job_description.status_id,
-            created_at=job_description.created_at,
-            updated_at=job_description.updated_at,
-            skills=[
-                JDSkillResponse(
-                    id=skill.id,
-                    skill_name=skill.skill_name,
-                    is_mandatory=skill.is_mandatory,
-                )
-                for skill in job_description.skills
-            ],
+        return self._build_job_description_response(
+            job_description,
         )
 
     async def get_employment_types(
@@ -267,4 +361,20 @@ class JobDescriptionService:
                 status
             )
             for status in statuses
+        ]
+
+    async def get_hiring_managers(
+        self,
+    ) -> list[HiringManagerResponse]:
+        hiring_managers = (
+            await self.job_description_repository.get_hiring_managers()
+        )
+
+        return [
+            HiringManagerResponse(
+                id=hiring_manager.id,
+                name=hiring_manager.name,
+                email=hiring_manager.email,
+            )
+            for hiring_manager in hiring_managers
         ]

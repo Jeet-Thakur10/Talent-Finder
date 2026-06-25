@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from src.data.models.postgres.candidate_education import CandidateEducation
     from src.data.models.postgres.candidate_experience import CandidateExperience
     from src.data.models.postgres.candidate_job_score import CandidateJobScore
+    from src.data.models.postgres.pipeline import Pipeline
     from src.data.models.postgres.candidate_skill import CandidateSkill
 
 
@@ -89,6 +90,10 @@ class Candidate(Base):
         cascade="all, delete-orphan",
     )
     scores: Mapped[list[CandidateJobScore]] = relationship(
+        back_populates="candidate",
+        cascade="all, delete-orphan",
+    )
+    pipeline_entries: Mapped[list[Pipeline]] = relationship(
         back_populates="candidate",
         cascade="all, delete-orphan",
     )

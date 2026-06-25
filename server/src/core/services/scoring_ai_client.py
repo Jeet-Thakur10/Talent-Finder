@@ -47,7 +47,7 @@ class ResumeExtractionClient:
         resume_text: str,
     ) -> ResumeExtractionResult:
         try:
-            print(f"🚀 Attempting Groq extraction with model: {self.groq_model}")
+            print(f"Attempting Groq extraction with model: {self.groq_model}")
             
             # 1. Grab the exact schema keys (full_name, experiences, etc.) dynamically
             schema_json = json.dumps(ResumeCandidateOutput.model_json_schema(), indent=2)
