@@ -76,26 +76,25 @@ class PostJobFreeSourcingService:
         if not search_results:
             return
 
-        existing_candidates = len(
-            await self._candidate_service.search_candidates(
-                request,
-            )
+        existing_candidates = await self._candidate_service.search_candidates(
+            request,
         )
+        existing_count = len(existing_candidates)
 
         missing_candidates = max(
-            request.min_candidates - existing_candidates,
+            request.required_candidates - existing_count,
             0,
         )
 
-        max_resumes_to_source = min(
-            missing_candidates,
-            request.max_source_resumes,
-            len(search_results),
-        )
+        if missing_candidates == 0:
+            return
 
-        for result in search_results[
-            :max_resumes_to_source
-        ]:
+        existing_ids = {c.candidate_id for c in existing_candidates}
+        newly_sourced_count = 0
+
+        for result in search_results:
+            if newly_sourced_count >= missing_candidates:
+                break
 
             try:
                 resume_html = (
@@ -115,11 +114,30 @@ class PostJobFreeSourcingService:
                     )
                 )
 
-                await self._candidate_service.create_candidate(
+                if not extraction_result.success:
+                    print(
+                        f"Skipping resume: "
+                        f"{extraction_result.error}"
+                    )
+                    continue
+
+                stored_candidate = await self._candidate_service.create_candidate(
                     candidate=extraction_result.payload,
                     resume_text=resume.raw_resume_text,
                     source_type="postjobfree",
                 )
+
+                if stored_candidate.id in request.exclude_candidate_ids:
+                    print(
+                        f"Scraped candidate {stored_candidate.id} "
+                        "is in exclude list. Skipping counting."
+                    )
+                    continue
+
+                if stored_candidate.id not in existing_ids:
+                    newly_sourced_count += 1
+                    existing_ids.add(stored_candidate.id)
+                    print(f"Successfully sourced and stored new candidate: {stored_candidate.id}")
 
                 sleep_seconds = random.randint(
                     15,

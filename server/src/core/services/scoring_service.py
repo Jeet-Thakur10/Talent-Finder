@@ -178,6 +178,8 @@ class ScoringService:
             return PipelineExecutionResponse(
                 stage="preview",
                 matched_candidate_count=matched_candidate_count,
+                eligible_candidate_count=None,
+                selected_candidate_count=None,
                 top_k=data.k,
             )
 
@@ -185,6 +187,8 @@ class ScoringService:
             return PipelineExecutionResponse(
                 stage="completed",
                 matched_candidate_count=0,
+                eligible_candidate_count=0,
+                selected_candidate_count=0,
                 top_k=data.k,
                 candidates=[],
             )
@@ -200,9 +204,32 @@ class ScoringService:
             print(f"{idx+1}. {c_name} (ID: {score.candidate_id}) -> Score: {score.score}")
         print("="*40 + "\n")
 
+        # Filter candidates whose pre-score >= minimum_prescore_threshold
+        # Note: _prescore_candidates() returns results already sorted in descending order.
+        eligible_scores = [
+            score
+            for score in prescore_output.scores
+            if score.score >= data.minimum_prescore_threshold
+        ]
+        eligible_candidate_count = len(eligible_scores)
+
+        # Select up to top K from the filtered list
+        top_scores = eligible_scores[: data.k]
+        selected_candidate_count = len(top_scores)
+
+        if selected_candidate_count == 0:
+            return PipelineExecutionResponse(
+                stage="completed",
+                matched_candidate_count=matched_candidate_count,
+                eligible_candidate_count=eligible_candidate_count,
+                selected_candidate_count=selected_candidate_count,
+                top_k=data.k,
+                candidates=[],
+            )
+
         top_candidate_ids = [
             score.candidate_id
-            for score in prescore_output.scores[: data.k]
+            for score in top_scores
         ]
 
         deep_score_output = await self.score_candidates_for_job_description(
@@ -267,6 +294,8 @@ class ScoringService:
         return PipelineExecutionResponse(
             stage="completed",
             matched_candidate_count=matched_candidate_count,
+            eligible_candidate_count=eligible_candidate_count,
+            selected_candidate_count=selected_candidate_count,
             top_k=data.k,
             candidates=candidates,
         )
@@ -473,18 +502,6 @@ class ScoringService:
             for pipeline_entry in pipeline_entries
         ]
 
-    async def prescore_candidates_for_job_description(
-        self,
-        job_description_id: UUID,
-    ) -> CandidatePrescoreBatchOutput:
-        candidates = await self._source_candidates_for_job_description(
-            job_description_id,
-        )
-
-        return await self._prescore_candidates(
-            job_description_id,
-            candidates,
-        )
 
     async def _prescore_candidates(
         self,

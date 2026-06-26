@@ -321,6 +321,7 @@ class CandidatePrescoreOutput(BaseModel):
     score: int
 
 
+
 class CandidatePrescoreBatchOutput(BaseModel):
     scores: list[CandidatePrescoreOutput]
 
@@ -328,6 +329,7 @@ class CandidatePrescoreBatchOutput(BaseModel):
 class PipelineExecutionRequest(BaseModel):
     confirm: bool = False
     k: int = Field(default=10, ge=1, le=25)
+    minimum_prescore_threshold: int = Field(default=0, ge=0, le=100)
 
 
 class PipelineCandidateResult(BaseModel):
@@ -352,6 +354,8 @@ class PipelineCandidateResult(BaseModel):
 class PipelineExecutionResponse(BaseModel):
     stage: Literal["preview", "completed"]
     matched_candidate_count: int
+    eligible_candidate_count: int | None = None
+    selected_candidate_count: int | None = None
     top_k: int
     candidates: list[PipelineCandidateResult] = Field(
         default_factory=list,

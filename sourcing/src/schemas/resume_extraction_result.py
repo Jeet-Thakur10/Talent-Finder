@@ -7,5 +7,7 @@ from src.schemas.resume_candidate_output import (
 
 @dataclass(slots=True)
 class ResumeExtractionResult:
-    payload: ResumeCandidateOutput
+    success: bool
     provider: str
+    payload: ResumeCandidateOutput | None = None
+    error: str | None = None

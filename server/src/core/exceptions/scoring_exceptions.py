@@ -54,3 +54,19 @@ class CandidateScoreNotFound(ScoringBaseException):
             error_code=error_code,
             status_code=404,
         )
+
+
+class SourcingServiceClientError(ScoringBaseException):
+    def __init__(
+        self,
+        details: str | None = None,
+        error_code: str | None = None,
+        status_code: int = 500,
+    ):
+        super().__init__(
+            message="Sourcing service request failed",
+            details=details,
+            error_code=error_code,
+            status_code=status_code,
+        )
+

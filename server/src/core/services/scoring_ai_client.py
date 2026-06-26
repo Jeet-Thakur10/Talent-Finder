@@ -8,10 +8,15 @@ from dataclasses import dataclass
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
-from huggingface_hub import InferenceClient
 
 from src.config.settings import settings
-from src.schemas.scoring_schema import CandidateEvaluationOutput, CandidatePrescoreBatchOutput, CompressedCandidate, CompressedJobDescription, ResumeCandidateOutput
+from src.schemas.scoring_schema import (
+    CandidateEvaluationOutput, 
+    CandidatePrescoreBatchOutput, 
+    CompressedCandidate, 
+    CompressedJobDescription, 
+    ResumeCandidateOutput
+    )
 
 from src.schemas.scoring_schema import (
     CandidateScoringInput,
@@ -452,19 +457,27 @@ class CandidatePrescoringClient:
                 content=(
                     "You are a recruiting pre-screening engine.\n\n"
 
-                    "Evaluate each candidate quickly.\n"
+                    "Evaluate each candidate using broad semantic matching.\n"
+                    "Assign a preliminary score from 0 to 100 indicating how promising "
+                    "the candidate is for further evaluation.\n\n"
 
-                    "Use broad semantic matching.\n"
+                    "Use the FULL scoring range, not just 0, 50, or 100.\n"
+                    "Choose the score that best reflects the overall strength of the match.\n\n"
 
-                    "The score should represent whether "
-                    "the candidate is worth deeper scoring.\n\n"
+                    "Scoring guide:\n"
+                    "90-100 : Exceptional match, highly recommended.\n"
+                    "75-89  : Strong match with only minor gaps.\n"
+                    "60-74  : Good match but several noticeable gaps.\n"
+                    "40-59  : Partial match, worth reviewing if needed.\n"
+                    "20-39  : Weak match with significant gaps.\n"
+                    "0-19   : Clear mismatch.\n\n"
 
-                    "0 = obvious mismatch\n"
-                    "50 = possible fit\n"
-                    "100 = excellent fit\n\n"
+                    "Do NOT round to multiples of 10 or 25 unless they are truly appropriate.\n"
+                    "Scores such as 67, 73, 81, 88, and 94 are perfectly acceptable.\n\n"
 
                     "IMPORTANT:\n"
-                    "Copy candidate_id exactly.\n"
+                    "- Copy candidate_id exactly.\n"
+                    "- Return only valid JSON.\n\n"
 
                     "Return JSON matching:\n"
                     f"{schema_json}"
@@ -481,136 +494,3 @@ class CandidatePrescoringClient:
         return await self.structured_llm.ainvoke(
             messages,
         )
-
-# not used here.
-
-class SemanticEmbeddingClient:
-    def __init__(self) -> None:
-        self.provider = settings.SCORING_EMBEDDING_PROVIDER
-        self.model_name = settings.HF_EMBEDDING_MODEL
-
-        self.client = InferenceClient(
-            api_key=settings.HF_TOKEN,
-        )
-
-        self._cache: dict[str, list[float]] = {}
-
-    def similarity(
-        self,
-        left_text: str,
-        right_text: str,
-    ) -> float:
-        left_vector, right_vector = self.embed_texts(
-            [left_text, right_text]
-        )
-
-        return self._cosine_similarity(
-            left_vector,
-            right_vector,
-        )
-
-    def best_similarity(
-        self,
-        target_text: str,
-        candidates: list[str],
-    ) -> tuple[float, str | None]:
-        best_score = 0.0
-        best_value: str | None = None
-
-        target_vector = self.embed_texts(
-            [target_text]
-        )[0]
-
-        for candidate in candidates:
-            if not candidate:
-                continue
-
-            candidate_vector = self.embed_texts(
-                [candidate]
-            )[0]
-
-            score = self._cosine_similarity(
-                target_vector,
-                candidate_vector,
-            )
-
-            if score > best_score:
-                best_score = score
-                best_value = candidate
-
-        return best_score, best_value
-
-    def embed_texts(
-        self,
-        texts: list[str],
-    ) -> list[list[float]]:
-        results: list[list[float]] = []
-
-        missing_texts: list[str] = []
-        missing_indices: list[int] = []
-
-        for index, text in enumerate(texts):
-            cached = self._cache.get(text)
-
-            if cached is None:
-                missing_texts.append(text)
-                missing_indices.append(index)
-                results.append([])
-            else:
-                results.append(cached)
-
-        if missing_texts:
-            vectors = []
-
-            for text in missing_texts:
-                vector = self.client.feature_extraction(
-                    text,
-                    model=self.model_name,
-                )
-
-                vectors.append(
-                    [float(value) for value in vector]
-                )
-
-            for idx, vector in zip(
-                missing_indices,
-                vectors,
-                strict=False,
-            ):
-                self._cache[texts[idx]] = vector
-                results[idx] = vector
-
-        return results
-
-    def _cosine_similarity(
-        self,
-        left_vector: list[float],
-        right_vector: list[float],
-    ) -> float:
-        if not left_vector or not right_vector:
-            return 0.0
-
-        numerator = sum(
-            left * right
-            for left, right in zip(
-                left_vector,
-                right_vector,
-                strict=False,
-            )
-        )
-
-        left_norm = math.sqrt(
-            sum(value * value for value in left_vector)
-        )
-
-        right_norm = math.sqrt(
-            sum(value * value for value in right_vector)
-        )
-
-        if left_norm == 0 or right_norm == 0:
-            return 0.0
-
-        return numerator / (
-            left_norm * right_norm
-        )
-

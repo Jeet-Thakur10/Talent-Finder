@@ -32,12 +32,13 @@ class CandidateSearchService:
             )
         )
 
-        if len(candidates) >= request.min_candidates:
+        if len(candidates) >= request.required_candidates:
+            selected_candidates = candidates[:request.required_candidates]
             return CandidateSearchResponse(
-                candidates=candidates,
-                requested_candidates=request.min_candidates,
+                candidates=selected_candidates,
+                requested_candidates=request.required_candidates,
                 returned_candidates=len(
-                    candidates,
+                    selected_candidates,
                 ),
                 sourced=False,
             )
@@ -56,11 +57,12 @@ class CandidateSearchService:
             )
         )
 
+        selected_candidates = candidates[:request.required_candidates]
         return CandidateSearchResponse(
-            candidates=candidates,
-            requested_candidates=request.min_candidates,
+            candidates=selected_candidates,
+            requested_candidates=request.required_candidates,
             returned_candidates=len(
-                candidates,
+                selected_candidates,
             ),
             sourced=True,
-        )
+        )
