@@ -56,6 +56,9 @@ class CandidateService:
             resume_hash=resume_hash,
             source_type=source_type,
         )
+
+    async def commit(self) -> None:
+        await self._db.commit()
     
     async def get_compressed_candidates(
         self,

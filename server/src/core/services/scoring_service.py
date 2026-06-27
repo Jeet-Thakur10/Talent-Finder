@@ -56,6 +56,12 @@ from src.schemas.scoring_schema import (
     CandidateScoreResponse,
     CandidateScoreDetailBreakdown,
 )
+from src.schemas.candidate_search_schema import CandidateDetailsResponse as SourcedCandidateDetailsResponse
+from src.core.services.candidate_acquisition_service import CandidateAcquisitionService
+from src.core.services.candidate_synchronization_service import CandidateSynchronizationService
+from src.data.clients.candidate_search_client import CandidateSearchClient
+from src.control.agents.candidate_search_query_agent import CandidateSearchQueryAgent
+from src.schemas.candidate_search_schema import CandidateSummary
 
 
 class ScoringService:
@@ -64,6 +70,22 @@ class ScoringService:
         self.resume_parser = ResumeParser()
         self.scoring_client = CandidateScoringClient()
         self.prescoring_client = CandidatePrescoringClient()
+
+        # Instantiate clients and agents
+        self.search_client = CandidateSearchClient()
+        self.search_query_agent = CandidateSearchQueryAgent()
+
+        # Instantiate services
+        self.acquisition_service = CandidateAcquisitionService(
+            local_search_fn=self._source_candidates_for_job_description,
+            compress_candidate_fn=self._build_compressed_candidate,
+            search_query_agent=self.search_query_agent,
+            search_client=self.search_client,
+        )
+        self.synchronization_service = CandidateSynchronizationService(
+            scoring_service=self,
+            search_client=self.search_client,
+        )
 
     async def import_candidate_resume(
         self,
@@ -131,13 +153,19 @@ class ScoringService:
 
         results = await asyncio.gather(
             *scoring_tasks,
+            return_exceptions=True,
         )
 
-        candidate_scores = [
-            result.payload
-            for result in results
-            if result.payload is not None
-        ]
+        candidate_scores = []
+        for result in results:
+            if isinstance(result, Exception):
+                import logging
+                logging.getLogger(__name__).error(
+                    "Recoverable deep-scoring error encountered for a candidate: %s",
+                    str(result),
+                )
+            elif result is not None and result.payload is not None:
+                candidate_scores.append(result.payload)
 
         await self.repository.upsert_candidate_scores(
             job_description_id=job_description_id,
@@ -166,45 +194,90 @@ class ScoringService:
             current_user,
         )
 
-        sourced_candidates = await self._source_candidates_for_job_description(
-            job_description_id,
+        # 1. Acquire candidate summaries using CandidateAcquisitionService
+        required_prescore_candidates = 10 * data.k
+        acquisition_result = await self.acquisition_service.acquire_candidates(
+            job_description=job_description,
+            job_description_id=job_description_id,
+            required_prescore_candidates=required_prescore_candidates,
         )
 
-        matched_candidate_count = len(
-            sourced_candidates,
-        )
+        matched_candidate_count = len(acquisition_result.candidates)
 
+        # 2. If confirm == False, return preview immediately
         if not data.confirm:
             return PipelineExecutionResponse(
                 stage="preview",
                 matched_candidate_count=matched_candidate_count,
+                eligible_candidate_count=None,
+                selected_candidate_count=None,
                 top_k=data.k,
             )
 
-        if not sourced_candidates:
+        if not acquisition_result.candidates:
             return PipelineExecutionResponse(
                 stage="completed",
                 matched_candidate_count=0,
+                eligible_candidate_count=0,
+                selected_candidate_count=0,
                 top_k=data.k,
                 candidates=[],
             )
 
+        # 3. Convert CandidateSummary objects to CompressedCandidate objects
+        compressed_candidates = [
+            CompressedCandidate(
+                candidate_id=c.candidate_id,
+                profile_text=c.profile_text,
+            )
+            for c in acquisition_result.candidates
+        ]
+
+        # 4. Run pre-scoring implementation on the acquired summaries
         prescore_output = await self._prescore_candidates(
             job_description_id,
-            sourced_candidates,
+            compressed_candidates,
         )
         print("\n" + "="*40 + "\nPrescore Output (Sorted)\n" + "="*40)
         for idx, score in enumerate(prescore_output.scores):
-            # Resolve name from sourced_candidates
-            c_name = next((c.full_name for c in sourced_candidates if c.id == score.candidate_id), "Unknown")
-            print(f"{idx+1}. {c_name} (ID: {score.candidate_id}) -> Score: {score.score}")
+            print(f"{idx+1}. ID: {score.candidate_id} -> Score: {score.score}")
         print("="*40 + "\n")
+
+        # 5. Apply the existing pre-score threshold logic
+        eligible_scores = [
+            score
+            for score in prescore_output.scores
+            if score.score >= data.minimum_prescore_threshold
+        ]
+        eligible_candidate_count = len(eligible_scores)
+
+        # 6. Select the top K candidates
+        top_scores = eligible_scores[: data.k]
+        selected_candidate_count = len(top_scores)
+
+        if selected_candidate_count == 0:
+            return PipelineExecutionResponse(
+                stage="completed",
+                matched_candidate_count=matched_candidate_count,
+                eligible_candidate_count=eligible_candidate_count,
+                selected_candidate_count=selected_candidate_count,
+                top_k=data.k,
+                candidates=[],
+            )
 
         top_candidate_ids = [
             score.candidate_id
-            for score in prescore_output.scores[: data.k]
+            for score in top_scores
         ]
 
+        # 7. Pass selected candidate IDs to CandidateSynchronizationService
+        await self.synchronization_service.synchronize_candidates(top_candidate_ids)
+
+        # 8. Load the selected Candidate ORM objects from local DB
+        db_candidates = await self.repository.get_candidates_by_ids(top_candidate_ids)
+        candidate_lookup = {c.id: c for c in db_candidates}
+
+        # 9. Execute deep scoring on the selected candidates
         deep_score_output = await self.score_candidates_for_job_description(
             job_description_id,
             current_user,
@@ -212,7 +285,7 @@ class ScoringService:
         )
         print("\n" + "="*40 + "\nDeep Score Output\n" + "="*40)
         for idx, score in enumerate(deep_score_output.scores):
-            c_name = next((c.full_name for c in sourced_candidates if c.id == score.candidate_id), "Unknown")
+            c_name = candidate_lookup[score.candidate_id].full_name if score.candidate_id in candidate_lookup else "Unknown"
             print(f"{idx+1}. Name: {c_name} (ID: {score.candidate_id})")
             print(f"   Final Score: {score.final_score} | Confidence: {score.confidence}%")
             print(f"   Breakdown -> Skills: {score.skills_score} | Exp: {score.experience_score} | Recency: {score.recency_score} | Role Fit: {score.role_fit_score} | Edu: {score.education_score}")
@@ -223,11 +296,7 @@ class ScoringService:
             print("-" * 20)
         print("="*40 + "\n")
 
-        candidate_lookup = {
-            candidate.id: candidate
-            for candidate in sourced_candidates
-        }
-
+        # 10. Construct response using the existing response building logic
         prescore_lookup = {
             score.candidate_id: (
                 index + 1,
@@ -267,6 +336,8 @@ class ScoringService:
         return PipelineExecutionResponse(
             stage="completed",
             matched_candidate_count=matched_candidate_count,
+            eligible_candidate_count=eligible_candidate_count,
+            selected_candidate_count=selected_candidate_count,
             top_k=data.k,
             candidates=candidates,
         )
@@ -473,23 +544,11 @@ class ScoringService:
             for pipeline_entry in pipeline_entries
         ]
 
-    async def prescore_candidates_for_job_description(
-        self,
-        job_description_id: UUID,
-    ) -> CandidatePrescoreBatchOutput:
-        candidates = await self._source_candidates_for_job_description(
-            job_description_id,
-        )
-
-        return await self._prescore_candidates(
-            job_description_id,
-            candidates,
-        )
 
     async def _prescore_candidates(
         self,
         job_description_id: UUID,
-        candidates: list[Candidate],
+        candidates: list[CompressedCandidate],
     ) -> CandidatePrescoreBatchOutput:
         job_description = await self.repository.get_job_description_by_id(
             job_description_id,
@@ -499,22 +558,15 @@ class ScoringService:
             job_description,
         )
 
-        compressed_candidates = [
-            self._build_compressed_candidate(
-                candidate,
-            )
-            for candidate in candidates
-        ]
-
         print("\n" + "="*40 + "\nPrescoring LLM Input\n" + "="*40)
         print(f"Compressed JD Profile:\n{compressed_jd.profile_text}\n")
         print("Compressed Candidates Profiles sent to LLM:")
-        for cc in compressed_candidates:
+        for cc in candidates:
             print(f"- ID: {cc.candidate_id}\nProfile Text:\n{cc.profile_text}\n" + "-"*20)
         print("="*40 + "\n")
 
         score_results = await self.prescoring_client.prescore_candidates(
-            compressed_candidates,
+            candidates,
             compressed_jd,
         )
 
@@ -953,3 +1005,13 @@ class ScoringService:
                 for skill in job_description.skills
             ],
         )
+
+    async def upsert_candidate_profile(
+        self,
+        candidate_details: SourcedCandidateDetailsResponse,
+    ) -> Candidate:
+        """Upsert a candidate details profile received from the Sourcing Service.
+
+        Ensures transaction safety by relying on the session transaction boundary.
+        """
+        return await self.repository.upsert_candidate(candidate_details)

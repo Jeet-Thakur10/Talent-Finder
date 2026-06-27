@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -282,7 +282,6 @@ class CandidateRepository:
             for candidate in candidates
         ]
     
-    # needs a fix, should also consider the experience. 
     async def search_candidates_by_skills(
         self,
         request: CandidateSearchRequest,
@@ -295,21 +294,25 @@ class CandidateRepository:
         #
 
         if request.skills:
-
-            skill_result = await self._db.execute(
-                select(
-                    Candidate.id,
-                )
+            query = (
+                select(Candidate.id)
                 .join(
                     CandidateSkill,
                     CandidateSkill.candidate_id == Candidate.id,
                 )
-                .where(
-                    func.lower(
-                        CandidateSkill.skill_name,
-                    ).in_(
-                        [
-                            skill.lower()
+            )
+            if request.exclude_candidate_ids:
+                query = query.where(Candidate.id.notin_(request.exclude_candidate_ids))
+
+            skill_result = await self._db.execute(
+                query.where(
+                    or_(
+                        *[
+                            func.lower(
+                                CandidateSkill.skill_name,
+                            ).like(
+                                f"%{skill.lower()}%"
+                            )
                             for skill in request.skills
                             if skill.strip()
                         ]
@@ -327,12 +330,12 @@ class CandidateRepository:
         #
 
         if request.title.strip():
+            query = select(Candidate.id)
+            if request.exclude_candidate_ids:
+                query = query.where(Candidate.id.notin_(request.exclude_candidate_ids))
 
             title_result = await self._db.execute(
-                select(
-                    Candidate.id,
-                )
-                .where(
+                query.where(
                     func.lower(
                         Candidate.current_title,
                     ).ilike(
@@ -349,17 +352,18 @@ class CandidateRepository:
         if not candidate_ids:
             return []
 
-        result = await self._db.execute(
-            select(
-                Candidate.id,
-                Candidate.compressed_profile_text,
-            )
-            .where(
-                Candidate.id.in_(
-                    candidate_ids,
-                )
+        query = select(
+            Candidate.id,
+            Candidate.compressed_profile_text,
+        ).where(
+            Candidate.id.in_(
+                candidate_ids,
             )
         )
+        if request.exclude_candidate_ids:
+            query = query.where(Candidate.id.notin_(request.exclude_candidate_ids))
+
+        result = await self._db.execute(query)
 
         rows = result.all()
 
@@ -371,3 +375,4 @@ class CandidateRepository:
             )
             for row in rows
         ]
+

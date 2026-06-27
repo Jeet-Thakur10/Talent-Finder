@@ -14,9 +14,27 @@ from src.schemas.job_description_schema import (
     JobDescriptionCreateRequest,
     JobDescriptionResponse,
     JobDescriptionUpdateRequest,
+    JobDescriptionExtractRequest,
 )
 
 router = APIRouter(prefix="/job-descriptions", tags=["Job Descriptions"])
+
+
+@router.post("/extract", response_model=JobDescriptionResponse)
+async def extract_job_description(
+    data: JobDescriptionExtractRequest,
+    current_user: AuthenticatedUserContext = Depends(
+        get_authenticated_user_context,
+    ),
+    service: JobDescriptionService = Depends(
+        get_job_description_service,
+    ),
+) -> JobDescriptionResponse:
+    return await service.extract_job_description(
+        data,
+        current_user,
+    )
+
 
 @router.post("", response_model=JobDescriptionResponse)
 async def create_job_description(

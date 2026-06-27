@@ -94,6 +94,11 @@ class JobDescription(Base):
         nullable=True,
     )
 
+    raw_job_description: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

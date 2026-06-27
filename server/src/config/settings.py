@@ -36,10 +36,17 @@ class Settings(BaseSettings):
     SCORING_LLM_PROVIDER: str = "groq"
 
     HF_TOKEN: str = ""
+    HF_MODEL: str = "meta-llama/Llama-3.3-70B-Instruct"
     HF_EMBEDDING_MODEL: str = "BAAI/bge-small-en-v1.5"
 
     SCORING_EMBEDDING_PROVIDER: str = "huggingface"
     SCORING_EMBEDDING_TIMEOUT: int = 30
+
+    SOURCING_SERVICE_BASE_URL: str = "http://localhost:8001"
+    SOURCING_CLIENT_TIMEOUT_SECONDS: float = 300.0
+
+    DEFAULT_MAX_SOURCE_RESUMES: int = 20
+    CANDIDATE_REFRESH_AFTER_DAYS: int = 30
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod

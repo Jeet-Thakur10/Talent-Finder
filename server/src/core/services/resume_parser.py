@@ -127,5 +127,3 @@ class ResumeParser:
             ),
         )
 
-# that code ends here
-

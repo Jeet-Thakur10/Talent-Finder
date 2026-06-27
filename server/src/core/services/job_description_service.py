@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 from uuid import UUID
+import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +11,7 @@ from src.core.exceptions.job_description_exception import (
     JobDescriptionNotFound,
     RecruiterAccessRequired,
 )
+from src.control.agents.job_description_extraction_agent import JobDescriptionExtractionAgent
 from src.data.models.postgres.jd_skill import JDSkill
 from src.data.models.postgres.job_description import JobDescription
 from src.data.repositories.job_description_repository import (
@@ -24,6 +26,7 @@ from src.schemas.job_description_schema import (
     JobDescriptionResponse,
     JobDescriptionUpdateRequest,
     JobDescriptionStatusResponse,
+    JobDescriptionExtractRequest,
 )
 
 
@@ -33,6 +36,7 @@ class JobDescriptionService:
         self.job_description_repository = (
             JobDescriptionRepository(db)
         )
+        self.extraction_agent = JobDescriptionExtractionAgent()
 
     async def create_job_description(
             self,
@@ -90,6 +94,7 @@ class JobDescriptionService:
 
             status_id=draft_status.id,
             hiring_manager_id=data.hiring_manager_id,
+            raw_job_description=data.raw_job_description,
 
             created_at=now,
             updated_at=now,
@@ -128,6 +133,7 @@ class JobDescriptionService:
             employment_type_id=job_description.employment_type_id,
             status_id=job_description.status_id,
             hiring_manager_id=job_description.hiring_manager_id,
+            raw_job_description=job_description.raw_job_description,
             created_at=job_description.created_at,
             updated_at=job_description.updated_at,
             skills=[
@@ -238,6 +244,7 @@ class JobDescriptionService:
             employment_type_id=job_description.employment_type_id,
             status_id=job_description.status_id,
             hiring_manager_id=job_description.hiring_manager_id,
+            raw_job_description=job_description.raw_job_description,
             created_at=job_description.created_at,
             updated_at=job_description.updated_at,
             skills=[
@@ -285,6 +292,7 @@ class JobDescriptionService:
                     employment_type_id=jd.employment_type_id,
                     status_id=jd.status_id,
                     hiring_manager_id=jd.hiring_manager_id,
+                    raw_job_description=jd.raw_job_description,
                     created_at=jd.created_at,
                     updated_at=jd.updated_at,
                     skills=[
@@ -378,3 +386,73 @@ class JobDescriptionService:
             )
             for hiring_manager in hiring_managers
         ]
+
+    async def extract_job_description(
+        self,
+        data: JobDescriptionExtractRequest,
+        current_user: AuthenticatedUserContext,
+    ) -> JobDescriptionResponse:
+        if current_user.role != UserRole.recruiter:
+            raise RecruiterAccessRequired(
+                details="Only recruiters can extract job descriptions.",
+                error_code="RECRUITER_ACCESS_REQUIRED",
+            )
+
+        extracted = self.extraction_agent.extract(data.raw_job_description)
+
+        # 1. Resolve employment type
+        employment_types = await self.job_description_repository.get_employment_types()
+        matched_type = None
+        if extracted.employment_type:
+            et_lower = extracted.employment_type.lower()
+            for et in employment_types:
+                if et.code.lower() in et_lower or et.name.lower() in et_lower or et_lower in et.code.lower() or et_lower in et.name.lower():
+                    matched_type = et
+                    break
+        if not matched_type and employment_types:
+            matched_type = employment_types[0]
+
+        # 2. Resolve hiring manager
+        hiring_managers = await self.job_description_repository.get_hiring_managers()
+        matched_manager = None
+        if extracted.hiring_manager:
+            hm_lower = extracted.hiring_manager.lower()
+            for hm in hiring_managers:
+                if hm.name.lower() in hm_lower or hm_lower in hm.name.lower():
+                    matched_manager = hm
+                    break
+        hiring_manager_id = matched_manager.id if matched_manager else None
+
+        # 3. Construct response mapping
+        dummy_jd_id = uuid.uuid4()
+        
+        responsibilities = "\n".join(extracted.responsibilities) if extracted.responsibilities else ""
+        preferred_qualifications = "\n".join(extracted.preferred_qualifications) if extracted.preferred_qualifications else None
+
+        skills_list = [
+            JDSkillResponse(
+                id=uuid.uuid4(),
+                skill_name=skill.skill_name,
+                is_mandatory=skill.is_mandatory
+            )
+            for skill in extracted.skills
+        ]
+
+        return JobDescriptionResponse(
+            id=dummy_jd_id,
+            title=extracted.title or "",
+            department=extracted.department,
+            job_purpose=extracted.job_purpose or "",
+            responsibilities=responsibilities,
+            min_experience=extracted.min_experience or 0,
+            max_experience=extracted.max_experience or 0,
+            location=extracted.location or "",
+            education_requirement=extracted.education_requirement or "",
+            preferred_qualifications=preferred_qualifications,
+            employment_type_id=matched_type.id if matched_type else uuid.uuid4(),
+            status_id=uuid.uuid4(),  # dummy status UUID
+            hiring_manager_id=hiring_manager_id,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+            skills=skills_list
+        )

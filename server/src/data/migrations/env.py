@@ -10,6 +10,18 @@ from src.config.settings import settings
 
 ## my imports , the models, base and settings
 from src.data.clients.postgres import Base
+from src.data.models.postgres.user import User
+from src.data.models.postgres.job_description import JobDescription
+from src.data.models.postgres.jd_skill import JDSkill
+from src.data.models.postgres.candidate import Candidate
+from src.data.models.postgres.candidate_skill import CandidateSkill
+from src.data.models.postgres.candidate_experience import CandidateExperience
+from src.data.models.postgres.candidate_experience_skill import CandidateExperienceSkill
+from src.data.models.postgres.candidate_education import CandidateEducation
+from src.data.models.postgres.candidate_job_score import CandidateJobScore
+from src.data.models.postgres.pipeline import Pipeline
+from src.data.models.postgres.employment_type import EmploymentType
+from src.data.models.postgres.job_description_status import JobDescriptionStatus
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

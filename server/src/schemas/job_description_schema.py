@@ -22,6 +22,7 @@ class JobDescriptionWriteRequest(BaseModel):
     preferred_qualifications: str | None = None
     skills: list[JDSkillCreateRequest]
     hiring_manager_id: UUID | None = None
+    raw_job_description: str | None = None
 
     @model_validator(mode="after")
     def validate_experience_range(self) -> "JobDescriptionWriteRequest":
@@ -73,6 +74,7 @@ class JobDescriptionResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     skills: list[JDSkillResponse]
+    raw_job_description: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -99,3 +101,8 @@ class HiringManagerResponse(BaseModel):
     id: UUID
     name: str
     email: str
+
+
+class JobDescriptionExtractRequest(BaseModel):
+    raw_job_description: str
+
