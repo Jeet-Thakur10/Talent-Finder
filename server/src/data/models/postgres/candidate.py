@@ -48,14 +48,14 @@ class Candidate(Base):
         Text,
         nullable=True,
     )
-    resume_text: Mapped[str] = mapped_column(
+    resume_text: Mapped[str | None] = mapped_column(
         Text,
-        nullable=False,
+        nullable=True,
     )
-    resume_hash: Mapped[str] = mapped_column(
+    resume_hash: Mapped[str | None] = mapped_column(
         String,
         unique=True,
-        nullable=False,
+        nullable=True,
     )
     source_type: Mapped[str] = mapped_column(
         String,

@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     RECRUITER_PASSWORD: str = "Temppass@123"
 
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    MAX_SOURCING_ATTEMPTS: int = 4
+    MAX_CONSECUTIVE_NO_IMPROVEMENT: int = 2
+    SOURCING_LOOP_TIMEOUT_SECONDS: float = 260.0
 
     model_config = SettingsConfigDict(
         env_file=".env",

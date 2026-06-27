@@ -43,8 +43,10 @@ class Settings(BaseSettings):
     SCORING_EMBEDDING_TIMEOUT: int = 30
 
     SOURCING_SERVICE_BASE_URL: str = "http://localhost:8001"
+    SOURCING_CLIENT_TIMEOUT_SECONDS: float = 300.0
 
     DEFAULT_MAX_SOURCE_RESUMES: int = 20
+    CANDIDATE_REFRESH_AFTER_DAYS: int = 30
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod

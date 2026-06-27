@@ -19,7 +19,7 @@ class CandidateSearchClient:
         self.base_url = base_url or settings.SOURCING_SERVICE_BASE_URL
         self._client = httpx.AsyncClient(
             base_url=self.base_url,
-            timeout=30.0,
+            timeout=settings.SOURCING_CLIENT_TIMEOUT_SECONDS,
         )
 
     async def search_candidates(

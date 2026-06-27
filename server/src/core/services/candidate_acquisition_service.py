@@ -121,6 +121,13 @@ class CandidateAcquisitionService:
         search_request.exclude_candidate_ids = [
             candidate.id for candidate in local_candidates
         ]
+        print(f"\n[ScoringService] LLM generated CandidateSearchRequest:")
+        print(f"  Generated title: {search_request.title}")
+        print(f"  Generated skills (full list): {search_request.skills}")
+        print(f"  min_experience: {search_request.min_experience}")
+        print(f"  required_candidates: {search_request.required_candidates}")
+        print(f"  max_source_resumes: {search_request.max_source_resumes}")
+        print()
 
         logger.info(
             "External search request: required_candidates=%d, exclude_ids=%d, title=%s",
@@ -130,8 +137,14 @@ class CandidateAcquisitionService:
         )
 
         # 4c. Call sourcing service
-        response = await self._search_client.search_candidates(search_request)
-        sourced_candidates = response.candidates
+        from src.core.exceptions.scoring_exceptions import SourcingServiceClientError
+        sourced_candidates = []
+        try:
+            response = await self._search_client.search_candidates(search_request)
+            sourced_candidates = response.candidates
+        except SourcingServiceClientError as e:
+            logger.warning("External sourcing client encountered a recoverable failure: %s", e)
+
         sourced_count = len(sourced_candidates)
 
         logger.info(

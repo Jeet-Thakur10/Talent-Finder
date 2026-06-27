@@ -22,6 +22,7 @@ from src.schemas.scoring_schema import (
     CandidateScoreOutput,
     ParsedCandidateProfile,
 )
+from src.schemas.candidate_search_schema import CandidateDetailsResponse
 
 
 class ScoringRepository:
@@ -141,6 +142,26 @@ class ScoringRepository:
             query,
         )
 
+        return list(result.scalars().unique().all())
+
+    async def get_candidates_by_ids(
+        self,
+        candidate_ids: list[UUID],
+    ) -> list[Candidate]:
+        if not candidate_ids:
+            return []
+
+        query = select(Candidate).options(
+            selectinload(Candidate.skills),
+            selectinload(Candidate.experiences).selectinload(
+                CandidateExperience.skills,
+            ),
+            selectinload(Candidate.educations),
+        ).where(
+            Candidate.id.in_(candidate_ids),
+        )
+
+        result = await self.db.execute(query)
         return list(result.scalars().unique().all())
 
     async def get_candidate_by_id(
@@ -437,3 +458,189 @@ class ScoringRepository:
                 )
 
         await self.db.flush()
+
+    async def upsert_candidate(
+        self,
+        candidate_details: CandidateDetailsResponse,
+    ) -> Candidate:
+        """Upsert a candidate profile and all nested child entities.
+
+        This method is idempotent:
+        - If a candidate with this ID exists, updates all mutable fields and synchronizes
+          the nested skills, experiences (including experience skills), and educations.
+        - If the candidate does not exist, creates the entire hierarchy.
+        """
+        existing_candidate = await self.get_candidate_by_id(candidate_details.id)
+
+        if existing_candidate:
+            # 1. Update Candidate master record mutable fields
+            existing_candidate.full_name = candidate_details.full_name
+            existing_candidate.email = candidate_details.email
+            existing_candidate.phone = candidate_details.phone
+            existing_candidate.current_title = candidate_details.current_title
+            existing_candidate.location = candidate_details.location
+            existing_candidate.summary = candidate_details.summary
+            existing_candidate.total_experience_months = candidate_details.total_experience_months
+            existing_candidate.source_type = candidate_details.source_type
+            existing_candidate.updated_at = datetime.now(UTC)
+
+            # 2. Synchronize Skills (match by skill_name)
+            incoming_skills = {skill.skill_name for skill in candidate_details.skills}
+            
+            # Remove skills not in incoming
+            existing_skills = list(existing_candidate.skills)
+            for skill in existing_skills:
+                if skill.skill_name not in incoming_skills:
+                    existing_candidate.skills.remove(skill)
+                    
+            # Add missing incoming skills
+            existing_skill_names = {skill.skill_name for skill in existing_candidate.skills}
+            for skill_name in incoming_skills:
+                if skill_name not in existing_skill_names:
+                    existing_candidate.skills.append(
+                        CandidateSkill(skill_name=skill_name, is_primary=True)
+                    )
+
+            # 3. Synchronize Experiences (match by (company_name, title, start_date))
+            matched_exps = {}
+            for inc in candidate_details.experiences:
+                key = (inc.company_name, inc.title, inc.start_date)
+                
+                # Check if this experience matches an existing one
+                matched_exp = None
+                for ext in existing_candidate.experiences:
+                    ext_key = (ext.company_name, ext.title, ext.start_date)
+                    if ext_key == key:
+                        matched_exp = ext
+                        break
+                        
+                if matched_exp:
+                    # Update mutable fields
+                    matched_exp.description = inc.description
+                    matched_exp.end_date = inc.end_date
+                    matched_exp.is_current = inc.is_current
+                    
+                    # Sync nested experience skills (match by skill_name)
+                    incoming_exp_skills = {s.skill_name for s in inc.skills}
+                    existing_exp_skills = list(matched_exp.skills)
+                    
+                    # Remove deleted nested skills
+                    for skill in existing_exp_skills:
+                        if skill.skill_name not in incoming_exp_skills:
+                            matched_exp.skills.remove(skill)
+                            
+                    # Add new nested skills
+                    existing_exp_skill_names = {s.skill_name for s in matched_exp.skills}
+                    for skill_name in incoming_exp_skills:
+                        if skill_name not in existing_exp_skill_names:
+                            matched_exp.skills.append(
+                                CandidateExperienceSkill(skill_name=skill_name)
+                            )
+                    
+                    matched_exps[matched_exp.id] = matched_exp
+                else:
+                    # Insert new experience
+                    new_exp = CandidateExperience(
+                        company_name=inc.company_name,
+                        title=inc.title,
+                        description=inc.description,
+                        start_date=inc.start_date,
+                        end_date=inc.end_date,
+                        is_current=inc.is_current,
+                        skills=[
+                            CandidateExperienceSkill(skill_name=s.skill_name)
+                            for s in inc.skills
+                        ]
+                    )
+                    existing_candidate.experiences.append(new_exp)
+            
+            # Prune unmatched experiences
+            for ext in list(existing_candidate.experiences):
+                if ext.id not in matched_exps and ext.id is not None:
+                    existing_candidate.experiences.remove(ext)
+
+            # 4. Synchronize Educations (match by (institution_name, degree, field_of_study))
+            matched_edus = set()
+            for inc in candidate_details.educations:
+                key = (inc.institution_name, inc.degree, inc.field_of_study)
+                
+                matched_edu = None
+                for ext in existing_candidate.educations:
+                    ext_key = (ext.institution_name, ext.degree, ext.field_of_study)
+                    if ext_key == key:
+                        matched_edu = ext
+                        break
+                        
+                if matched_edu:
+                    # Update mutable fields
+                    matched_edu.start_date = inc.start_date
+                    matched_edu.end_date = inc.end_date
+                    matched_edus.add(matched_edu.id)
+                else:
+                    # Insert new education
+                    new_edu = CandidateEducation(
+                        institution_name=inc.institution_name,
+                        degree=inc.degree,
+                        field_of_study=inc.field_of_study,
+                        start_date=inc.start_date,
+                        end_date=inc.end_date,
+                    )
+                    existing_candidate.educations.append(new_edu)
+                    
+            # Prune unmatched educations
+            for ext in list(existing_candidate.educations):
+                if ext.id not in matched_edus and ext.id is not None:
+                    existing_candidate.educations.remove(ext)
+
+            await self.db.flush()
+            return existing_candidate
+
+        else:
+            # Create a completely new candidate using details and the exact id from details
+            new_candidate = Candidate(
+                id=candidate_details.id,
+                full_name=candidate_details.full_name,
+                email=candidate_details.email,
+                phone=candidate_details.phone,
+                current_title=candidate_details.current_title,
+                location=candidate_details.location,
+                summary=candidate_details.summary,
+                resume_text=None,
+                resume_hash=None,
+                source_type=candidate_details.source_type,
+                total_experience_months=candidate_details.total_experience_months,
+                created_at=candidate_details.created_at,
+                updated_at=candidate_details.updated_at,
+                skills=[
+                    CandidateSkill(skill_name=skill.skill_name, is_primary=True)
+                    for skill in candidate_details.skills
+                ],
+                experiences=[
+                    CandidateExperience(
+                        company_name=exp.company_name,
+                        title=exp.title,
+                        description=exp.description,
+                        start_date=exp.start_date,
+                        end_date=exp.end_date,
+                        is_current=exp.is_current,
+                        skills=[
+                            CandidateExperienceSkill(skill_name=s.skill_name)
+                            for s in exp.skills
+                        ]
+                    )
+                    for exp in candidate_details.experiences
+                ],
+                educations=[
+                    CandidateEducation(
+                        institution_name=edu.institution_name,
+                        degree=edu.degree,
+                        field_of_study=edu.field_of_study,
+                        start_date=edu.start_date,
+                        end_date=edu.end_date,
+                    )
+                    for edu in candidate_details.educations
+                ]
+            )
+            self.db.add(new_candidate)
+            await self.db.flush()
+            return new_candidate

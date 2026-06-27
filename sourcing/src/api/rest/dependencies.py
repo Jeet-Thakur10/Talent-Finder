@@ -21,6 +21,15 @@ from src.handlers.http_clients.postjobfree_client import (
 from src.core.services.candidate_search_service import (
     CandidateSearchService,
 )
+from src.control.agents.candidate_search_strategy_agent import CandidateSearchStrategyAgent
+from src.core.services.search_strategies import (
+    OriginalQueryStrategy,
+    MandatorySkillsStrategy,
+    TitleOnlyStrategy,
+    LLMOptimizationStrategy,
+)
+from src.core.services.search_query_optimizer import SearchQueryOptimizer
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_local() as session:
@@ -58,12 +67,26 @@ async def get_postjobfree_client():
         await client.close()
 
 
+def get_search_query_optimizer() -> SearchQueryOptimizer:
+    agent = CandidateSearchStrategyAgent()
+    strategies = [
+        OriginalQueryStrategy(),
+        MandatorySkillsStrategy(),
+        TitleOnlyStrategy(),
+        LLMOptimizationStrategy(agent),
+    ]
+    return SearchQueryOptimizer(strategies)
+
+
 def get_postjobfree_sourcing_service(
     client: PostJobFreeClient = Depends(
         get_postjobfree_client,
     ),
     db: AsyncSession = Depends(
         get_db,
+    ),
+    optimizer: SearchQueryOptimizer = Depends(
+        get_search_query_optimizer,
     ),
 ) -> PostJobFreeSourcingService:
 
@@ -73,7 +96,9 @@ def get_postjobfree_sourcing_service(
         candidate_service=CandidateService(
             db,
         ),
+        optimizer=optimizer,
     )
+
 
 def get_candidate_search_service(
     db: AsyncSession = Depends(
@@ -81,6 +106,9 @@ def get_candidate_search_service(
     ),
     client: PostJobFreeClient = Depends(
         get_postjobfree_client,
+    ),
+    optimizer: SearchQueryOptimizer = Depends(
+        get_search_query_optimizer,
     ),
 ) -> CandidateSearchService:
 
@@ -93,6 +121,7 @@ def get_candidate_search_service(
             client=client,
             extraction_agent=ResumeExtractionAgent(),
             candidate_service=candidate_service,
+            optimizer=optimizer,
         )
     )
 
