@@ -41,9 +41,15 @@ export function LoginPage() {
 
       login(response.user);
 
-      navigate("/dashboard", {
-        replace: true,
-      });
+      if (response.user.role === "recruiter") {
+        navigate("/recruiter/job-descriptions", {
+          replace: true,
+        });
+      } else {
+        navigate("/dashboard", {
+          replace: true,
+        });
+      }
     } catch {
       setError(
         "Invalid email or password",

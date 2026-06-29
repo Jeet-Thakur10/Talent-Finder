@@ -22,6 +22,8 @@ from src.data.models.postgres.candidate_job_score import CandidateJobScore
 from src.data.models.postgres.pipeline import Pipeline
 from src.data.models.postgres.employment_type import EmploymentType
 from src.data.models.postgres.job_description_status import JobDescriptionStatus
+from src.data.models.postgres.scoring_task import ScoringTask
+from src.data.models.postgres.notification import Notification, NotificationType
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     SMTP_EMAIL: str = "11a08cnn@gmail.com"
     SMTP_APP_PASSWORD: str = "hqtugeunpycqqwyz"
 
+    BREVO_API_KEY: str = ""
+    BREVO_SENDER_EMAIL: str = "11a08cnn@gmail.com"
+    BREVO_SENDER_NAME: str = "Talent Finder"
+
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
@@ -47,6 +51,8 @@ class Settings(BaseSettings):
 
     DEFAULT_MAX_SOURCE_RESUMES: int = 20
     CANDIDATE_REFRESH_AFTER_DAYS: int = 30
+
+    REDIS_URL: str = "redis://localhost:6379/0"
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod

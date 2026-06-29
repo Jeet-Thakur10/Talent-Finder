@@ -39,6 +39,7 @@ export interface JobDescription {
   created_at: string;
   updated_at: string;
   skills: JDSkill[];
+  raw_job_description?: string;
 }
 
 export interface JobDescriptionPayload {
@@ -54,6 +55,7 @@ export interface JobDescriptionPayload {
   preferred_qualifications: string | null;
   hiring_manager_id: string | null;
   skills: JDSkill[];
+  raw_job_description?: string;
 }
 
 export interface PipelineCandidateResult {
@@ -72,7 +74,14 @@ export interface PipelineCandidateResult {
   stage: string;
   recruiter_notes: string | null;
   hiring_manager_notes: string | null;
+  shared_with_hiring_manager: boolean;
   updated_at: string | null;
+  hm_decision?: "PENDING" | "INTERVIEW_SENT" | "REJECTED" | null;
+  interview_link?: string | null;
+  interview_datetime?: string | null;
+  interview_timezone?: string | null;
+  interview_message?: string | null;
+  interview_sent_at?: string | null;
 }
 
 export interface PipelineExecutionPayload {
@@ -128,6 +137,7 @@ export interface CandidateDetails {
   summary: string | null;
   source_type: string;
   total_experience_months: number;
+  resume_text: string | null;
   created_at: string;
   updated_at: string;
   skills: CandidateSkill[];
@@ -143,6 +153,12 @@ export interface PipelineSnapshot {
   recruiter_notes: string | null;
   hiring_manager_notes: string | null;
   created_at: string;
+  hm_decision?: "PENDING" | "INTERVIEW_SENT" | "REJECTED" | null;
+  interview_link?: string | null;
+  interview_datetime?: string | null;
+  interview_timezone?: string | null;
+  interview_message?: string | null;
+  interview_sent_at?: string | null;
 }
 
 export interface CandidateScoreBreakdown {
@@ -169,4 +185,24 @@ export interface PipelineNotesPayload {
 export interface PipelineStagePayload {
   stage: string;
   candidate_ids: string[];
+}
+
+export interface PipelineEnqueueResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface PipelineTaskStatus {
+  id: string;
+  job_description_id: string;
+  status: string;
+  current_stage: string;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  error_message: string | null;
+  matched_candidate_count: number | null;
+  eligible_candidate_count: number | null;
+  selected_candidate_count: number | null;
+  job_description_title?: string;
 }
