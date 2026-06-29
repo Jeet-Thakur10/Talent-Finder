@@ -11,6 +11,7 @@ from src.api.rest.routes.job_description_route import router as job_description_
 from src.api.rest.routes.lookup_route import router as lookup_router
 from src.api.rest.routes.otp_router import router as otp_router
 from src.api.rest.routes.scoring_route import router as scoring_router
+from src.api.rest.routes.notification_route import router as notification_router
 from src.config.settings import settings
 from src.core.exceptions.auth_exceptions import (
     GeneralException,
@@ -93,6 +94,7 @@ app.include_router(otp_router)
 app.include_router(job_description_router)
 app.include_router(lookup_router)
 app.include_router(scoring_router)
+app.include_router(notification_router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host=settings.HOST, port=settings.PORT)

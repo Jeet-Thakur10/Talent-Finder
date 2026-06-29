@@ -540,7 +540,7 @@ export function useRecruiterDashboard() {
           {
             k: PIPELINE_TOP_K,
           },
-        );
+        ) as any;
 
       setMatchedCountByJob(
         (currentCounts) => ({
@@ -636,7 +636,7 @@ export function useRecruiterDashboard() {
         {
           k: PIPELINE_TOP_K,
         },
-      );
+      ) as any;
 
       setMatchedCountByJob(
         (currentCounts) => ({
@@ -679,7 +679,7 @@ export function useRecruiterDashboard() {
           {
             k: PIPELINE_TOP_K,
           },
-        );
+        ) as any;
 
       setMatchedCountByJob(
         (currentCounts) => ({

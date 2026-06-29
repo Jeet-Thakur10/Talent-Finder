@@ -1,8 +1,18 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, UTC
 import hashlib
+import logging
 from uuid import UUID
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from src.config.settings import settings
+from src.data.models.postgres.notification import NotificationType
+from src.core.services.notification_service import NotificationService
+from src.utils.email_templates import get_generic_email_html
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +22,7 @@ from src.core.exceptions.job_description_exception import (
 from src.core.exceptions.scoring_exceptions import (
     CandidateNotFound,
     ResumeImportValidationError,
+    ScoringBaseException,
 )
 from src.core.services.resume_parser import ResumeParser
 from src.core.services.scoring_ai_client import (
@@ -22,12 +33,14 @@ from src.data.models.postgres.candidate import Candidate
 from src.data.models.postgres.candidate_job_score import CandidateJobScore
 from src.data.models.postgres.job_description import JobDescription
 from src.data.repositories.scoring_repository import ScoringRepository
-from src.schemas.auth_schema import AuthenticatedUserContext
+from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
 from src.schemas.job_description_schema import (
     JDSkillResponse,
     JobDescriptionResponse,
 )
 from src.schemas.scoring_schema import (
+    SharedCampaignCandidateResponse,
+    HMCampaignResponse,
     CandidateBatchScoreOutput,
     CandidateEvaluationBoardResponse,
     CandidateScoreBreakdownResponse,
@@ -62,6 +75,7 @@ from src.core.services.candidate_synchronization_service import CandidateSynchro
 from src.data.clients.candidate_search_client import CandidateSearchClient
 from src.control.agents.candidate_search_query_agent import CandidateSearchQueryAgent
 from src.schemas.candidate_search_schema import CandidateSummary
+from src.core.services.progress_reporter import PipelineProgressReporter
 
 
 class ScoringService:
@@ -188,11 +202,18 @@ class ScoringService:
         job_description_id: UUID,
         current_user: AuthenticatedUserContext,
         data: PipelineExecutionRequest,
+        progress_reporter: PipelineProgressReporter | None = None,
     ) -> PipelineExecutionResponse:
+        if progress_reporter is None:
+            from src.core.services.progress_reporter import NoOpProgressReporter
+            progress_reporter = NoOpProgressReporter()
+
         job_description = await self._get_authorized_job_description(
             job_description_id,
             current_user,
         )
+
+        await progress_reporter.update_stage("ACQUIRING")
 
         # 1. Acquire candidate summaries using CandidateAcquisitionService
         required_prescore_candidates = 10 * data.k
@@ -201,6 +222,10 @@ class ScoringService:
             job_description_id=job_description_id,
             required_prescore_candidates=required_prescore_candidates,
         )
+
+        # Check if external sourcing was executed, set stage to SOURCING
+        if not acquisition_result.sourcing_skipped:
+            await progress_reporter.update_stage("SOURCING")
 
         matched_candidate_count = len(acquisition_result.candidates)
 
@@ -232,6 +257,8 @@ class ScoringService:
             )
             for c in acquisition_result.candidates
         ]
+
+        await progress_reporter.update_stage("PRE_SCORING")
 
         # 4. Run pre-scoring implementation on the acquired summaries
         prescore_output = await self._prescore_candidates(
@@ -270,12 +297,16 @@ class ScoringService:
             for score in top_scores
         ]
 
+        await progress_reporter.update_stage("SYNCHRONIZING")
+
         # 7. Pass selected candidate IDs to CandidateSynchronizationService
         await self.synchronization_service.synchronize_candidates(top_candidate_ids)
 
         # 8. Load the selected Candidate ORM objects from local DB
         db_candidates = await self.repository.get_candidates_by_ids(top_candidate_ids)
         candidate_lookup = {c.id: c for c in db_candidates}
+
+        await progress_reporter.update_stage("DEEP_SCORING")
 
         # 9. Execute deep scoring on the selected candidates
         deep_score_output = await self.score_candidates_for_job_description(
@@ -374,17 +405,10 @@ class ScoringService:
             for stored_score in stored_scores
         ]
 
-    async def get_candidate_details(
+    async def _get_candidate_details_dto(
         self,
-        job_description_id: UUID,
         candidate_id: UUID,
-        current_user: AuthenticatedUserContext,
     ) -> CandidateDetailsResponse:
-        await self._get_authorized_job_description(
-            job_description_id,
-            current_user,
-        )
-
         candidate = await self.repository.get_candidate_by_id(
             candidate_id,
         )
@@ -405,6 +429,7 @@ class ScoringService:
             summary=candidate.summary,
             source_type=candidate.source_type,
             total_experience_months=candidate.total_experience_months,
+            resume_text=candidate.resume_text,
             created_at=candidate.created_at,
             updated_at=candidate.updated_at,
             skills=[
@@ -447,17 +472,24 @@ class ScoringService:
             ],
         )
 
-    async def get_candidate_evaluation_board(
+    async def get_candidate_details(
         self,
         job_description_id: UUID,
         candidate_id: UUID,
         current_user: AuthenticatedUserContext,
-    ) -> CandidateEvaluationBoardResponse:
-        candidate = await self.get_candidate_details(
+    ) -> CandidateDetailsResponse:
+        await self._get_authorized_job_description(
             job_description_id,
-            candidate_id,
             current_user,
         )
+        return await self._get_candidate_details_dto(candidate_id)
+
+    async def _get_candidate_evaluation_board_internal(
+        self,
+        job_description_id: UUID,
+        candidate_id: UUID,
+    ) -> CandidateEvaluationBoardResponse:
+        candidate = await self._get_candidate_details_dto(candidate_id)
 
         pipeline_entry = await self.repository.get_pipeline_entry(
             job_description_id,
@@ -487,6 +519,51 @@ class ScoringService:
             )
             if score
             else None,
+        )
+
+    async def get_candidate_evaluation_board(
+        self,
+        job_description_id: UUID,
+        candidate_id: UUID,
+        current_user: AuthenticatedUserContext,
+    ) -> CandidateEvaluationBoardResponse:
+        await self._get_authorized_job_description(
+            job_description_id,
+            current_user,
+        )
+        return await self._get_candidate_evaluation_board_internal(
+            job_description_id,
+            candidate_id,
+        )
+
+    async def get_hm_candidate_evaluation_board(
+        self,
+        job_description_id: UUID,
+        candidate_id: UUID,
+        current_user: AuthenticatedUserContext,
+    ) -> CandidateEvaluationBoardResponse:
+        if current_user.role != UserRole.hiring_manager:
+            raise ScoringBaseException(message="Access denied", details="Only hiring managers can access this endpoint.", status_code=403)
+
+        job_description = await self.repository.get_job_description_by_id(job_description_id)
+        if not job_description or job_description.hiring_manager_id != current_user.user_id:
+            raise ScoringBaseException(message="Access denied", details="Hiring manager does not own this campaign.", status_code=403)
+
+        pipeline_entry = await self.repository.get_pipeline_entry(
+            job_description_id,
+            candidate_id,
+        )
+
+        if not pipeline_entry or not pipeline_entry.shared_with_hiring_manager:
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Candidate shortlist is not shared with the hiring manager.",
+                status_code=403,
+            )
+
+        return await self._get_candidate_evaluation_board_internal(
+            job_description_id,
+            candidate_id,
         )
 
     async def update_pipeline_notes(
@@ -727,6 +804,11 @@ class ScoringService:
             "hiring_manager_notes",
             None,
         )
+        shared_with_hiring_manager = getattr(
+            pipeline_entry,
+            "shared_with_hiring_manager",
+            False,
+        )
 
         return PipelineCandidateResult(
             candidate_id=candidate.id,
@@ -744,7 +826,14 @@ class ScoringService:
             stage=stage,
             recruiter_notes=recruiter_notes,
             hiring_manager_notes=hiring_manager_notes,
+            shared_with_hiring_manager=shared_with_hiring_manager,
             updated_at=updated_at,
+            hm_decision=getattr(pipeline_entry, "hm_decision", None),
+            interview_link=getattr(pipeline_entry, "interview_link", None),
+            interview_datetime=getattr(pipeline_entry, "interview_datetime", None),
+            interview_timezone=getattr(pipeline_entry, "interview_timezone", None),
+            interview_message=getattr(pipeline_entry, "interview_message", None),
+            interview_sent_at=getattr(pipeline_entry, "interview_sent_at", None),
         )
 
     def _build_pipeline_snapshot(
@@ -773,6 +862,12 @@ class ScoringService:
                 pipeline_entry,
                 "created_at",
             ),
+            hm_decision=getattr(pipeline_entry, "hm_decision", None),
+            interview_link=getattr(pipeline_entry, "interview_link", None),
+            interview_datetime=getattr(pipeline_entry, "interview_datetime", None),
+            interview_timezone=getattr(pipeline_entry, "interview_timezone", None),
+            interview_message=getattr(pipeline_entry, "interview_message", None),
+            interview_sent_at=getattr(pipeline_entry, "interview_sent_at", None),
         )
 
     def _build_compressed_job_description(
@@ -1015,3 +1110,358 @@ class ScoringService:
         Ensures transaction safety by relying on the session transaction boundary.
         """
         return await self.repository.upsert_candidate(candidate_details)
+
+    async def share_shortlist(
+        self,
+        job_description_id: UUID,
+        current_user: AuthenticatedUserContext,
+        candidate_ids: list[UUID],
+        notes_by_candidate: dict[UUID, str],
+    ) -> int:
+        if current_user.role != UserRole.recruiter:
+            raise ScoringBaseException(message="Access denied", details="Only recruiters are allowed to share shortlists.", status_code=403)
+            
+        # 1. Validate that all submitted candidates already exist in the pipeline for this job description
+        invalid_ids = await self.repository.validate_candidates_belong_to_job(
+            job_description_id,
+            candidate_ids,
+        )
+        if invalid_ids:
+            invalid_str = ", ".join(str(cid) for cid in invalid_ids)
+            raise ScoringBaseException(
+                message="Validation failed",
+                details=f"Invalid candidate IDs for this job description: {invalid_str}",
+                status_code=400,
+            )
+            
+        # 2. Perform the update
+        shared_count = await self.repository.share_shortlist_with_hiring_manager(
+            job_description_id,
+            candidate_ids,
+            notes_by_candidate,
+        )
+        
+        # 3. Commit transaction successfully
+        await self.repository.db.commit()
+        logger.info("Shortlist shared: JobDescription %s successfully committed sharing for %s candidates", job_description_id, shared_count)
+        
+        # 4. Best-effort notification dispatch to the Hiring Manager
+        try:
+            # Load JobDescription along with recruiter and hiring_manager relations
+            stmt = (
+                select(JobDescription)
+                .options(
+                    selectinload(JobDescription.recruiter),
+                    selectinload(JobDescription.hiring_manager),
+                )
+                .where(JobDescription.id == job_description_id)
+            )
+            res = await self.repository.db.execute(stmt)
+            jd = res.scalar_one_or_none()
+
+            if jd and jd.hiring_manager:
+                notification_service = NotificationService(self.repository.db)
+                frontend_base = settings.ALLOWED_ORIGINS[0] if settings.ALLOWED_ORIGINS else "http://localhost:5173"
+                absolute_target_url = f"{frontend_base}/hm/shared-campaigns/{job_description_id}"
+                
+                email_body = (
+                    f"Hello {jd.hiring_manager.name},\n\n"
+                    f"{jd.recruiter.name} has shared a new candidate shortlist for "
+                    f"\"{jd.title}\" with you.\n\n"
+                    f"There are {len(candidate_ids)} recommended candidates ready for your review."
+                )
+
+                email_html = get_generic_email_html(
+                    title="New Shortlist Shared",
+                    body=email_body,
+                    action_text="Review Candidates",
+                    action_url=absolute_target_url
+                )
+
+                await notification_service.notify(
+                    user=jd.hiring_manager,
+                    notification_type=NotificationType.SHORTLIST_SHARED,
+                    title="New Candidate Shortlist Shared",
+                    message=f"A new shortlist for \"{jd.title}\" has been shared with you by {jd.recruiter.name}. Review the recommended candidates.",
+                    target_url=f"/hm/shared-campaigns/{job_description_id}",
+                    metadata={"job_description_id": str(job_description_id), "candidate_count": len(candidate_ids)},
+                    send_in_app=True,
+                    send_email=True,
+                    email_subject=f"New candidate shortlist for {jd.title}",
+                    email_html=email_html
+                )
+                logger.info("Hiring Manager notification created and email sent for shortlist share on campaign %s", job_description_id)
+            elif not jd:
+                logger.warning("Could not send shortlist share notification: Job description %s not found.", job_description_id)
+            else:
+                logger.warning("Could not send shortlist share notification: Job description %s has no assigned Hiring Manager.", job_description_id)
+        except Exception as e:
+            # Notification failures must NEVER rollback or fail the shortlist sharing transaction
+            logger.exception("Hiring Manager email failed: Failed to send shortlist shared notification: %s", str(e))
+        
+        return shared_count
+
+    async def get_hm_shared_campaigns(
+        self,
+        current_user: AuthenticatedUserContext,
+    ) -> list[HMCampaignResponse]:
+        if current_user.role != UserRole.hiring_manager:
+            raise ScoringBaseException(message="Access denied", details="Only hiring managers can view shared campaigns.", status_code=403)
+            
+        jds = await self.repository.get_hm_campaigns(current_user.user_id)
+        
+        from src.data.models.postgres.pipeline import HiringManagerDecision
+        
+        response = []
+        for jd in jds:
+            shared_entries = [p for p in jd.pipeline_entries if p.shared_with_hiring_manager]
+            
+            # calculate counts
+            shared_candidate_count = len(shared_entries)
+            accepted_candidate_count = sum(1 for p in shared_entries if p.hm_decision == HiringManagerDecision.INTERVIEW_SENT)
+            rejected_candidate_count = sum(1 for p in shared_entries if p.hm_decision == HiringManagerDecision.REJECTED)
+            pending_candidate_count = sum(1 for p in shared_entries if p.hm_decision == HiringManagerDecision.PENDING)
+            
+            # calculate latest shared date
+            shared_dates = [p.shared_at for p in shared_entries if p.shared_at is not None]
+            shared_at = max(shared_dates) if shared_dates else None
+            
+            recruiter_name = jd.recruiter.name if jd.recruiter else "Unknown Recruiter"
+            
+            response.append(
+                HMCampaignResponse(
+                    id=jd.id,
+                    title=jd.title,
+                    department=jd.department,
+                    recruiter_name=recruiter_name,
+                    shared_at=shared_at,
+                    shared_candidate_count=shared_candidate_count,
+                    accepted_candidate_count=accepted_candidate_count,
+                    rejected_candidate_count=rejected_candidate_count,
+                    pending_candidate_count=pending_candidate_count,
+                )
+            )
+            
+        return response
+
+    async def get_hm_shared_candidates(
+        self,
+        job_description_id: UUID,
+        current_user: AuthenticatedUserContext,
+    ) -> list[SharedCampaignCandidateResponse]:
+        if current_user.role != UserRole.hiring_manager:
+            raise ScoringBaseException(message="Access denied", details="Only hiring managers can view shared candidates.", status_code=403)
+            
+        rows = await self.repository.get_shared_candidates_for_hm(
+            job_description_id,
+            current_user.user_id,
+        )
+        
+        return [
+            SharedCampaignCandidateResponse(
+                candidate_id=cand.id,
+                full_name=cand.full_name,
+                current_title=cand.current_title,
+                total_experience_months=cand.total_experience_months,
+                location=cand.location,
+                final_score=score.final_score,
+                recruiter_notes=pipe.recruiter_notes,
+                shared_at=pipe.shared_at,
+                hm_decision=pipe.hm_decision,
+                hiring_manager_notes=pipe.hiring_manager_notes,
+                interview_link=pipe.interview_link,
+                interview_datetime=pipe.interview_datetime,
+                interview_timezone=pipe.interview_timezone,
+                interview_message=pipe.interview_message,
+                interview_sent_at=pipe.interview_sent_at,
+            )
+            for cand, pipe, score in rows
+        ]
+
+    async def submit_hm_candidate_review(
+        self,
+        job_description_id: UUID,
+        candidate_id: UUID,
+        current_user: AuthenticatedUserContext,
+        decision: HiringManagerDecision,
+        remarks: str | None,
+    ) -> Pipeline:
+        from src.data.models.postgres.pipeline import HiringManagerDecision
+        if current_user.role != UserRole.hiring_manager:
+            raise ScoringBaseException(message="Access denied", details="Only hiring managers can submit candidate reviews.", status_code=403)
+            
+        pipeline_entry = await self.repository.submit_hm_review(
+            job_description_id,
+            candidate_id,
+            current_user.user_id,
+            decision,
+            remarks,
+        )
+        
+        if not pipeline_entry:
+            raise ScoringBaseException(
+                message="Review failed",
+                details="Failed to submit review. Candidate may not be shared, or job description is not assigned to you.",
+                status_code=400,
+            )
+            
+        # Publish CANDIDATE_REVIEWED event (stub/log for future integration)
+        print(f"[EVENT] CANDIDATE_REVIEWED: Candidate {candidate_id} reviewed for JobDescription {job_description_id}. Decision: {decision}")
+        
+        return pipeline_entry
+
+    async def schedule_interview(
+        self,
+        job_description_id: UUID,
+        candidate_id: UUID,
+        current_user: AuthenticatedUserContext,
+        interview_link: str,
+        interview_datetime: datetime,
+        timezone: str,
+        message: str | None,
+    ) -> Pipeline:
+        from src.data.models.postgres.pipeline import HiringManagerDecision
+        from src.data.models.postgres.user import User
+        from datetime import UTC
+        
+        if current_user.role != UserRole.hiring_manager:
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Only hiring managers can schedule interviews.",
+                status_code=403
+            )
+            
+        # 1. Authorize: Load JobDescription along with recruiter relation
+        stmt = (
+            select(JobDescription)
+            .options(
+                selectinload(JobDescription.recruiter),
+            )
+            .where(JobDescription.id == job_description_id)
+        )
+        res = await self.repository.db.execute(stmt)
+        jd = res.scalar_one_or_none()
+        
+        if not jd or jd.hiring_manager_id != current_user.user_id:
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Hiring manager does not own this campaign or job description not found.",
+                status_code=403
+            )
+            
+        # 2. Validate candidate is shared
+        pipeline_entry = await self.repository.get_pipeline_entry(
+            job_description_id,
+            candidate_id,
+        )
+        if not pipeline_entry or not pipeline_entry.shared_with_hiring_manager:
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Candidate shortlist is not shared with the hiring manager.",
+                status_code=403
+            )
+            
+        # 3. Validate candidate email exists
+        candidate = await self.repository.get_candidate_by_id(candidate_id)
+        if not candidate:
+            raise CandidateNotFound(
+                details="Candidate could not be found",
+                error_code="CANDIDATE_NOT_FOUND"
+            )
+        if not candidate.email or not candidate.email.strip():
+            raise ScoringBaseException(
+                message="Validation failed",
+                details="Candidate email address is missing. Cannot send interview invitation.",
+                status_code=400
+            )
+
+        # 4. Dispatch Email to Candidate
+        notification_service = NotificationService(self.repository.db)
+        
+        date_str = interview_datetime.strftime("%B %d, %Y")
+        time_str = interview_datetime.strftime("%I:%M %p")
+        
+        candidate_body = (
+            f"Hello {candidate.full_name},\n\n"
+            f"Congratulations! You have been selected for an interview for the "
+            f"\"{jd.title}\" role.\n\n"
+            f"Please find the details below:\n"
+            f"- **Date:** {date_str}\n"
+            f"- **Time:** {time_str}\n"
+            f"- **Timezone:** {timezone}\n"
+            f"- **Link:** {interview_link}\n"
+        )
+        if message:
+            candidate_body += f"\n**Message from Hiring Manager:**\n{message}\n"
+
+        candidate_html = get_generic_email_html(
+            title="Interview Invitation",
+            body=candidate_body,
+            action_text="Join Interview",
+            action_url=interview_link
+        )
+        
+        # This will raise exception if Brevo client fails
+        await notification_service.send_email(
+            recipient_email=candidate.email,
+            recipient_name=candidate.full_name,
+            subject=f"Interview Invitation – {jd.title}",
+            html_content=candidate_html
+        )
+        logger.info("Hiring Manager email sent successfully to candidate %s", candidate.email)
+
+        # 5. Only AFTER successful email dispatch, update pipeline in DB
+        pipeline_entry.hm_decision = HiringManagerDecision.INTERVIEW_SENT
+        pipeline_entry.interview_link = interview_link
+        pipeline_entry.interview_datetime = interview_datetime
+        pipeline_entry.interview_timezone = timezone
+        pipeline_entry.interview_message = message
+        pipeline_entry.interview_sent_at = datetime.now(UTC)
+        
+        await self.repository.db.commit()
+        logger.info("Pipeline status updated to INTERVIEW_SENT for candidate %s on campaign %s", candidate_id, job_description_id)
+
+        # 6. Recruiter Notification (best-effort)
+        try:
+            res_hm = await self.repository.db.execute(select(User).where(User.id == current_user.user_id))
+            hm_user = res_hm.scalar_one_or_none()
+            hm_name = hm_user.name if hm_user else "Hiring Manager"
+
+            recruiter_user = jd.recruiter
+            frontend_base = settings.ALLOWED_ORIGINS[0] if settings.ALLOWED_ORIGINS else "http://localhost:5173"
+            
+            recruiter_body = (
+                f"Hello {recruiter_user.name},\n\n"
+                f"{hm_name} has scheduled an interview with {candidate.full_name} for your job description \"{jd.title}\".\n\n"
+                f"Interview Details:\n"
+                f"- **Date & Time:** {date_str} at {time_str} ({timezone})\n"
+                f"- **Link:** {interview_link}\n"
+            )
+            recruiter_html = get_generic_email_html(
+                title="Interview Scheduled",
+                body=recruiter_body,
+                action_text="View Candidate Detail",
+                action_url=f"{frontend_base}/recruiter/job-descriptions/{job_description_id}/candidates/{candidate_id}"
+            )
+
+            await notification_service.notify(
+                user=recruiter_user,
+                notification_type=NotificationType.INTERVIEW_INVITATION,
+                title="Interview Scheduled",
+                message=f"{hm_name} has scheduled an interview with {candidate.full_name} for \"{jd.title}\".",
+                target_url=f"/recruiter/job-descriptions/{job_description_id}/candidates/{candidate_id}",
+                metadata={
+                    "job_description_id": str(job_description_id),
+                    "candidate_id": str(candidate_id),
+                    "candidate_name": candidate.full_name
+                },
+                send_in_app=True,
+                send_email=True,
+                email_subject=f"Interview scheduled for {candidate.full_name}",
+                email_html=recruiter_html
+            )
+            logger.info("Hiring Manager notification created and Recruiter email sent successfully for interview on candidate %s", candidate_id)
+        except Exception as recruiter_notify_err:
+            logger.warning("Failed to send recruiter notification for interview invitation: %s", str(recruiter_notify_err))
+
+        return pipeline_entry

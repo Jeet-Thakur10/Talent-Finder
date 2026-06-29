@@ -11,6 +11,8 @@ from .job_description import JobDescription
 from .job_description_status import JobDescriptionStatus
 from .pipeline import Pipeline
 from .user import User
+from .scoring_task import ScoringTask
+from .notification import Notification, NotificationType
 
 __all__ = [
     "User",
@@ -25,4 +27,7 @@ __all__ = [
     "CandidateEducation",
     "CandidateJobScore",
     "Pipeline",
+    "ScoringTask",
+    "Notification",
+    "NotificationType",
 ]

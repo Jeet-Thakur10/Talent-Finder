@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import Select, desc, select
+from sqlalchemy import Select, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -644,3 +644,130 @@ class ScoringRepository:
             self.db.add(new_candidate)
             await self.db.flush()
             return new_candidate
+
+    async def validate_candidates_belong_to_job(
+        self,
+        job_description_id: UUID,
+        candidate_ids: list[UUID],
+    ) -> list[UUID]:
+        if not candidate_ids:
+            return []
+            
+        stmt = select(Pipeline.candidate_id).where(
+            Pipeline.jd_id == job_description_id,
+            Pipeline.candidate_id.in_(candidate_ids),
+        )
+        res = await self.db.execute(stmt)
+        found_ids = set(res.scalars().all())
+        
+        return [cid for cid in candidate_ids if cid not in found_ids]
+
+    async def share_shortlist_with_hiring_manager(
+        self,
+        job_description_id: UUID,
+        candidate_ids: list[UUID],
+        notes_by_candidate: dict[UUID, str],
+    ) -> int:
+        from src.data.models.postgres.pipeline import HiringManagerDecision
+        now = datetime.now(UTC)
+        
+        # 1. Reset shared_with_hiring_manager for all pipeline entries for this JD
+        reset_query = (
+            update(Pipeline)
+            .where(Pipeline.jd_id == job_description_id)
+            .values(
+                shared_with_hiring_manager=False,
+            )
+        )
+        await self.db.execute(reset_query)
+        
+        # 2. For selected candidates, mark as shared, update notes, set PENDING, and clear HM notes
+        shared_count = 0
+        for candidate_id in candidate_ids:
+            pipeline_entry = await self.get_pipeline_entry(
+                job_description_id,
+                candidate_id,
+            )
+            
+            if pipeline_entry:
+                pipeline_entry.shared_with_hiring_manager = True
+                pipeline_entry.shared_at = now
+                pipeline_entry.hm_decision = HiringManagerDecision.PENDING
+                pipeline_entry.hiring_manager_notes = None
+                
+                # Update recruiter notes if notes were provided
+                if candidate_id in notes_by_candidate:
+                    pipeline_entry.recruiter_notes = notes_by_candidate[candidate_id]
+                
+                shared_count += 1
+                
+        await self.db.flush()
+        return shared_count
+
+    async def get_hm_campaigns(self, hiring_manager_id: UUID) -> list[JobDescription]:
+        query = (
+            select(JobDescription)
+            .options(
+                selectinload(JobDescription.recruiter),
+                selectinload(JobDescription.pipeline_entries),
+            )
+            .join(Pipeline, Pipeline.jd_id == JobDescription.id)
+            .where(
+                JobDescription.hiring_manager_id == hiring_manager_id,
+                Pipeline.shared_with_hiring_manager == True,
+            )
+            .distinct()
+        )
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def get_shared_candidates_for_hm(
+        self, job_description_id: UUID, hiring_manager_id: UUID
+    ) -> list[tuple[Candidate, Pipeline, CandidateJobScore]]:
+        # Verify the job description is assigned to the hiring manager
+        jd = await self.get_job_description_by_id(job_description_id)
+        if not jd or jd.hiring_manager_id != hiring_manager_id:
+            return []
+            
+        query = (
+            select(Candidate, Pipeline, CandidateJobScore)
+            .join(Pipeline, Pipeline.candidate_id == Candidate.id)
+            .join(
+                CandidateJobScore,
+                (CandidateJobScore.candidate_id == Candidate.id)
+                & (CandidateJobScore.job_description_id == job_description_id),
+            )
+            .where(
+                Pipeline.jd_id == job_description_id,
+                Pipeline.shared_with_hiring_manager == True,
+            )
+            .order_by(desc(CandidateJobScore.final_score))
+        )
+        result = await self.db.execute(query)
+        return [(row[0], row[1], row[2]) for row in result.all()]
+
+    async def submit_hm_review(
+        self,
+        job_description_id: UUID,
+        candidate_id: UUID,
+        hiring_manager_id: UUID,
+        decision: HiringManagerDecision,
+        remarks: str | None,
+    ) -> Pipeline | None:
+        # Verify ownership
+        jd = await self.get_job_description_by_id(job_description_id)
+        if not jd or jd.hiring_manager_id != hiring_manager_id:
+            return None
+            
+        pipeline_entry = await self.get_pipeline_entry(
+            job_description_id,
+            candidate_id,
+        )
+        if not pipeline_entry or not pipeline_entry.shared_with_hiring_manager:
+            return None
+            
+        pipeline_entry.hm_decision = decision
+        pipeline_entry.hiring_manager_notes = remarks
+        
+        await self.db.flush()
+        return pipeline_entry

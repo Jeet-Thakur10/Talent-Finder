@@ -8,11 +8,12 @@ import type {
   JobDescriptionPayload,
   JobDescriptionStatus,
   PipelineExecutionPayload,
-  PipelineExecutionResponse,
   PipelineNotesPayload,
   PipelineSnapshot,
   PipelineStagePayload,
   PipelineCandidateResult,
+  PipelineEnqueueResponse,
+  PipelineTaskStatus,
 } from "./dashboard.types";
 
 export const dashboardService = {
@@ -60,6 +61,17 @@ export const dashboardService = {
     return response.data;
   },
 
+  async extractJobDescription(
+    raw_job_description: string,
+  ): Promise<JobDescription> {
+    const response = await api.post<JobDescription>(
+      "/job-descriptions/extract",
+      { raw_job_description },
+    );
+
+    return response.data;
+  },
+
   async getJobDescription(
     jobDescriptionId: string,
   ): Promise<JobDescription> {
@@ -101,10 +113,10 @@ export const dashboardService = {
     payload: Omit<
       PipelineExecutionPayload,
       "confirm"
-    >,
-  ): Promise<PipelineExecutionResponse> {
+    > & { minimum_prescore_threshold?: number },
+  ): Promise<PipelineEnqueueResponse> {
     const response =
-      await api.post<PipelineExecutionResponse>(
+      await api.post<PipelineEnqueueResponse>(
         `/scoring/${jobDescriptionId}/pipeline`,
         {
           ...payload,
@@ -120,10 +132,10 @@ export const dashboardService = {
     payload: Omit<
       PipelineExecutionPayload,
       "confirm"
-    >,
-  ): Promise<PipelineExecutionResponse> {
+    > & { minimum_prescore_threshold?: number },
+  ): Promise<PipelineEnqueueResponse> {
     const response =
-      await api.post<PipelineExecutionResponse>(
+      await api.post<PipelineEnqueueResponse>(
         `/scoring/${jobDescriptionId}/pipeline`,
         {
           ...payload,
@@ -183,6 +195,29 @@ export const dashboardService = {
         payload,
       );
 
+    return response.data;
+  },
+
+  async listRecruiterTasks(): Promise<PipelineTaskStatus[]> {
+    const response =
+      await api.get<PipelineTaskStatus[]>(
+        "/scoring/tasks",
+      );
+
+    return response.data;
+  },
+
+  async shareShortlist(
+    jobDescriptionId: string,
+    payload: {
+      candidate_ids: string[];
+      notes_by_candidate: Record<string, string>;
+    }
+  ): Promise<{ message: string; shared_candidate_count: number }> {
+    const response = await api.post<{ message: string; shared_candidate_count: number }>(
+      `/scoring/recruiter/job-descriptions/${jobDescriptionId}/share`,
+      payload
+    );
     return response.data;
   },
 };
