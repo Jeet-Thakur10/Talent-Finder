@@ -51,14 +51,17 @@ class JWTProvider:
                 algorithms=[settings.ALGORITHM],
             )
 
-        except ExpiredSignatureError:
-            raise InvalidToken(details="Token has expired", error_code="TOKEN_EXPIRED")
+        except ExpiredSignatureError as exc:
+            raise InvalidToken(
+                details="Token has expired",
+                error_code="TOKEN_EXPIRED") from exc
 
-        except JWTError:
-            raise InvalidToken(details="Token is malformed or invalid")
+        except JWTError as exc:
+            raise InvalidToken(
+                details="Token is malformed or invalid") from exc
 
         return payload
-    
+
     def create_password_reset_token(self, user_id: UUID) -> str:
 
         payload = {

@@ -1,1 +1,101 @@
 @import "tailwindcss";
+
+@layer base {
+	:root {
+		color-scheme: light;
+	}
+
+	html {
+		@apply bg-slate-50 text-slate-900;
+	}
+
+	body {
+		@apply min-h-screen bg-slate-50 font-sans text-slate-900 antialiased;
+		background-image:
+			radial-gradient(circle at top, rgba(15, 23, 42, 0.08), transparent 38%),
+			linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+	}
+
+	* {
+		@apply border-slate-200;
+	}
+}
+
+@layer components {
+	.auth-shell {
+		@apply relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10;
+	}
+
+	.auth-shell::before {
+		content: "";
+		position: absolute;
+		inset: -10rem auto auto -8rem;
+		height: 20rem;
+		width: 20rem;
+		border-radius: 9999px;
+		background: radial-gradient(circle, rgba(15, 23, 42, 0.12), transparent 68%);
+		filter: blur(28px);
+		pointer-events: none;
+	}
+
+	.auth-shell::after {
+		content: "";
+		position: absolute;
+		right: -7rem;
+		bottom: -10rem;
+		height: 24rem;
+		width: 24rem;
+		border-radius: 9999px;
+		background: radial-gradient(circle, rgba(56, 189, 248, 0.12), transparent 66%);
+		filter: blur(32px);
+		pointer-events: none;
+	}
+
+	.auth-card {
+		@apply relative w-full max-w-md rounded-[2rem] border border-white/70 bg-white/85 p-8 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.45)] backdrop-blur-xl;
+	}
+
+	.auth-kicker {
+		@apply mb-3 inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-slate-500;
+	}
+
+	.auth-title {
+		@apply text-3xl font-semibold tracking-tight text-slate-900;
+	}
+
+	.auth-subtitle {
+		@apply mt-3 text-sm leading-6 text-slate-500;
+	}
+
+	.auth-form {
+		@apply mt-8 space-y-5;
+	}
+
+	.auth-field {
+		@apply space-y-2;
+	}
+
+	.auth-label {
+		@apply text-sm font-medium text-slate-700;
+	}
+
+	.auth-input {
+		@apply w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-200;
+	}
+
+	.auth-error {
+		@apply rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700;
+	}
+
+	.auth-button {
+		@apply inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 transition duration-200 hover:-translate-y-0.5 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0;
+	}
+
+	.auth-footer {
+		@apply mt-6 text-center text-sm text-slate-500;
+	}
+
+	.auth-link {
+		@apply font-medium text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:decoration-slate-900;
+	}
+}

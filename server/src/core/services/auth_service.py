@@ -1,9 +1,12 @@
-from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.exceptions.auth_exceptions import InvalidCredentials, InvalidPasswordException, InvalidToken
+from src.core.exceptions.auth_exceptions import (
+    InvalidCredentials,
+    InvalidPasswordException,
+    InvalidToken,
+)
 from src.core.security.JwtProvider import JWTProvider
 from src.data.repositories.auth_repository import AuthRepository
 from src.schemas.auth_schema import (
@@ -20,7 +23,7 @@ class AuthService:
         self.auth_repository = AuthRepository(db)
         self.jwt_provider = JWTProvider()
 
-    async def login(self, data: LoginRequest ) -> LoginResponse:
+    async def login(self, data: LoginRequest ) -> tuple[str, str, LoginResponse]:
 
         user = await self.auth_repository.get_user_by_email(
             data.email,
@@ -48,7 +51,7 @@ class AuthService:
                 user=UserResponse.model_validate(user),
             )
         )
-    
+
     async def refresh(self, user_id: UUID) -> str:
 
         user = await self.auth_repository.get_user_by_id(
@@ -64,7 +67,7 @@ class AuthService:
             user_id=user.id,
             role=user.role,
         )
-    
+
     async def reset_password(
         self,
         reset_token: str,

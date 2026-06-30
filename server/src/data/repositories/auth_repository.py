@@ -1,4 +1,6 @@
-from sqlalchemy import UUID, select
+from uuid import UUID
+
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.data.models.postgres.user import User

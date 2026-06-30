@@ -1,4 +1,10 @@
 from datetime import datetime
+from typing import TypedDict
 
 
-otp_store: dict[str, dict[str, str | datetime]] = {}
+class OTPRecord(TypedDict):
+    otp: str
+    expires_at: datetime
+
+
+otp_store: dict[str, OTPRecord] = {}

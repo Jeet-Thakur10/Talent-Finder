@@ -1,22 +1,33 @@
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, Response
 
-from fastapi import APIRouter, Depends, Request, Response
-
-from src.api.rest.dependencies import get_auth_service, get_authenticated_user_context, get_refresh_token_payload
-from src.core.services.auth_service import AuthService
-from src.schemas.auth_schema import LoginRequest, LoginResponse, LogoutResponse, RefreshResponse
+from src.api.rest.dependencies import (
+    get_auth_service,
+    get_authenticated_user_context,
+    get_refresh_token_payload,
+)
 from src.config.settings import settings
-from src.schemas.otp_schema import ResetPasswordResponse, ResetPasswordRequest
+from src.core.services.auth_service import AuthService
 
-# temp
-from src.schemas.auth_schema import AuthenticatedUserContext
+from src.schemas.auth_schema import (
+    AuthenticatedUserContext,
+    LoginRequest,
+    LoginResponse,
+    LogoutResponse,
+    RefreshResponse,
+)
+from src.schemas.otp_schema import ResetPasswordRequest, ResetPasswordResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(data: LoginRequest, response: Response, auth_service: AuthService = Depends(get_auth_service)) -> LoginResponse:
+async def login(
+    data: LoginRequest,
+    response: Response,
+    auth_service: AuthService = Depends(get_auth_service)
+    ) -> LoginResponse:
 
     access_token, refresh_token, result = (await auth_service.login(data))
 
@@ -45,12 +56,8 @@ async def me(
     user: AuthenticatedUserContext = Depends(
         get_authenticated_user_context,
     ),
-):
+) -> AuthenticatedUserContext:
     return user
-
-@router.get("/cookies")
-async def cookies(request: Request):
-    return request.cookies
 
 @router.post(
     "/refresh",

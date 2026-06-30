@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.clients.postgres import Base
+
+if TYPE_CHECKING:
+    from src.data.models.postgres.job_description import JobDescription
 
 
 class JDSkill(Base):
@@ -33,6 +37,6 @@ class JDSkill(Base):
         nullable=False,
     )
 
-    job_description: Mapped["JobDescription"] = relationship(
+    job_description: Mapped[JobDescription] = relationship(
         back_populates="skills",
     )

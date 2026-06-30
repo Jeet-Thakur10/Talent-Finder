@@ -1,19 +1,20 @@
-from datetime import UTC, datetime, timedelta
-from random import randint
 import smtplib
-
+from datetime import UTC, datetime, timedelta
 from email.mime.text import MIMEText
-from src.core.security.JwtProvider import JWTProvider
-from src.core.exceptions.auth_exceptions import InvalidToken
-from src.data.repositories.auth_repository import AuthRepository
-from src.core.security.otp_store import otp_store
+from random import randint
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.settings import settings
+from src.core.exceptions.auth_exceptions import InvalidToken
+from src.core.security.JwtProvider import JWTProvider
+from src.core.security.otp_store import otp_store
+from src.data.repositories.auth_repository import AuthRepository
 
 
 class OTPService:
 
-    def __init__(self, db):
+    def __init__(self, db: AsyncSession) -> None:
         self.auth_repository = AuthRepository(db)
         self.jwt_provider = JWTProvider()
 
@@ -35,10 +36,6 @@ class OTPService:
             otp=otp,
         )
 
-        print(
-            f"OTP for {email}: {otp}",
-        )
-
     def generate_otp(self, email: str) -> str:
 
         otp = str(randint(100000, 999999))
@@ -50,7 +47,7 @@ class OTPService:
         }
 
         return otp
-    
+
     def verify_otp_code(self, email: str, otp: str) -> bool:
 
         record = otp_store.get(email)
@@ -68,12 +65,8 @@ class OTPService:
         del otp_store[email]
 
         return True
-    
-    async def verify_otp(
-        self,
-        email: str,
-        otp: str,
-    ) -> str:
+
+    async def verify_otp(self, email: str, otp: str) -> str:
 
         is_valid = self.verify_otp_code(
             email=email,
@@ -97,13 +90,9 @@ class OTPService:
         return self.jwt_provider.create_password_reset_token(
             user.id,
         )
-    
-    
-    def send_otp(
-        self,
-        email: str,
-        otp: str,
-    ) -> None:
+
+
+    def send_otp(self, email: str, otp: str) -> None:
 
         message = MIMEText(
             f"Your password reset OTP is: {otp}"
@@ -113,10 +102,7 @@ class OTPService:
         message["From"] = settings.SMTP_EMAIL
         message["To"] = email
 
-        with smtplib.SMTP(
-            settings.SMTP_HOST,
-            settings.SMTP_PORT,
-        ) as server:
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
 
             server.starttls()
 

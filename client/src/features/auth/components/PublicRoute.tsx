@@ -14,6 +14,7 @@ export function PublicRoute({
   const {
     isAuthenticated,
     isLoading,
+    user,
   } = useAuth();
 
   if (isLoading) {
@@ -25,6 +26,22 @@ export function PublicRoute({
   }
 
   if (isAuthenticated) {
+    if (user?.role === "recruiter") {
+      return (
+        <Navigate
+          to="/recruiter/job-descriptions"
+          replace
+        />
+      );
+    }
+    if (user?.role === "hiring_manager") {
+      return (
+        <Navigate
+          to="/hm/shared-campaigns"
+          replace
+        />
+      );
+    }
     return (
       <Navigate
         to="/dashboard"
