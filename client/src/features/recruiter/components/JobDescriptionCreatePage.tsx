@@ -2,7 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRecruiterJobDescriptionWizard } from "../hooks/useRecruiterJobDescriptionWizard";
 
-export function JobDescriptionCreatePage() {
+interface JobDescriptionCreatePageProps {
+  isEdit?: boolean;
+  jobDescriptionId?: string;
+}
+
+export function JobDescriptionCreatePage({
+  isEdit = false,
+  jobDescriptionId,
+}: JobDescriptionCreatePageProps) {
   const navigate = useNavigate();
   const {
     step,
@@ -22,7 +30,7 @@ export function JobDescriptionCreatePage() {
     updateStructuredField,
     addSkill,
     removeSkill,
-  } = useRecruiterJobDescriptionWizard();
+  } = useRecruiterJobDescriptionWizard(isEdit, jobDescriptionId);
 
   // Local skills inputs
   const [newMandatorySkill, setNewMandatorySkill] = useState("");
@@ -65,56 +73,58 @@ export function JobDescriptionCreatePage() {
       {/* Page Header */}
       <div className="workspace-header !mb-6">
         <div>
-          <div className="auth-kicker">Wizard</div>
-          <h1 className="workspace-title">Job Description Creation Wizard</h1>
+          <div className="auth-kicker">{isEdit ? "Edit Flow" : "Wizard"}</div>
+          <h1 className="workspace-title">{isEdit ? "Edit Job Description" : "Job Description Creation Wizard"}</h1>
           <p className="workspace-subtitle">
-            AI-assisted job description extraction and configuration setup.
+            {isEdit ? "Update active requirements and details for this Job Description." : "AI-assisted job description extraction and configuration setup."}
           </p>
         </div>
       </div>
 
       {/* Progress Indicator */}
-      <div className="surface-card !p-5 mb-8 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
-          {stepsList.map((s, idx) => (
-            <div key={s.num} className="flex items-center flex-1 last:flex-initial">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition ${
-                    step === s.num
-                      ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/15"
-                      : step > s.num
-                      ? "bg-emerald-500 border-emerald-500 text-white"
-                      : "bg-white border-slate-200 text-slate-400"
-                  }`}
-                >
-                  {step > s.num ? (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    s.num
-                  )}
+      {!isEdit && (
+        <div className="surface-card !p-5 mb-8 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
+            {stepsList.map((s, idx) => (
+              <div key={s.num} className="flex items-center flex-1 last:flex-initial">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition ${
+                      step === s.num
+                        ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/15"
+                        : step > s.num
+                        ? "bg-emerald-500 border-emerald-500 text-white"
+                        : "bg-white border-slate-200 text-slate-400"
+                    }`}
+                  >
+                    {step > s.num ? (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      s.num
+                    )}
+                  </div>
+                  <span
+                    className={`text-xs font-semibold uppercase tracking-wider hidden sm:inline ${
+                      step === s.num ? "text-slate-900 font-bold" : "text-slate-400"
+                    }`}
+                  >
+                    {s.label}
+                  </span>
                 </div>
-                <span
-                  className={`text-xs font-semibold uppercase tracking-wider hidden sm:inline ${
-                    step === s.num ? "text-slate-900 font-bold" : "text-slate-400"
-                  }`}
-                >
-                  {s.label}
-                </span>
+                {idx < stepsList.length - 1 && (
+                  <div
+                    className={`h-0.5 flex-1 mx-4 transition ${
+                      step > s.num ? "bg-emerald-500" : "bg-slate-200"
+                    }`}
+                  />
+                )}
               </div>
-              {idx < stepsList.length - 1 && (
-                <div
-                  className={`h-0.5 flex-1 mx-4 transition ${
-                    step > s.num ? "bg-emerald-500" : "bg-slate-200"
-                  }`}
-                />
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Error display */}
       {error && (
@@ -133,9 +143,13 @@ export function JobDescriptionCreatePage() {
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
           <div className="surface-card max-w-sm p-8 text-center shadow-2xl relative bg-white border border-slate-200 rounded-3xl">
             <div className="h-10 w-10 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mx-auto mb-4" />
-            <h3 className="text-base font-semibold text-slate-900">Extracting Job Profile</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              {isEdit ? "Saving Changes..." : "Extracting Job Profile"}
+            </h3>
             <p className="mt-2 text-xs text-slate-500 leading-relaxed">
-              Our AI is extracting structured responsibilities, experiences, and candidate mandatory requirements from your text...
+              {isEdit
+                ? "Please wait while we save your updated job description..."
+                : "Our AI is extracting structured responsibilities, experiences, and candidate mandatory requirements from your text..."}
             </p>
           </div>
         </div>
@@ -494,10 +508,16 @@ export function JobDescriptionCreatePage() {
             <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => setStep(2)}
+                onClick={() => {
+                  if (isEdit) {
+                    navigate(`/recruiter/job-descriptions/${jobDescriptionId}`);
+                  } else {
+                    setStep(2);
+                  }
+                }}
                 className="workspace-ghost-button !py-2.5 !px-5 !rounded-xl text-sm focus:outline-none"
               >
-                Back
+                {isEdit ? "Cancel" : "Back"}
               </button>
               <button
                 type="button"
@@ -557,7 +577,7 @@ export function JobDescriptionCreatePage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 justify-between items-center">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 justify-between items-center w-full">
               <button
                 type="button"
                 onClick={() => setStep(3)}
@@ -566,22 +586,32 @@ export function JobDescriptionCreatePage() {
                 Back
               </button>
               
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              {isEdit ? (
                 <button
                   type="button"
                   onClick={handleSaveDraft}
-                  className="workspace-ghost-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none"
+                  className="workspace-primary-button w-full sm:w-auto !py-2.5 !px-6 !rounded-xl text-sm font-semibold focus:outline-none shadow-md shadow-slate-900/10"
                 >
-                  Save as Draft
+                  Save Changes
                 </button>
-                <button
-                  type="button"
-                  onClick={handleContinueScoring}
-                  className="workspace-primary-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm font-semibold focus:outline-none shadow-md shadow-slate-900/10"
-                >
-                  Continue to Scoring
-                </button>
-              </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleSaveDraft}
+                    className="workspace-ghost-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none"
+                  >
+                    Save as Draft
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleContinueScoring}
+                    className="workspace-primary-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm font-semibold focus:outline-none shadow-md shadow-slate-900/10"
+                  >
+                    Continue to Scoring
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -1,5 +1,7 @@
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
+
 from src.api.rest.dependencies import (
     get_authenticated_user_context,
     get_notification_service,
@@ -7,9 +9,9 @@ from src.api.rest.dependencies import (
 from src.core.services.notification_service import NotificationService
 from src.schemas.auth_schema import AuthenticatedUserContext
 from src.schemas.notification_schema import (
+    MessageResponse,
     NotificationResponse,
     UnreadCountResponse,
-    MessageResponse,
 )
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])

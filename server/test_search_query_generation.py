@@ -1,16 +1,16 @@
 import asyncio
+from datetime import UTC, datetime
 from pprint import pprint
 from uuid import uuid4
-from datetime import datetime, UTC
 
-from src.schemas.job_description_schema import JobDescriptionResponse, JDSkillResponse
 from src.control.agents.candidate_search_query_agent import CandidateSearchQueryAgent
+from src.schemas.job_description_schema import JDSkillResponse, JobDescriptionResponse
 
 
 async def main():
     print("Initializing Candidate Search Query Agent...")
     agent = CandidateSearchQueryAgent()
-    
+
     # 1. Define sample Job Description Response matching the schema
     sample_jd = JobDescriptionResponse(
         id=uuid4(),
@@ -28,14 +28,26 @@ async def main():
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
         skills=[
-            JDSkillResponse(id=uuid4(), skill_name="Advanced Python", is_mandatory=True),
+            JDSkillResponse(
+                id=uuid4(), skill_name="Advanced Python", is_mandatory=True
+            ),
             JDSkillResponse(id=uuid4(), skill_name="Basic Java", is_mandatory=False),
-            JDSkillResponse(id=uuid4(), skill_name="Hands-on PostgreSQL", is_mandatory=True),
-            JDSkillResponse(id=uuid4(), skill_name="Expert Kubernetes", is_mandatory=False),
-            JDSkillResponse(id=uuid4(), skill_name="REST API Development", is_mandatory=True),
-            JDSkillResponse(id=uuid4(), skill_name="Microservices Architecture", is_mandatory=True),
-            JDSkillResponse(id=uuid4(), skill_name="Object-Oriented Programming", is_mandatory=False),
-        ]
+            JDSkillResponse(
+                id=uuid4(), skill_name="Hands-on PostgreSQL", is_mandatory=True
+            ),
+            JDSkillResponse(
+                id=uuid4(), skill_name="Expert Kubernetes", is_mandatory=False
+            ),
+            JDSkillResponse(
+                id=uuid4(), skill_name="REST API Development", is_mandatory=True
+            ),
+            JDSkillResponse(
+                id=uuid4(), skill_name="Microservices Architecture", is_mandatory=True
+            ),
+            JDSkillResponse(
+                id=uuid4(), skill_name="Object-Oriented Programming", is_mandatory=False
+            ),
+        ],
     )
 
     print("\n==================================================")
@@ -49,9 +61,7 @@ async def main():
 
     print("\nGenerating CandidateSearchRequest...")
     search_request = agent.generate_search_query(
-        job_description=sample_jd,
-        min_candidates=10,
-        max_source_resumes=50
+        job_description=sample_jd, min_candidates=10, max_source_resumes=50
     )
 
     print("\n==================================================")

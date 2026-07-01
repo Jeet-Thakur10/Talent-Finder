@@ -7,33 +7,33 @@ from src.api.rest.dependencies import (
     get_scoring_service,
     get_scoring_task_service,
 )
+from src.config.settings import settings
 from src.core.services.scoring_service import ScoringService
 from src.core.services.scoring_task_service import ScoringTaskService
 from src.schemas.auth_schema import AuthenticatedUserContext
 from src.schemas.scoring_schema import (
-    CandidateEvaluationBoardResponse,
     CandidateDetailsResponse,
+    CandidateEvaluationBoardResponse,
     CandidateImportRequest,
+    CandidateScoreResponse,
+    HiringManagerReviewRequest,
+    HiringManagerReviewResponse,
+    HMCampaignResponse,
+    InterviewScheduleRequest,
+    InterviewScheduleResponse,
     ParsedCandidateProfile,
     PipelineCandidateResult,
+    PipelineEnqueueResponse,
     PipelineExecutionRequest,
     PipelineExecutionResponse,
     PipelineNotesUpdateRequest,
     PipelineSnapshotResponse,
     PipelineStageUpdateRequest,
-    CandidateScoreResponse,
-    PipelineEnqueueResponse,
     PipelineTaskStatusResponse,
+    SharedCampaignCandidateResponse,
     ShortlistShareRequest,
     ShortlistShareResponse,
-    HiringManagerReviewRequest,
-    HiringManagerReviewResponse,
-    SharedCampaignCandidateResponse,
-    HMCampaignResponse,
-    InterviewScheduleRequest,
-    InterviewScheduleResponse,
 )
-from src.schemas.job_description_schema import JobDescriptionResponse
 
 router = APIRouter(prefix="/scoring", tags=["Scoring"])
 
@@ -66,6 +66,7 @@ async def list_recruiter_tasks(
         get_scoring_task_service,
     ),
 ) -> list[PipelineTaskStatusResponse]:
+    await task_service.recover_stale_tasks(settings.SCORING_TASK_TIMEOUT_MINUTES)
     tasks = await task_service.get_tasks_by_recruiter(current_user.user_id)
     return [
         PipelineTaskStatusResponse(
@@ -103,6 +104,7 @@ async def pipeline_prescore_and_score(
         get_scoring_task_service,
     ),
 ) -> PipelineEnqueueResponse:
+    await task_service.recover_stale_tasks(settings.SCORING_TASK_TIMEOUT_MINUTES)
     # 1. Authorize user has access to job description first
     await service._get_authorized_job_description(
         job_description_id,
@@ -149,6 +151,7 @@ async def get_task_status(
         get_scoring_task_service,
     ),
 ) -> PipelineTaskStatusResponse:
+    await task_service.recover_stale_tasks(settings.SCORING_TASK_TIMEOUT_MINUTES)
     task = await task_service.get_task_by_id(task_id)
     if not task:
         from fastapi import HTTPException
@@ -191,6 +194,7 @@ async def get_task_result(
         get_scoring_task_service,
     ),
 ):
+    await task_service.recover_stale_tasks(settings.SCORING_TASK_TIMEOUT_MINUTES)
     task = await task_service.get_task_by_id(task_id)
     if not task:
         from fastapi import HTTPException

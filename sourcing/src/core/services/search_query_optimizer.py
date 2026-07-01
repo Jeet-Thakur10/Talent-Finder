@@ -1,11 +1,32 @@
 from src.schemas.candidate_search_request import CandidateSearchRequest
-from src.schemas.search_attempt import SearchAttempt
-from src.core.services.search_strategies import SearchOptimizationStrategy
+from src.schemas.search_attempt import SearchAttempt, SearchOptimizationPlan
+from src.control.agents.candidate_search_strategy_agent import CandidateSearchStrategyAgent
+from src.core.services.search_strategies import (
+    RepresentativeSkillsStrategy,
+    GeneralizedTitleStrategy,
+    SingleCoreSkillStrategy,
+    TitleOnlyStrategy,
+)
 
 
 class SearchQueryOptimizer:
-    def __init__(self, strategies: list[SearchOptimizationStrategy]) -> None:
-        self._strategies = strategies
+    def __init__(self, agent: CandidateSearchStrategyAgent) -> None:
+        self._agent = agent
+        self._plan = None
+        self._strategies = [
+            RepresentativeSkillsStrategy(),
+            GeneralizedTitleStrategy(),
+            SingleCoreSkillStrategy(),
+            TitleOnlyStrategy(),
+        ]
+
+    async def initialize(self, original_request: CandidateSearchRequest) -> None:
+        """Generate the optimization plan once at the beginning of the sourcing session."""
+        self._plan = await self._agent.optimize(original_request)
+
+    def get_plan(self) -> SearchOptimizationPlan | None:
+        """Retrieve the generated optimization plan."""
+        return self._plan
 
     async def get_optimized_request(
         self,
@@ -16,12 +37,11 @@ class SearchQueryOptimizer:
         attempt_idx = len(history)
 
         if attempt_idx >= len(self._strategies):
-            # Fall back to the last strategy in sequence (typically LLMStrategy)
             strategy = self._strategies[-1]
         else:
             strategy = self._strategies[attempt_idx]
 
-        optimized_request = await strategy.optimize(original_request, history)
+        optimized_request = await strategy.optimize(original_request, self._plan)
         reason = strategy.get_reason()
 
         return optimized_request, reason

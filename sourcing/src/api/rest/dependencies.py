@@ -22,12 +22,6 @@ from src.core.services.candidate_search_service import (
     CandidateSearchService,
 )
 from src.control.agents.candidate_search_strategy_agent import CandidateSearchStrategyAgent
-from src.core.services.search_strategies import (
-    OriginalQueryStrategy,
-    MandatorySkillsStrategy,
-    TitleOnlyStrategy,
-    LLMOptimizationStrategy,
-)
 from src.core.services.search_query_optimizer import SearchQueryOptimizer
 
 
@@ -69,13 +63,7 @@ async def get_postjobfree_client():
 
 def get_search_query_optimizer() -> SearchQueryOptimizer:
     agent = CandidateSearchStrategyAgent()
-    strategies = [
-        OriginalQueryStrategy(),
-        MandatorySkillsStrategy(),
-        TitleOnlyStrategy(),
-        LLMOptimizationStrategy(agent),
-    ]
-    return SearchQueryOptimizer(strategies)
+    return SearchQueryOptimizer(agent)
 
 
 def get_postjobfree_sourcing_service(

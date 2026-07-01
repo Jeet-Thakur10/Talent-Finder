@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import select, update
@@ -108,4 +108,30 @@ class ScoringTaskRepository:
             .where(ScoringTask.recruiter_id == recruiter_id)
             .order_by(ScoringTask.created_at.desc())
         )
+        return list(result.scalars().all())
+
+    async def find_stale_tasks(self, cutoff_time: datetime) -> list[ScoringTask]:
+        from sqlalchemy import and_, or_
+        query = (
+            select(ScoringTask)
+            .where(
+                or_(
+                    and_(
+                        ScoringTask.status == "PENDING",
+                        ScoringTask.created_at < cutoff_time,
+                    ),
+                    and_(
+                        ScoringTask.status == "RUNNING",
+                        or_(
+                            ScoringTask.started_at < cutoff_time,
+                            and_(
+                                ScoringTask.started_at == None,
+                                ScoringTask.created_at < cutoff_time,
+                            ),
+                        ),
+                    ),
+                )
+            )
+        )
+        result = await self.db.execute(query)
         return list(result.scalars().all())

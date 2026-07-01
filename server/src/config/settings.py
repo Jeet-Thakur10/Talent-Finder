@@ -1,11 +1,22 @@
+from pathlib import Path
 from typing import Literal
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Resolve absolute path to server/.env relative to this file
+current_dir = Path(__file__).resolve().parent
+server_dir = current_dir.parent.parent
+env_file_path = server_dir / ".env"
+
+if not env_file_path.exists():
+    raise RuntimeError(
+        f"Critical Configuration Error: The required environment file '.env' was not found at the expected absolute path: {env_file_path.as_posix()}. "
+        "Please check your deployment and working directory structure."
+    )
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:jeetu@localhost:5432/delete"
+    DATABASE_URL: str  # Required field - removing fallback value to prevent silent failure
     PORT: int = 8000
     HOST: str = "127.0.0.1"
 
@@ -48,6 +59,7 @@ class Settings(BaseSettings):
 
     SOURCING_SERVICE_BASE_URL: str = "http://localhost:8001"
     SOURCING_CLIENT_TIMEOUT_SECONDS: float = 300.0
+    SCORING_TASK_TIMEOUT_MINUTES: int = 15
 
     DEFAULT_MAX_SOURCE_RESUMES: int = 20
     CANDIDATE_REFRESH_AFTER_DAYS: int = 30
@@ -62,7 +74,31 @@ class Settings(BaseSettings):
         return v
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(env_file_path),
+        env_file_encoding="utf-8",
+        extra="ignore",
     )
 
 settings = Settings()
+
+# Log configuration status at startup
+import logging
+
+logger = logging.getLogger(__name__)
+# Mask database URL password for security
+try:
+    from urllib.parse import urlparse
+    url = urlparse(settings.DATABASE_URL)
+    masked_db_url = f"{url.scheme}://{url.username}:****@{url.hostname}:{url.port}{url.path}"
+    db_name = url.path.lstrip('/')
+except Exception:
+    masked_db_url = "Invalid URL structure"
+    db_name = "Unknown"
+
+print(f"[CONFIG] Loaded .env from: {env_file_path.as_posix()}")
+print(f"[CONFIG] DATABASE_URL: {masked_db_url}")
+print(f"[CONFIG] Database Name: {db_name}")
+logger.info(f"Loaded .env from: {env_file_path.as_posix()}")
+logger.info(f"DATABASE_URL: {masked_db_url}")
+logger.info(f"Database Name: {db_name}")
+

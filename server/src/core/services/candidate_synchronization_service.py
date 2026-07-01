@@ -1,6 +1,7 @@
 from __future__ import annotations
+
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -31,18 +32,26 @@ class CandidateSynchronizationService:
     async def synchronize_candidates(
         self,
         selected_candidate_ids: list[UUID],
-    ) -> None:
+    ) -> SyncBatchResult:
         """Verify which candidates exist locally, check freshness, and synchronize stale/missing ones.
 
         Args:
             selected_candidate_ids: A list of candidate UUIDs selected for deep scoring.
         """
+        import time
+
+        from src.schemas.sync_result import CandidateSyncResultItem, SyncBatchResult
+
+        batch_result = SyncBatchResult()
+
         if not selected_candidate_ids:
-            return
+            return batch_result
 
         # 1. Fetch candidates that already exist in the local database
-        existing_candidates = await self.scoring_service.repository.get_candidates_by_ids(
-            selected_candidate_ids
+        existing_candidates = (
+            await self.scoring_service.repository.get_candidates_by_ids(
+                selected_candidate_ids
+            )
         )
         local_lookup = {c.id: c for c in existing_candidates}
 
@@ -51,7 +60,7 @@ class CandidateSynchronizationService:
         stale_ids: list[UUID] = []
         fresh_ids: list[UUID] = []
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         threshold = timedelta(days=settings.CANDIDATE_REFRESH_AFTER_DAYS)
 
         for cid in selected_candidate_ids:
@@ -66,7 +75,7 @@ class CandidateSynchronizationService:
             else:
                 updated_at = candidate.updated_at
                 if updated_at.tzinfo is None:
-                    updated_at = updated_at.replace(tzinfo=timezone.utc)
+                    updated_at = updated_at.replace(tzinfo=UTC)
 
                 time_diff = now - updated_at
                 if time_diff > threshold:
@@ -85,24 +94,78 @@ class CandidateSynchronizationService:
                         cid,
                         candidate.updated_at,
                     )
+                    batch_result.results[cid] = CandidateSyncResultItem(
+                        candidate_id=cid, success=True, duration_ms=0.0
+                    )
 
         # 3. Combine Missing and Stale candidate IDs
         union_ids = missing_ids + stale_ids
 
-        # 4. If no candidates to synchronize, return immediately
+        # 4. If no candidates to synchronize, return batch_result
         if not union_ids:
-            return
+            return batch_result
 
         # 5. Fetch updated/latest profiles from the Sourcing Service in a single request
+        start_time = time.perf_counter()
         try:
             updated_details = await self.search_client.get_candidate_details(union_ids)
+            api_duration = (time.perf_counter() - start_time) * 1000.0
         except Exception as e:
-            logger.exception("Failed to fetch candidate details for synchronization: %s", e)
-            return
+            api_duration = (time.perf_counter() - start_time) * 1000.0
+            logger.exception(
+                "Failed to fetch candidate details for synchronization: %s", e
+            )
+            for cid in union_ids:
+                batch_result.results[cid] = CandidateSyncResultItem(
+                    candidate_id=cid,
+                    success=False,
+                    error_code="SOURCING_CLIENT_ERROR",
+                    error_message=str(e),
+                    duration_ms=api_duration,
+                )
+            return batch_result
+
+        returned_ids = [d.id for d in updated_details]
+        missing_sync_ids = [cid for cid in union_ids if cid not in returned_ids]
+        if missing_sync_ids:
+            logger.warning(
+                "Synchronization mismatch\nRequested:\n%s\nReturned:\n%s\nMissing:\n%s",
+                [str(i) for i in union_ids],
+                [str(i) for i in returned_ids],
+                [str(i) for i in missing_sync_ids],
+            )
+            for cid in missing_sync_ids:
+                batch_result.results[cid] = CandidateSyncResultItem(
+                    candidate_id=cid,
+                    success=False,
+                    error_code="CANDIDATE_OMITTED_IN_RESPONSE",
+                    error_message="Candidate details not returned by external sourcing service",
+                    duration_ms=api_duration,
+                )
 
         # 6. Persist each fetched profile sequentially to ensure transaction safety
         for details in updated_details:
+            cid = details.id
+            db_start = time.perf_counter()
             try:
                 await self.scoring_service.upsert_candidate_profile(details)
+                db_duration = (time.perf_counter() - db_start) * 1000.0
+                batch_result.results[cid] = CandidateSyncResultItem(
+                    candidate_id=cid,
+                    success=True,
+                    duration_ms=api_duration + db_duration,
+                )
             except Exception as e:
-                logger.exception("Failed to synchronize candidate profile for ID %s: %s", details.id, e)
+                db_duration = (time.perf_counter() - db_start) * 1000.0
+                logger.exception(
+                    "Failed to synchronize candidate profile for ID %s: %s", cid, e
+                )
+                batch_result.results[cid] = CandidateSyncResultItem(
+                    candidate_id=cid,
+                    success=False,
+                    error_code="DB_PERSISTENCE_ERROR",
+                    error_message=str(e),
+                    duration_ms=api_duration + db_duration,
+                )
+
+        return batch_result

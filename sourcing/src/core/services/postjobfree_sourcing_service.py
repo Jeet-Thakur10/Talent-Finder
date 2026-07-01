@@ -1,6 +1,8 @@
 import asyncio
+import logging
 import random
 import urllib.parse
+import httpx
 
 from src.config.settings import settings
 from src.control.agents.resume_extraction_agent import (
@@ -26,6 +28,8 @@ from src.schemas.postjobfree_search_request import (
 )
 from src.schemas.search_attempt import SearchAttempt
 from src.core.services.search_query_optimizer import SearchQueryOptimizer
+
+logger = logging.getLogger(__name__)
 
 
 class PostJobFreeSourcingService:
@@ -65,9 +69,26 @@ class PostJobFreeSourcingService:
         request: CandidateSearchRequest,
     ) -> None:
 
+        # 1. Pre-generate the optimization plan once at the beginning of the sourcing session
+        await self._optimizer.initialize(request)
+
+        plan = self._optimizer.get_plan()
+        if plan:
+            print("\n================================================")
+            print("Recruiter Search Plan")
+            print("=====================")
+            print(f"Inferred Role:\n{plan.inferred_role}\n")
+            print(f"Representative Title:\n{plan.representative_title}\n")
+            print(f"Representative Skills:\n{plan.representative_skills}\n")
+            print(f"Reasoning:\n{plan.reasoning}")
+            print("================================================\n")
+
         attempts_history: list[SearchAttempt] = []
         best_resumes_found = 0
         no_improvement_count = 0
+
+        seen_queries = set()  # To track executed queries: tuple(title, tuple(sorted_skills))
+        processed_resume_urls = set()  # To track processed resume URLs across attempts
 
         # Load existing candidates matching the original request
         existing_candidates = await self._candidate_service.search_candidates(
@@ -108,6 +129,29 @@ class PostJobFreeSourcingService:
             except Exception as opt_err:
                 print(f"  [Attempt {current_attempt}] Strategy optimization failed: {opt_err}")
                 break
+
+            # Check query deduplication using normalized representation
+            normalized_query = (
+                optimized_req.title.strip().lower(),
+                tuple(sorted(skill.strip().lower() for skill in optimized_req.skills))
+            )
+            if normalized_query in seen_queries:
+                print(f"  [Attempt {current_attempt}] Skipped duplicate query: Title='{optimized_req.title}', Skills={optimized_req.skills}")
+                attempt_stat = SearchAttempt(
+                    attempt_number=current_attempt,
+                    title=optimized_req.title,
+                    skills=optimized_req.skills,
+                    resumes_found=0,
+                    candidates_persisted=0,
+                    new_candidates_persisted=0,
+                    candidates_remaining=candidates_remaining,
+                    reason=f"Skipped duplicate query. (Attempt details: {reason})",
+                    query_url="",
+                )
+                attempts_history.append(attempt_stat)
+                continue
+
+            seen_queries.add(normalized_query)
 
             # Generate the provider request
             search_request = self.generate_postjobfree_search_request(
@@ -165,30 +209,128 @@ class PostJobFreeSourcingService:
                         print("  Reached target candidates count mid-scrape. Stopping attempt loop.")
                         break
 
-                    print(f"  -> Scraping URL: {result.resume_url}")
+                    # Resume URL Deduplication: skip if already processed in this run
+                    if result.resume_url in processed_resume_urls:
+                        print(f"     [Scrape] Skipped duplicate URL (already processed in this run): {result.resume_url}")
+                        continue
+
+                    processed_resume_urls.add(result.resume_url)
+
+                    print(f"  -> Scraping URL: {result.resume_url}\n")
                     try:
-                        resume_html = await self._client.get_resume_page(
-                            result.resume_url,
-                        )
-                        resume = self._resume_parser.parse(
-                            html=resume_html,
-                            source_url=result.resume_url,
-                        )
+                        # 1. Resume download stage
+                        print("Downloading resume...\n")
+                        try:
+                            resume_html = await self._client.get_resume_page(
+                                result.resume_url,
+                            )
+                            print("Resume downloaded successfully.\n")
+                        except Exception as exc:
+                            if isinstance(exc, (httpx.TimeoutException, asyncio.TimeoutError, TimeoutError)):
+                                stage = "Resume download"
+                                error_code = "EXTRACTION_TIMEOUT"
+                                error_msg = "Resume download request timed out."
+                            elif isinstance(exc, httpx.RequestError):
+                                stage = "Resume download"
+                                error_code = "EXTRACTION_NETWORK"
+                                error_msg = "Resume download failed due to network issue."
+                            else:
+                                stage = "Resume download"
+                                error_code = "EXTRACTION_UNKNOWN"
+                                error_msg = f"Resume download failed with unexpected error: {str(exc)}"
+
+                            logger.error(
+                                "Resume extraction failed during stage: '%s'\n"
+                                "Provider: postjobfree\n"
+                                "Resume URL: %s\n"
+                                "Error Code: %s\n"
+                                "Error Message: %s",
+                                stage,
+                                result.resume_url,
+                                error_code,
+                                error_msg,
+                                exc_info=True
+                            )
+                            print(f"{error_msg}\n")
+                            print("Candidate rejected.\n")
+                            continue
+
+                        # 2. HTML parsing stage
+                        print("Parsing HTML...\n")
+                        try:
+                            resume = self._resume_parser.parse(
+                                html=resume_html,
+                                source_url=result.resume_url,
+                            )
+                            print("HTML parsed successfully.\n")
+                        except Exception as exc:
+                            stage = "HTML parsing"
+                            error_code = "EXTRACTION_OUTPUT_PARSER"
+                            error_msg = f"HTML parsing failed: {str(exc)}"
+
+                            logger.error(
+                                "Resume extraction failed during stage: '%s'\n"
+                                "Provider: postjobfree\n"
+                                "Resume URL: %s\n"
+                                "Error Code: %s\n"
+                                "Error Message: %s",
+                                stage,
+                                result.resume_url,
+                                error_code,
+                                error_msg,
+                                exc_info=True
+                            )
+                            print(f"{error_msg}\n")
+                            print("Candidate rejected.\n")
+                            continue
+
+                        # 3. Extracting resume text stage
+                        print("Extracting resume text...\n")
+                        print("Extracted text length:")
+                        print(f"{len(resume.raw_resume_text)} characters\n")
+
+                        # 4. Groq extraction stage
                         extraction_result = self._extraction_agent.extract(
                             resume.raw_resume_text,
+                            resume_url=result.resume_url,
                         )
 
                         if not extraction_result.success:
-                            print(f"     [Scrape] Rejected: extraction failed: {extraction_result.error}")
+                            print(f"{extraction_result.error}\n")
+                            print("Candidate rejected.\n")
                             continue
 
-                        stored_candidate = await self._candidate_service.create_candidate(
-                            candidate=extraction_result.payload,
-                            resume_text=resume.raw_resume_text,
-                            source_type="postjobfree",
-                        )
-                        await self._candidate_service.commit()
-                        candidates_persisted_this_attempt += 1
+                        # 5. Persistence stage
+                        print("Persisting candidate...\n")
+                        try:
+                            stored_candidate = await self._candidate_service.create_candidate(
+                                candidate=extraction_result.payload,
+                                resume_text=resume.raw_resume_text,
+                                source_type="postjobfree",
+                            )
+                            await self._candidate_service.commit()
+                            print("Candidate persisted successfully.\n")
+                            candidates_persisted_this_attempt += 1
+                        except Exception as exc:
+                            stage = "Candidate persistence"
+                            error_code = "EXTRACTION_UNKNOWN"
+                            error_msg = f"Candidate persistence failed: {str(exc)}"
+
+                            logger.error(
+                                "Resume extraction failed during stage: '%s'\n"
+                                "Provider: postjobfree\n"
+                                "Resume URL: %s\n"
+                                "Error Code: %s\n"
+                                "Error Message: %s",
+                                stage,
+                                result.resume_url,
+                                error_code,
+                                error_msg,
+                                exc_info=True
+                            )
+                            print(f"{error_msg}\n")
+                            print("Candidate rejected.\n")
+                            continue
 
                         if stored_candidate.id in request.exclude_candidate_ids:
                             print(f"     [Scrape] Excluded: candidate ID in exclude_candidate_ids.")
@@ -202,12 +344,23 @@ class PostJobFreeSourcingService:
                             print(f"     [Scrape] Duplicate candidate ID: {stored_candidate.id}")
 
                         # Delay between requests
-                        sleep_seconds = random.randint(15, 25)
+                        sleep_seconds = random.randint(10, 15)
                         print(f"     Sleeping for {sleep_seconds} seconds...")
                         await asyncio.sleep(sleep_seconds)
 
                     except Exception as exc:
-                        print(f"     [Scrape] Failed scraping {result.resume_url}: {exc}")
+                        logger.error(
+                            "Unexpected failure in resume scraping pipeline\n"
+                            "Provider: postjobfree\n"
+                            "Resume URL: %s\n"
+                            "Error Code: EXTRACTION_UNKNOWN\n"
+                            "Error Message: %s",
+                            result.resume_url,
+                            str(exc),
+                            exc_info=True
+                        )
+                        print(f"Unexpected error: {exc}\n")
+                        print("Candidate rejected.\n")
 
             # Recompute remaining needed candidates
             candidates_remaining = max(request.required_candidates - len(existing_ids), 0)

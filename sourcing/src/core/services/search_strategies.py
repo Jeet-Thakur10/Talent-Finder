@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from src.schemas.candidate_search_request import CandidateSearchRequest
-from src.schemas.search_attempt import SearchAttempt
-from src.control.agents.candidate_search_strategy_agent import CandidateSearchStrategyAgent
+from src.schemas.search_attempt import SearchOptimizationPlan
 
 
 class SearchOptimizationStrategy(ABC):
@@ -9,93 +8,86 @@ class SearchOptimizationStrategy(ABC):
     async def optimize(
         self,
         original_request: CandidateSearchRequest,
-        history: list[SearchAttempt],
+        plan: SearchOptimizationPlan | None,
     ) -> CandidateSearchRequest:
-        """Derive an optimized CandidateSearchRequest from the original request."""
+        """Derive an optimized CandidateSearchRequest from the original request using the optimization plan."""
         pass
 
     @abstractmethod
     def get_reason(self) -> str:
-        """Get the reason/explanation for this search query relaxation."""
+        """Get the reason/explanation for this search query."""
         pass
 
 
-class OriginalQueryStrategy(SearchOptimizationStrategy):
+class RepresentativeSkillsStrategy(SearchOptimizationStrategy):
+    def __init__(self) -> None:
+        self._reason = ""
+
     async def optimize(
         self,
         original_request: CandidateSearchRequest,
-        history: list[SearchAttempt],
+        plan: SearchOptimizationPlan | None,
     ) -> CandidateSearchRequest:
-        return original_request.model_copy()
+        skills = plan.representative_skills if plan else original_request.skills
+        reasoning = plan.reasoning if plan else "Fallback using original skills."
+        self._reason = f"Recruiter-optimized search (representative skills only). Reasoning: {reasoning}"
+        return original_request.model_copy(update={"skills": skills})
 
     def get_reason(self) -> str:
-        return "Search with original title and all requested skills."
+        return self._reason
 
 
-class MandatorySkillsStrategy(SearchOptimizationStrategy):
+class GeneralizedTitleStrategy(SearchOptimizationStrategy):
+    def __init__(self) -> None:
+        self._reason = ""
+
     async def optimize(
         self,
         original_request: CandidateSearchRequest,
-        history: list[SearchAttempt],
+        plan: SearchOptimizationPlan | None,
     ) -> CandidateSearchRequest:
-        # Relax query by keeping only the top 2 skills, dropping lower-priority ones
-        relaxed_skills = (
-            original_request.skills[:2]
-            if len(original_request.skills) > 2
-            else original_request.skills
+        title = plan.representative_title if plan else original_request.title
+        skills = plan.representative_skills if plan else original_request.skills
+        reasoning = plan.reasoning if plan else "Fallback using original title/skills."
+        self._reason = f"Generalized recruiter search (generalized title + representative skills). Reasoning: {reasoning}"
+        return original_request.model_copy(update={"title": title, "skills": skills})
+
+    def get_reason(self) -> str:
+        return self._reason
+
+
+class SingleCoreSkillStrategy(SearchOptimizationStrategy):
+    def __init__(self) -> None:
+        self._reason = ""
+
+    async def optimize(
+        self,
+        original_request: CandidateSearchRequest,
+        plan: SearchOptimizationPlan | None,
+    ) -> CandidateSearchRequest:
+        title = plan.representative_title if plan else original_request.title
+        skills = [plan.representative_skills[0]] if plan and plan.representative_skills else (
+            [original_request.skills[0]] if original_request.skills else []
         )
-        return original_request.model_copy(update={"skills": relaxed_skills})
+        self._reason = f"Broadened recruiter search (generalized title + single most important skill: {skills})."
+        return original_request.model_copy(update={"title": title, "skills": skills})
 
     def get_reason(self) -> str:
-        return "Deterministic relaxation: keep top-priority skills, drop lower-priority skills."
+        return self._reason
 
 
 class TitleOnlyStrategy(SearchOptimizationStrategy):
-    async def optimize(
-        self,
-        original_request: CandidateSearchRequest,
-        history: list[SearchAttempt],
-    ) -> CandidateSearchRequest:
-        # Relax query by dropping all skills and searching purely by job title
-        return original_request.model_copy(update={"skills": []})
-
-    def get_reason(self) -> str:
-        return "Deterministic relaxation: drop all skills, search purely by job title."
-
-
-class LLMOptimizationStrategy(SearchOptimizationStrategy):
-    def __init__(self, agent: CandidateSearchStrategyAgent) -> None:
-        self._agent = agent
-        self._last_reason = ""
+    def __init__(self) -> None:
+        self._reason = ""
 
     async def optimize(
         self,
         original_request: CandidateSearchRequest,
-        history: list[SearchAttempt],
+        plan: SearchOptimizationPlan | None,
     ) -> CandidateSearchRequest:
-        remaining = (
-            history[-1].candidates_remaining
-            if history
-            else original_request.required_candidates
-        )
-
-        plan = await self._agent.optimize(original_request, history, remaining)
-        self._last_reason = plan.reason or "LLM-driven query relaxation plan."
-
-        # Apply LLM plan transformations to the original request
-        new_title = plan.generalize_title if plan.generalize_title else original_request.title
-
-        skills_to_remove = {s.lower().strip() for s in plan.skills_to_remove}
-        new_skills = [
-            s
-            for s in original_request.skills
-            if s.lower().strip() not in skills_to_remove
-        ]
-
-        return original_request.model_copy(update={
-            "title": new_title,
-            "skills": new_skills,
-        })
+        title = plan.representative_title if plan else original_request.title
+        self._reason = "Broadest search: generalized job title only, dropping all skill constraints."
+        return original_request.model_copy(update={"title": title, "skills": []})
 
     def get_reason(self) -> str:
-        return self._last_reason or "LLM-driven query relaxation."
+        return self._reason

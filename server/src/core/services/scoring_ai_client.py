@@ -1,27 +1,23 @@
 from __future__ import annotations
 
 import json
-import math
-from datetime import date
 import traceback
 from dataclasses import dataclass
+from datetime import date
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
 
 from src.config.settings import settings
 from src.schemas.scoring_schema import (
-    CandidateEvaluationOutput, 
-    CandidatePrescoreBatchOutput, 
-    CompressedCandidate, 
-    CompressedJobDescription, 
-    ResumeCandidateOutput
-    )
-
-from src.schemas.scoring_schema import (
-    CandidateScoringInput,
+    CandidateEvaluationOutput,
+    CandidatePrescoreBatchOutput,
     CandidateScoreOutput,
+    CandidateScoringInput,
+    CompressedCandidate,
+    CompressedJobDescription,
     JobDescriptionScoringInput,
+    ResumeCandidateOutput,
 )
 
 
@@ -53,10 +49,10 @@ class ResumeExtractionClient:
     ) -> ResumeExtractionResult:
         try:
             print(f"Attempting Groq extraction with model: {self.groq_model}")
-            
+
             # 1. Grab the exact schema keys (full_name, experiences, etc.) dynamically
             schema_json = json.dumps(ResumeCandidateOutput.model_json_schema(), indent=2)
-            
+
             messages = [
                 SystemMessage(
                     content=(
@@ -84,12 +80,12 @@ class ResumeExtractionClient:
                 provider="groq",
             )
 
-        except Exception as e:
+        except Exception:
             import traceback
             print("\n --- GROQ EXTRACTION CRASHED --- ")
             traceback.print_exc()
             print("------------------------------------\n")
-            
+
             return ResumeExtractionResult(
                 payload={},
                 provider="fallback",
@@ -162,6 +158,24 @@ class CandidateScoringClient:
                         "- Copy candidate_id exactly from the input.\n"
                         "- Do not generate a new candidate_id.\n\n"
 
+                        "Skill Proficiency Matching:\n"
+                        "- When comparing skills, assess the proficiency level match.\n"
+                        "- For each matched skill (mandatory or optional), append a pipe and match quality float.\n"
+                        "- Format: \"SkillName|quality\" where quality is a float between 0.0 and 1.0.\n"
+                        "- Match quality values:\n"
+                        "  1.0 = exact proficiency match, or candidate exceeds required level, or no proficiency specified on either side\n"
+                        "  0.75 = candidate is roughly one level below the required proficiency (slight gap)\n"
+                        "  0.4 = candidate is two or more levels below the required proficiency (significant gap)\n"
+                        "- If a skill is completely absent from the candidate, do NOT include it in matched lists. Put it in missing_mandatory_skills instead (without a pipe suffix).\n"
+                        "- Examples:\n"
+                        "  JD requires \"Advanced Python\", candidate has \"Advanced Python\" → \"Python|1.0\"\n"
+                        "  JD requires \"Advanced Python\", candidate has \"Expert Python\" → \"Python|1.0\"\n"
+                        "  JD requires \"Advanced Python\", candidate has \"Python\" (intermediate inferred) → \"Python|0.75\"\n"
+                        "  JD requires \"Advanced Python\", candidate has \"Basic Python\" → \"Python|0.4\"\n"
+                        "  JD requires \"Python\", candidate has \"Python\" → \"Python|1.0\"\n"
+                        "  JD requires \"Kubernetes\", candidate has no Kubernetes → missing_mandatory_skills: [\"Kubernetes\"]\n"
+                        "- Document any proficiency gaps in the explanation weaknesses list.\n\n"
+
                         "Role Fit Scoring (0-12):\n"
                         "- 0 = no alignment\n"
                         "- 6 = moderate alignment\n"
@@ -214,7 +228,25 @@ class CandidateScoringClient:
                 payload=None,
                 provider="fallback",
             )
-        
+
+    def _parse_skill_weight(
+        self,
+        skill_entry: str,
+    ) -> tuple[str, float]:
+        """Extract skill name and match quality from a pipe-delimited entry.
+
+        Returns (skill_name, weight) where weight is clamped to [0.0, 1.0].
+        If no pipe delimiter is found, weight defaults to 1.0 (backward compatible).
+        """
+        if "|" in skill_entry:
+            parts = skill_entry.rsplit("|", 1)
+            try:
+                weight = float(parts[1])
+                return parts[0], max(0.0, min(1.0, weight))
+            except (ValueError, IndexError):
+                return skill_entry, 1.0
+        return skill_entry, 1.0
+
     def _calculate_candidate_score(
         self,
         evaluation: CandidateEvaluationOutput,
@@ -243,6 +275,18 @@ class CandidateScoringClient:
             + evaluation.education_score
         )
 
+        # Strip pipe-delimited weights from skill names before output.
+        # The weights are consumed only by _calculate_skills_score above;
+        # downstream consumers (persistence, API, frontend) receive clean names.
+        clean_mandatory = [
+            self._parse_skill_weight(s)[0]
+            for s in evaluation.matched_mandatory_skills
+        ]
+        clean_optional = [
+            self._parse_skill_weight(s)[0]
+            for s in evaluation.matched_optional_skills
+        ]
+
         return CandidateScoreOutput(
             candidate_id=evaluation.candidate_id,
             final_score=round(
@@ -270,18 +314,14 @@ class CandidateScoringClient:
                 evaluation.education_score,
                 2,
             ),
-            matched_mandatory_skills=(
-                evaluation.matched_mandatory_skills
-            ),
-            matched_optional_skills=(
-                evaluation.matched_optional_skills
-            ),
+            matched_mandatory_skills=clean_mandatory,
+            matched_optional_skills=clean_optional,
             missing_mandatory_skills=(
                 evaluation.missing_mandatory_skills
             ),
             explanation=evaluation.explanation.model_dump(),
         )
-    
+
     def _calculate_skills_score(
         self,
         evaluation: CandidateEvaluationOutput,
@@ -302,25 +342,27 @@ class CandidateScoringClient:
         mandatory_score = 0.0
 
         if mandatory_skills:
+            weighted_sum = sum(
+                self._parse_skill_weight(skill)[1]
+                for skill in evaluation.matched_mandatory_skills
+            )
             mandatory_score = (
-                len(
-                    evaluation.matched_mandatory_skills,
-                )
-                / len(mandatory_skills)
+                weighted_sum / len(mandatory_skills)
             ) * 28
 
         optional_score = 0.0
 
         if optional_skills:
+            weighted_sum = sum(
+                self._parse_skill_weight(skill)[1]
+                for skill in evaluation.matched_optional_skills
+            )
             optional_score = (
-                len(
-                    evaluation.matched_optional_skills,
-                )
-                / len(optional_skills)
+                weighted_sum / len(optional_skills)
             ) * 12
 
         return mandatory_score + optional_score
-    
+
     def _calculate_experience_score(
         self,
         candidate: CandidateScoringInput,
@@ -361,7 +403,7 @@ class CandidateScoringClient:
             15,
             25 - decay,
         )
-    
+
     def _calculate_recency_score(
         self,
         candidate: CandidateScoringInput,

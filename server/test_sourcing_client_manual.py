@@ -2,13 +2,13 @@ import asyncio
 from pprint import pprint
 from uuid import uuid4
 
-from src.schemas.candidate_search_schema import CandidateSearchRequest
 from src.data.clients.candidate_search_client import CandidateSearchClient
+from src.schemas.candidate_search_schema import CandidateSearchRequest
 
 
 async def main():
     print("Initializing CandidateSearchClient...")
-    
+
     # 1. Construct request payload with some exclude IDs
     request = CandidateSearchRequest(
         title="Backend Engineer",
@@ -18,7 +18,7 @@ async def main():
         max_source_resumes=20,
         exclude_candidate_ids=[uuid4()]
     )
-    
+
     print("\n==================================================")
     print("Request Payload (serialized):")
     pprint(request.model_dump(mode="json"))

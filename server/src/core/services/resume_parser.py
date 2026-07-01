@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 
 from src.core.services.scoring_ai_client import ResumeExtractionClient
 from src.schemas.scoring_schema import (

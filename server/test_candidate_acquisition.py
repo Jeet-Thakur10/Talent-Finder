@@ -15,18 +15,18 @@ import sys
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
-from src.schemas.candidate_search_schema import (
-    CandidateSummary,
-    CandidateSearchRequest,
-    CandidateSearchResponse,
-)
-from src.schemas.scoring_schema import CompressedCandidate
 from src.core.services.candidate_acquisition_service import (
     CandidateAcquisitionService,
 )
-
+from src.schemas.candidate_search_schema import (
+    CandidateSearchRequest,
+    CandidateSearchResponse,
+    CandidateSummary,
+)
+from src.schemas.scoring_schema import CompressedCandidate
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
 
 def make_fake_candidate(index: int) -> MagicMock:
     """Create a mock Candidate ORM object with a unique id and name."""
@@ -79,6 +79,7 @@ def make_fake_job_description() -> MagicMock:
 
 # ── Test Cases ───────────────────────────────────────────────────────────────
 
+
 async def test_case_1():
     """Case 1: local_count (150) >= required (100) — no external call."""
     print("\n" + "=" * 70)
@@ -109,16 +110,22 @@ async def test_case_1():
 
     # Assertions
     assert result.sourcing_skipped is True, "Expected sourcing to be skipped"
-    assert result.local_count == 150, f"Expected local_count=150, got {result.local_count}"
-    assert result.sourced_count == 0, f"Expected sourced_count=0, got {result.sourced_count}"
-    assert len(result.candidates) == 150, f"Expected 150 candidates, got {len(result.candidates)}"
+    assert result.local_count == 150, (
+        f"Expected local_count=150, got {result.local_count}"
+    )
+    assert result.sourced_count == 0, (
+        f"Expected sourced_count=0, got {result.sourced_count}"
+    )
+    assert len(result.candidates) == 150, (
+        f"Expected 150 candidates, got {len(result.candidates)}"
+    )
 
     # External service should NEVER have been called
     search_query_agent.generate_search_query.assert_not_called()
     search_client.search_candidates.assert_not_called()
 
     print(f"\n  * Local candidates found:       {result.local_count}")
-    print(f"  [OK] External request payload:      SKIPPED (local pool sufficient)")
+    print("  [OK] External request payload:      SKIPPED (local pool sufficient)")
     print(f"  * External candidates received:  {result.sourced_count}")
     print(f"  * Total merged candidates:       {len(result.candidates)}")
     print(f"  * Sourcing skipped:              {result.sourcing_skipped}")
@@ -169,9 +176,15 @@ async def test_case_2():
 
     # Assertions
     assert result.sourcing_skipped is False, "Expected sourcing NOT to be skipped"
-    assert result.local_count == 30, f"Expected local_count=30, got {result.local_count}"
-    assert result.sourced_count == 70, f"Expected sourced_count=70, got {result.sourced_count}"
-    assert len(result.candidates) == 100, f"Expected 100 candidates, got {len(result.candidates)}"
+    assert result.local_count == 30, (
+        f"Expected local_count=30, got {result.local_count}"
+    )
+    assert result.sourced_count == 70, (
+        f"Expected sourced_count=70, got {result.sourced_count}"
+    )
+    assert len(result.candidates) == 100, (
+        f"Expected 100 candidates, got {len(result.candidates)}"
+    )
 
     # Verify the agent was called
     search_query_agent.generate_search_query.assert_called_once()
@@ -192,9 +205,11 @@ async def test_case_2():
     assert local_ids == exclude_ids, "Exclude IDs should match local candidate IDs"
 
     print(f"\n  * Local candidates found:       {result.local_count}")
-    print(f"  * External request payload:")
+    print("  * External request payload:")
     print(f"      required_candidates:        {actual_request.required_candidates}")
-    print(f"      exclude_candidate_ids:      {len(actual_request.exclude_candidate_ids)} IDs")
+    print(
+        f"      exclude_candidate_ids:      {len(actual_request.exclude_candidate_ids)} IDs"
+    )
     print(f"      title:                      {actual_request.title}")
     print(f"      skills:                     {actual_request.skills}")
     print(f"  * External candidates received:  {result.sourced_count}")
@@ -246,8 +261,12 @@ async def test_case_3():
     # Assertions
     assert result.sourcing_skipped is False, "Expected sourcing NOT to be skipped"
     assert result.local_count == 0, f"Expected local_count=0, got {result.local_count}"
-    assert result.sourced_count == 100, f"Expected sourced_count=100, got {result.sourced_count}"
-    assert len(result.candidates) == 100, f"Expected 100 candidates, got {len(result.candidates)}"
+    assert result.sourced_count == 100, (
+        f"Expected sourced_count=100, got {result.sourced_count}"
+    )
+    assert len(result.candidates) == 100, (
+        f"Expected 100 candidates, got {len(result.candidates)}"
+    )
 
     # Verify external call with correct parameters
     search_client.search_candidates.assert_called_once()
@@ -260,9 +279,11 @@ async def test_case_3():
     )
 
     print(f"\n  * Local candidates found:       {result.local_count}")
-    print(f"  * External request payload:")
+    print("  * External request payload:")
     print(f"      required_candidates:        {actual_request.required_candidates}")
-    print(f"      exclude_candidate_ids:      {len(actual_request.exclude_candidate_ids)} IDs")
+    print(
+        f"      exclude_candidate_ids:      {len(actual_request.exclude_candidate_ids)} IDs"
+    )
     print(f"      title:                      {actual_request.title}")
     print(f"      skills:                     {actual_request.skills}")
     print(f"  * External candidates received:  {result.sourced_count}")
@@ -272,6 +293,7 @@ async def test_case_3():
 
 
 # -- Main ---------------------------------------------------------------------
+
 
 async def run_all():
     print("\n" + "#" * 70)
@@ -295,6 +317,7 @@ async def run_all():
             failed += 1
             print(f"\n  [FAIL] {test_fn.__doc__.strip()} FAILED: {e}\n")
             import traceback
+
             traceback.print_exc()
 
     print("=" * 70)

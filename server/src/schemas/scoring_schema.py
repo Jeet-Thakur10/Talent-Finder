@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+
 # (done, parsed candidate)
 class ParsedSkill(BaseModel):
     skill_name: str
@@ -593,6 +594,7 @@ class PipelineTaskStatusResponse(BaseModel):
 
 # --- Hiring Manager Shortlist Sharing Schemas ---
 from src.data.models.postgres.pipeline import HiringManagerDecision
+
 
 class ShortlistShareRequest(BaseModel):
     candidate_ids: list[UUID]

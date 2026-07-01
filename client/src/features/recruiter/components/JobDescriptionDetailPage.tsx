@@ -40,6 +40,18 @@ export function JobDescriptionDetailPage() {
 
   const { latestTask } = useLatestJobTask(jobDescriptionId);
 
+  const isOutdated = Boolean(
+    latestTask &&
+    latestTask.status.toUpperCase() === "SUCCESS" &&
+    jobDescription &&
+    new Date(jobDescription.updated_at) >
+      new Date(
+        latestTask.completed_at ||
+          latestTask.started_at ||
+          latestTask.created_at
+      )
+  );
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(undefined, {
       year: "numeric",
@@ -114,6 +126,30 @@ export function JobDescriptionDetailPage() {
         <span className="mx-2">/</span>
         <span className="text-slate-800 font-bold truncate max-w-xs">{jobDescription.title}</span>
       </nav>
+
+      {/* Outdated shortlist / warning banner */}
+      {isOutdated && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+          <div className="space-y-1 text-left">
+            <div className="text-sm font-bold text-amber-900 flex items-center gap-2">
+              <svg className="w-5 h-5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              The candidate shortlist and scores were generated from an older version of this Job Description.
+            </div>
+            <p className="text-xs text-amber-700">
+              The job profile was updated on {formatDate(jobDescription.updated_at)} after the last evaluation was completed.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/score-config`)}
+            className="workspace-primary-button !bg-amber-600 hover:!bg-amber-700 !text-white !py-2.5 !px-4 !rounded-xl text-xs font-bold focus:outline-none shrink-0"
+          >
+            Re-score Candidates
+          </button>
+        </div>
+      )}
 
       {/* Prominent Task Awareness Banner */}
       {latestTask && (latestTask.status.toUpperCase() === "PENDING" || latestTask.status.toUpperCase() === "RUNNING") && (

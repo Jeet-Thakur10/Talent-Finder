@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import json
 import traceback
+
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 
 from src.config.settings import settings
-from src.schemas.candidate_search_schema import CandidateSearchRequest, CandidateSearchQueryOutput
 from src.control.agents.prompts import CANDIDATE_SEARCH_QUERY_PROMPT
 from src.data.models.postgres.job_description import JobDescription
+from src.schemas.candidate_search_schema import (
+    CandidateSearchQueryOutput,
+    CandidateSearchRequest,
+)
 from src.schemas.job_description_schema import JobDescriptionResponse
 from src.schemas.scoring_schema import JobDescriptionScoringInput
 
@@ -87,16 +91,16 @@ class CandidateSearchQueryAgent:
                 max_source_resumes=max_source_resumes,
             )
 
-        except Exception as e:
+        except Exception:
             print("\n --- CANDIDATE SEARCH QUERY GENERATION CRASHED --- ")
             traceback.print_exc()
             print("--------------------------------------------------\n")
-            
+
             # Return default/fallback request on failure
             fallback_skills = []
             if job_description.skills:
                 fallback_skills = [skill.skill_name for skill in job_description.skills]
-                
+
             return CandidateSearchRequest(
                 title=job_description.title,
                 skills=fallback_skills,

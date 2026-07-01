@@ -4,14 +4,14 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Boolean
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.clients.postgres import Base
 
 if TYPE_CHECKING:
-    from src.data.models.postgres.user import User
     from src.data.models.postgres.job_description import JobDescription
+    from src.data.models.postgres.user import User
 
 
 class ScoringTask(Base):
@@ -79,6 +79,10 @@ class ScoringTask(Base):
         nullable=True,
     )
     error_message: Mapped[str | None] = mapped_column(
+        String,
+        nullable=True,
+    )
+    error_code: Mapped[str | None] = mapped_column(
         String,
         nullable=True,
     )

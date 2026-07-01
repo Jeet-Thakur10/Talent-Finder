@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from src.data.models.postgres.candidate_education import CandidateEducation
     from src.data.models.postgres.candidate_experience import CandidateExperience
     from src.data.models.postgres.candidate_job_score import CandidateJobScore
-    from src.data.models.postgres.pipeline import Pipeline
     from src.data.models.postgres.candidate_skill import CandidateSkill
+    from src.data.models.postgres.pipeline import Pipeline
 
 
 class Candidate(Base):

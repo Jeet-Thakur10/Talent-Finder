@@ -9,13 +9,13 @@ from src.api.rest.dependencies import (
 )
 from src.config.settings import settings
 from src.core.services.auth_service import AuthService
-
 from src.schemas.auth_schema import (
     AuthenticatedUserContext,
     LoginRequest,
     LoginResponse,
     LogoutResponse,
     RefreshResponse,
+    UserResponse,
 )
 from src.schemas.otp_schema import ResetPasswordRequest, ResetPasswordResponse
 
@@ -51,13 +51,14 @@ async def login(
 
     return result
 
-@router.get("/me")
+@router.get("/me", response_model=UserResponse)
 async def me(
-    user: AuthenticatedUserContext = Depends(
+    user_context: AuthenticatedUserContext = Depends(
         get_authenticated_user_context,
     ),
-) -> AuthenticatedUserContext:
-    return user
+    auth_service: AuthService = Depends(get_auth_service),
+) -> UserResponse:
+    return await auth_service.get_user_by_id(user_context.user_id)
 
 @router.post(
     "/refresh",

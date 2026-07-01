@@ -1,7 +1,9 @@
-from uuid import UUID
 from typing import Any
-from sqlalchemy import select, update, func
+from uuid import UUID
+
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.data.models.postgres.notification import Notification, NotificationType
 
 

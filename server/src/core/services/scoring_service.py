@@ -1,21 +1,24 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, UTC
 import hashlib
 import logging
+from datetime import UTC, datetime
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+
 from src.config.settings import settings
-from src.data.models.postgres.notification import NotificationType
 from src.core.services.notification_service import NotificationService
+from src.data.models.postgres.notification import NotificationType
 from src.utils.email_templates import get_generic_email_html
 
 logger = logging.getLogger(__name__)
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.control.agents.candidate_search_query_agent import CandidateSearchQueryAgent
 from src.core.exceptions.job_description_exception import (
     RecruiterAccessRequired,
 )
@@ -24,58 +27,61 @@ from src.core.exceptions.scoring_exceptions import (
     ResumeImportValidationError,
     ScoringBaseException,
 )
+from src.core.services.candidate_acquisition_service import CandidateAcquisitionService
+from src.core.services.candidate_synchronization_service import (
+    CandidateSynchronizationService,
+)
+from src.core.services.progress_reporter import PipelineProgressReporter
 from src.core.services.resume_parser import ResumeParser
 from src.core.services.scoring_ai_client import (
     CandidatePrescoringClient,
     CandidateScoringClient,
 )
+from src.data.clients.candidate_search_client import CandidateSearchClient
 from src.data.models.postgres.candidate import Candidate
 from src.data.models.postgres.candidate_job_score import CandidateJobScore
 from src.data.models.postgres.job_description import JobDescription
 from src.data.repositories.scoring_repository import ScoringRepository
 from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
+from src.schemas.candidate_search_schema import (
+    CandidateDetailsResponse as SourcedCandidateDetailsResponse,
+)
 from src.schemas.job_description_schema import (
     JDSkillResponse,
     JobDescriptionResponse,
 )
+from src.schemas.pipeline_candidate_state import PipelineExecutionContext
 from src.schemas.scoring_schema import (
-    SharedCampaignCandidateResponse,
-    HMCampaignResponse,
     CandidateBatchScoreOutput,
-    CandidateEvaluationBoardResponse,
-    CandidateScoreBreakdownResponse,
     CandidateDetailsResponse,
-    CandidateEducationResponse,
     CandidateEducationInput,
+    CandidateEducationResponse,
+    CandidateEvaluationBoardResponse,
+    CandidateExperienceInput,
     CandidateExperienceResponse,
     CandidateExperienceSkillResponse,
-    CandidateExperienceInput,
     CandidateImportRequest,
     CandidatePrescoreBatchOutput,
+    CandidateScoreBreakdownResponse,
+    CandidateScoreDetailBreakdown,
+    CandidateScoreResponse,
     CandidateScoringInput,
-    CandidateSkillResponse,
     CandidateSkillInput,
+    CandidateSkillResponse,
     CompressedCandidate,
     CompressedJobDescription,
+    HMCampaignResponse,
     JobDescriptionScoringInput,
     JobSkillInput,
     ParsedCandidateProfile,
-    PipelineNotesUpdateRequest,
     PipelineCandidateResult,
     PipelineExecutionRequest,
     PipelineExecutionResponse,
+    PipelineNotesUpdateRequest,
     PipelineSnapshotResponse,
     PipelineStageUpdateRequest,
-    CandidateScoreResponse,
-    CandidateScoreDetailBreakdown,
+    SharedCampaignCandidateResponse,
 )
-from src.schemas.candidate_search_schema import CandidateDetailsResponse as SourcedCandidateDetailsResponse
-from src.core.services.candidate_acquisition_service import CandidateAcquisitionService
-from src.core.services.candidate_synchronization_service import CandidateSynchronizationService
-from src.data.clients.candidate_search_client import CandidateSearchClient
-from src.control.agents.candidate_search_query_agent import CandidateSearchQueryAgent
-from src.schemas.candidate_search_schema import CandidateSummary
-from src.core.services.progress_reporter import PipelineProgressReporter
 
 
 class ScoringService:
@@ -136,7 +142,12 @@ class ScoringService:
         job_description_id: UUID,
         current_user: AuthenticatedUserContext,
         candidate_ids: list[UUID] | None = None,
+        context: PipelineExecutionContext | None = None,
     ) -> CandidateBatchScoreOutput:
+        import time
+
+        from src.schemas.pipeline_candidate_state import StageStatus
+
         job_description = await self._get_authorized_job_description(
             job_description_id,
             current_user,
@@ -147,6 +158,15 @@ class ScoringService:
         )
 
         if not candidates:
+            if context and candidate_ids:
+                for cid in candidate_ids:
+                    if cid in context.candidates:
+                        state = context.candidates[cid]
+                        if state.scoring == StageStatus.PENDING:
+                            state.mark_scoring_failed(
+                                error_code="NO_CANDIDATE_RECORD_IN_DB",
+                                error_message="Candidate record does not exist in local database",
+                            )
             return CandidateBatchScoreOutput(
                 scores=[],
             )
@@ -155,43 +175,125 @@ class ScoringService:
             job_description,
         )
 
-        scoring_tasks = [
-            self.scoring_client.score_candidate(
-                scoring_job,
-                self._build_candidate_scoring_input(
-                    candidate,
-                ),
-            )
-            for candidate in candidates
-        ]
+        scoring_tasks = []
+        task_candidate_ids = []
+        for candidate in candidates:
+            cid = candidate.id
+            if context and cid in context.candidates:
+                state = context.candidates[cid]
+                if state.synchronization != StageStatus.SUCCESS:
+                    state.mark_scoring_failed(
+                        error_code="SYNC_FAILED",
+                        error_message="Skipping scoring because synchronization failed",
+                    )
+                    continue
+                state.scoring = StageStatus.PENDING
 
+            scoring_tasks.append(
+                self.scoring_client.score_candidate(
+                    scoring_job,
+                    self._build_candidate_scoring_input(
+                        candidate,
+                    ),
+                )
+            )
+            task_candidate_ids.append(cid)
+
+        if not scoring_tasks:
+            return CandidateBatchScoreOutput(
+                scores=[],
+            )
+
+        start_time = time.perf_counter()
         results = await asyncio.gather(
             *scoring_tasks,
             return_exceptions=True,
         )
+        scoring_duration = (time.perf_counter() - start_time) * 1000.0
+        per_task_duration = scoring_duration / len(scoring_tasks)
 
         candidate_scores = []
-        for result in results:
+        for cid, result in zip(task_candidate_ids, results):
+            state = (
+                context.candidates[cid]
+                if (context and cid in context.candidates)
+                else None
+            )
+
             if isinstance(result, Exception):
-                import logging
-                logging.getLogger(__name__).error(
+                logger.error(
                     "Recoverable deep-scoring error encountered for a candidate: %s",
                     str(result),
                 )
+                if state:
+                    state.mark_scoring_failed(
+                        error_code="LLM_SCORING_ERROR",
+                        error_message=str(result),
+                        duration_ms=per_task_duration,
+                    )
             elif result is not None and result.payload is not None:
                 candidate_scores.append(result.payload)
+                if state:
+                    state.mark_scoring_success(
+                        final_score=result.payload.final_score,
+                        confidence=result.payload.confidence,
+                        duration_ms=per_task_duration,
+                    )
+            else:
+                if state:
+                    state.mark_scoring_failed(
+                        error_code="LLM_SCORING_EMPTY",
+                        error_message="AI client returned an empty scoring result",
+                        duration_ms=per_task_duration,
+                    )
 
-        await self.repository.upsert_candidate_scores(
-            job_description_id=job_description_id,
-            scores=candidate_scores,
-        )
-        await self.repository.upsert_pipeline_entries(
-            job_description_id,
-            [
-                score.candidate_id
-                for score in candidate_scores
-            ],
-        )
+        # Persistence Stage
+        persist_start = time.perf_counter()
+        persistence_failed_flag = False
+        persistence_error_str = ""
+        try:
+            await self.repository.upsert_candidate_scores(
+                job_description_id=job_description_id,
+                scores=candidate_scores,
+            )
+            await self.repository.upsert_pipeline_entries(
+                job_description_id,
+                [score.candidate_id for score in candidate_scores],
+                stage="SHORTLISTED",
+            )
+            await self._transition_to_active_if_needed(job_description_id)
+        except Exception as e:
+            persistence_failed_flag = True
+            persistence_error_str = str(e)
+            logger.exception("Failed to persist scoring results: %s", e)
+
+        persist_duration = (time.perf_counter() - persist_start) * 1000.0
+        per_task_persist_duration = persist_duration / max(1, len(candidate_scores))
+
+        for cid in task_candidate_ids:
+            state = (
+                context.candidates[cid]
+                if (context and cid in context.candidates)
+                else None
+            )
+            if state:
+                if state.scoring == StageStatus.SUCCESS:
+                    if persistence_failed_flag:
+                        state.mark_persistence_failed(
+                            error_code="DB_PERSISTENCE_FAILED",
+                            error_message=persistence_error_str,
+                            duration_ms=per_task_persist_duration,
+                        )
+                    else:
+                        state.mark_persistence_success(
+                            duration_ms=per_task_persist_duration
+                        )
+
+        if persistence_failed_flag:
+            raise ScoringBaseException(
+                details=f"Failed to persist candidate scores: {persistence_error_str}",
+                error_code="PERSISTENCE_FAILED",
+            )
 
         return CandidateBatchScoreOutput(
             scores=candidate_scores,
@@ -204,8 +306,20 @@ class ScoringService:
         data: PipelineExecutionRequest,
         progress_reporter: PipelineProgressReporter | None = None,
     ) -> PipelineExecutionResponse:
+        import time
+        from uuid import uuid4
+
+        from src.schemas.pipeline_candidate_state import (
+            CandidateTerminalOutcome,
+            PipelineCandidateState,
+            PipelineExecutionContext,
+            StageOutcome,
+            StageStatus,
+        )
+
         if progress_reporter is None:
             from src.core.services.progress_reporter import NoOpProgressReporter
+
             progress_reporter = NoOpProgressReporter()
 
         job_description = await self._get_authorized_job_description(
@@ -217,11 +331,13 @@ class ScoringService:
 
         # 1. Acquire candidate summaries using CandidateAcquisitionService
         required_prescore_candidates = 10 * data.k
+        acquisition_start = time.perf_counter()
         acquisition_result = await self.acquisition_service.acquire_candidates(
             job_description=job_description,
             job_description_id=job_description_id,
             required_prescore_candidates=required_prescore_candidates,
         )
+        acquisition_duration = (time.perf_counter() - acquisition_start) * 1000.0
 
         # Check if external sourcing was executed, set stage to SOURCING
         if not acquisition_result.sourcing_skipped:
@@ -239,7 +355,25 @@ class ScoringService:
                 top_k=data.k,
             )
 
+        # Initialize the transient PipelineExecutionContext coordinator
+        context = PipelineExecutionContext(
+            execution_id=uuid4(),
+            job_description_id=job_description_id,
+            recruiter_id=current_user.user_id,
+        )
+
+        for c in acquisition_result.candidates:
+            state = PipelineCandidateState(
+                candidate_id=c.candidate_id,
+                profile_text=c.profile_text,
+            )
+            state.mark_acquired(
+                duration_ms=acquisition_duration / max(1, matched_candidate_count)
+            )
+            context.candidates[c.candidate_id] = state
+
         if not acquisition_result.candidates:
+            await self._transition_to_active_if_needed(job_description_id)
             return PipelineExecutionResponse(
                 stage="completed",
                 matched_candidate_count=0,
@@ -261,28 +395,93 @@ class ScoringService:
         await progress_reporter.update_stage("PRE_SCORING")
 
         # 4. Run pre-scoring implementation on the acquired summaries
+        prescore_start = time.perf_counter()
         prescore_output = await self._prescore_candidates(
             job_description_id,
             compressed_candidates,
         )
-        print("\n" + "="*40 + "\nPrescore Output (Sorted)\n" + "="*40)
-        for idx, score in enumerate(prescore_output.scores):
-            print(f"{idx+1}. ID: {score.candidate_id} -> Score: {score.score}")
-        print("="*40 + "\n")
+        prescore_duration = (time.perf_counter() - prescore_start) * 1000.0
+        per_candidate_prescore_duration = prescore_duration / len(compressed_candidates)
 
-        # 5. Apply the existing pre-score threshold logic
+        for score in prescore_output.scores:
+            if score.candidate_id in context.candidates:
+                context.candidates[score.candidate_id].mark_prescored(
+                    prescore=score.score, duration_ms=per_candidate_prescore_duration
+                )
+
+        print("\n" + "=" * 40 + "\nPrescore Output (Sorted)\n" + "=" * 40)
+        for idx, score in enumerate(prescore_output.scores):
+            print(f"{idx + 1}. ID: {score.candidate_id} -> Score: {score.score}")
+        print("=" * 40 + "\n")
+
+        # 5. Apply the pre-score threshold logic
         eligible_scores = [
             score
             for score in prescore_output.scores
             if score.score >= data.minimum_prescore_threshold
         ]
-        eligible_candidate_count = len(eligible_scores)
+        eligible_candidate_ids = [score.candidate_id for score in eligible_scores]
 
         # 6. Select the top K candidates
         top_scores = eligible_scores[: data.k]
-        selected_candidate_count = len(top_scores)
+        top_candidate_ids = [score.candidate_id for score in top_scores]
+
+        # Mark and transition all candidates to their proper lifecycle status
+        prescored_ids = {score.candidate_id for score in prescore_output.scores}
+        for cid, state in context.candidates.items():
+            if cid not in prescored_ids:
+                state.prescoring = StageStatus.FAILED
+                state.terminal_outcome = CandidateTerminalOutcome.FAILED_SCORING
+                state.diagnostics.prescoring = StageOutcome(
+                    status=StageStatus.FAILED,
+                    error_code="OMITTED_FROM_PRESCORING",
+                    error_message="Candidate summary was not pre-scored by AI client",
+                )
+            elif cid not in eligible_candidate_ids:
+                state.mark_skipped_threshold()
+            elif cid not in top_candidate_ids:
+                rank = next(
+                    (
+                        idx + 1
+                        for idx, s in enumerate(prescore_output.scores)
+                        if s.candidate_id == cid
+                    ),
+                    999,
+                )
+                state.mark_skipped_top_k(rank=rank)
+            else:
+                rank = next(
+                    (
+                        idx + 1
+                        for idx, s in enumerate(prescore_output.scores)
+                        if s.candidate_id == cid
+                    ),
+                    1,
+                )
+                state.mark_selected(rank=rank)
+
+        # Count metrics directly from the transient state coordinator
+        matched_candidate_count = sum(
+            1
+            for c in context.candidates.values()
+            if c.acquisition == StageStatus.SUCCESS
+        )
+        eligible_candidate_count = sum(
+            1
+            for c in context.candidates.values()
+            if c.prescoring == StageStatus.SUCCESS
+            and c.terminal_outcome != CandidateTerminalOutcome.SKIPPED_THRESHOLD
+        )
+        selected_candidate_count = sum(
+            1
+            for c in context.candidates.values()
+            if c.terminal_outcome == CandidateTerminalOutcome.PENDING
+        )
 
         if selected_candidate_count == 0:
+            await self._transition_to_active_if_needed(job_description_id)
+            final_report = self._generate_pipeline_report(context, api_returned_count=0)
+            logger.info(final_report)
             return PipelineExecutionResponse(
                 stage="completed",
                 matched_candidate_count=matched_candidate_count,
@@ -292,15 +491,33 @@ class ScoringService:
                 candidates=[],
             )
 
-        top_candidate_ids = [
-            score.candidate_id
-            for score in top_scores
-        ]
-
         await progress_reporter.update_stage("SYNCHRONIZING")
 
-        # 7. Pass selected candidate IDs to CandidateSynchronizationService
-        await self.synchronization_service.synchronize_candidates(top_candidate_ids)
+        # 7. Pass selected candidate IDs to CandidateSynchronizationService (returns result batch)
+        sync_result = await self.synchronization_service.synchronize_candidates(
+            top_candidate_ids
+        )
+
+        # ScoringService centralizes applying synchronization mutations:
+        for cid in top_candidate_ids:
+            if cid in context.candidates:
+                state = context.candidates[cid]
+                res_item = sync_result.results.get(cid)
+                if res_item and res_item.success:
+                    state.mark_synchronization_success(duration_ms=res_item.duration_ms)
+                elif res_item:
+                    state.mark_synchronization_failed(
+                        error_code=res_item.error_code or "SYNC_FAILED",
+                        error_message=res_item.error_message
+                        or "Unknown synchronization failure",
+                        duration_ms=res_item.duration_ms,
+                    )
+                else:
+                    state.mark_synchronization_failed(
+                        error_code="SYNC_OMITTED",
+                        error_message="Sourcing service failed to process candidate profile",
+                        duration_ms=0.0,
+                    )
 
         # 8. Load the selected Candidate ORM objects from local DB
         db_candidates = await self.repository.get_candidates_by_ids(top_candidate_ids)
@@ -308,24 +525,38 @@ class ScoringService:
 
         await progress_reporter.update_stage("DEEP_SCORING")
 
-        # 9. Execute deep scoring on the selected candidates
+        # 9. Execute deep scoring on the selected candidates, passing the coordinator context
         deep_score_output = await self.score_candidates_for_job_description(
             job_description_id,
             current_user,
             candidate_ids=top_candidate_ids,
+            context=context,
         )
-        print("\n" + "="*40 + "\nDeep Score Output\n" + "="*40)
+
+        print("\n" + "=" * 40 + "\nDeep Score Output\n" + "=" * 40)
         for idx, score in enumerate(deep_score_output.scores):
-            c_name = candidate_lookup[score.candidate_id].full_name if score.candidate_id in candidate_lookup else "Unknown"
-            print(f"{idx+1}. Name: {c_name} (ID: {score.candidate_id})")
-            print(f"   Final Score: {score.final_score} | Confidence: {score.confidence}%")
-            print(f"   Breakdown -> Skills: {score.skills_score} | Exp: {score.experience_score} | Recency: {score.recency_score} | Role Fit: {score.role_fit_score} | Edu: {score.education_score}")
+            c_name = (
+                candidate_lookup[score.candidate_id].full_name
+                if score.candidate_id in candidate_lookup
+                else "Unknown"
+            )
+            print(f"{idx + 1}. Name: {c_name} (ID: {score.candidate_id})")
+            print(
+                f"   Final Score: {score.final_score} | Confidence: {score.confidence}%"
+            )
+            print(
+                f"   Breakdown -> Skills: {score.skills_score} | Exp: {score.experience_score} | Recency: {score.recency_score} | Role Fit: {score.role_fit_score} | Edu: {score.education_score}"
+            )
             print(f"   Matched Mandatory Skills: {score.matched_mandatory_skills}")
             print(f"   Missing Mandatory Skills: {score.missing_mandatory_skills}")
-            explanation_summary = score.explanation.get("summary") if isinstance(score.explanation, dict) else getattr(score.explanation, "summary", "")
+            explanation_summary = (
+                score.explanation.get("summary")
+                if isinstance(score.explanation, dict)
+                else getattr(score.explanation, "summary", "")
+            )
             print(f"   Explanation Summary: {explanation_summary}")
             print("-" * 20)
-        print("="*40 + "\n")
+        print("=" * 40 + "\n")
 
         # 10. Construct response using the existing response building logic
         prescore_lookup = {
@@ -339,8 +570,7 @@ class ScoringService:
         }
 
         deep_score_lookup = {
-            score.candidate_id: score
-            for score in deep_score_output.scores
+            score.candidate_id: score for score in deep_score_output.scores
         }
 
         candidates = [
@@ -364,6 +594,40 @@ class ScoringService:
             reverse=True,
         )
 
+        api_returned_count = len(candidates)
+        final_report = self._generate_pipeline_report(context, api_returned_count)
+        logger.info(final_report)
+
+        # Invariant Assertion Checks (limited only to selected pool)
+        completed_count = sum(
+            1
+            for c in context.candidates.values()
+            if c.terminal_outcome == CandidateTerminalOutcome.SUCCESS
+        )
+        failed_count = sum(
+            1
+            for c in context.candidates.values()
+            if c.terminal_outcome
+            in (
+                CandidateTerminalOutcome.FAILED_SYNCHRONIZATION,
+                CandidateTerminalOutcome.FAILED_SCORING,
+                CandidateTerminalOutcome.FAILED_PERSISTENCE,
+            )
+            and c.metrics.prescore_rank is not None
+            and c.metrics.prescore_rank <= data.k
+        )
+
+        inv1 = selected_candidate_count == (completed_count + failed_count)
+        inv2 = completed_count == api_returned_count
+
+        if not (inv1 and inv2):
+            discrepancy_msg = (
+                f"Pipeline Consistency Discrepancy Found!\n"
+                f"Assertion Invariant 1 (Selected == Completed + Failed): {inv1} (Selected: {selected_candidate_count}, Completed: {completed_count}, Failed: {failed_count})\n"
+                f"Assertion Invariant 2 (Completed == API Returned): {inv2} (Completed: {completed_count}, API Returned: {api_returned_count})"
+            )
+            logger.error(discrepancy_msg)
+
         return PipelineExecutionResponse(
             stage="completed",
             matched_candidate_count=matched_candidate_count,
@@ -372,6 +636,140 @@ class ScoringService:
             top_k=data.k,
             candidates=candidates,
         )
+
+    def _generate_pipeline_report(
+        self, context: PipelineExecutionContext, api_returned_count: int
+    ) -> str:
+        from src.schemas.pipeline_candidate_state import (
+            CandidateTerminalOutcome,
+            StageStatus,
+        )
+
+        selected_candidates = [
+            c
+            for c in context.candidates.values()
+            if c.terminal_outcome
+            in (
+                CandidateTerminalOutcome.SUCCESS,
+                CandidateTerminalOutcome.FAILED_SYNCHRONIZATION,
+                CandidateTerminalOutcome.FAILED_SCORING,
+                CandidateTerminalOutcome.FAILED_PERSISTENCE,
+            )
+        ]
+        selected_ids = {c.candidate_id for c in selected_candidates}
+        selected_count = len(selected_candidates)
+
+        matched_count = sum(
+            1
+            for c in context.candidates.values()
+            if c.acquisition == StageStatus.SUCCESS
+        )
+        eligible_count = sum(
+            1
+            for c in context.candidates.values()
+            if c.prescoring == StageStatus.SUCCESS
+            and c.terminal_outcome != CandidateTerminalOutcome.SKIPPED_THRESHOLD
+        )
+
+        sync_success = sum(
+            1
+            for c in context.candidates.values()
+            if c.synchronization == StageStatus.SUCCESS
+            and c.candidate_id in selected_ids
+        )
+        sync_failed = sum(
+            1
+            for c in context.candidates.values()
+            if c.synchronization == StageStatus.FAILED
+            and c.candidate_id in selected_ids
+        )
+
+        deep_success = sum(
+            1
+            for c in context.candidates.values()
+            if c.scoring == StageStatus.SUCCESS and c.candidate_id in selected_ids
+        )
+        deep_failed = sum(
+            1
+            for c in context.candidates.values()
+            if c.scoring == StageStatus.FAILED and c.candidate_id in selected_ids
+        )
+
+        persist_success = sum(
+            1
+            for c in context.candidates.values()
+            if c.persistence == StageStatus.SUCCESS and c.candidate_id in selected_ids
+        )
+        persist_failed = sum(
+            1
+            for c in context.candidates.values()
+            if c.persistence == StageStatus.FAILED and c.candidate_id in selected_ids
+        )
+
+        # Check validation invariants
+        inv1 = selected_count == (sync_success + sync_failed)
+        inv2 = sync_success == (deep_success + deep_failed)
+        inv3 = deep_success == persist_success
+        inv4 = persist_success == api_returned_count
+
+        consistency_passed = all([inv1, inv2, inv3, inv4])
+        status_str = "PASSED" if consistency_passed else "FAILED"
+
+        reasons = []
+        if not inv1:
+            reasons.append(
+                f"Selected count ({selected_count}) != Sync Success ({sync_success}) + Sync Failed ({sync_failed})"
+            )
+        if not inv2:
+            reasons.append(
+                f"Sync Success ({sync_success}) != Deep Score Success ({deep_success}) + Deep Score Failed ({deep_failed})"
+            )
+        if not inv3:
+            reasons.append(
+                f"Deep Score Success ({deep_success}) != Persist Success ({persist_success})"
+            )
+        if not inv4:
+            reasons.append(
+                f"Persist Success ({persist_success}) != API Returned Count ({api_returned_count})"
+            )
+
+        reason_str = (
+            "\n".join(reasons)
+            if reasons
+            else "All database invariants and API serialization mappings are fully consistent."
+        )
+
+        report = f"""
+==================================================
+PIPELINE EXECUTION REPORT
+==================================================
+Pipeline Execution ID: {context.execution_id}
+Job Description ID: {context.job_description_id}
+Recruiter ID: {context.recruiter_id}
+
+Matched: {matched_count}
+Eligible: {eligible_count}
+Selected: {selected_count}
+
+Synchronization
+  Success: {sync_success}
+  Failed: {sync_failed}
+
+Deep Scoring
+  Success: {deep_success}
+  Failed: {deep_failed}
+
+Persistence
+  CandidateJobScore: {persist_success}
+  Pipeline Entries: {persist_success}
+  API Response: {api_returned_count}
+
+Consistency: {status_str}
+Reason:
+{reason_str}
+==================================================
+"""
+        return report
 
     async def list_ranked_candidates_for_job_description(
         self,
@@ -543,11 +941,24 @@ class ScoringService:
         current_user: AuthenticatedUserContext,
     ) -> CandidateEvaluationBoardResponse:
         if current_user.role != UserRole.hiring_manager:
-            raise ScoringBaseException(message="Access denied", details="Only hiring managers can access this endpoint.", status_code=403)
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Only hiring managers can access this endpoint.",
+                status_code=403,
+            )
 
-        job_description = await self.repository.get_job_description_by_id(job_description_id)
-        if not job_description or job_description.hiring_manager_id != current_user.user_id:
-            raise ScoringBaseException(message="Access denied", details="Hiring manager does not own this campaign.", status_code=403)
+        job_description = await self.repository.get_job_description_by_id(
+            job_description_id
+        )
+        if (
+            not job_description
+            or job_description.hiring_manager_id != current_user.user_id
+        ):
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Hiring manager does not own this campaign.",
+                status_code=403,
+            )
 
         pipeline_entry = await self.repository.get_pipeline_entry(
             job_description_id,
@@ -621,7 +1032,6 @@ class ScoringService:
             for pipeline_entry in pipeline_entries
         ]
 
-
     async def _prescore_candidates(
         self,
         job_description_id: UUID,
@@ -635,12 +1045,15 @@ class ScoringService:
             job_description,
         )
 
-        print("\n" + "="*40 + "\nPrescoring LLM Input\n" + "="*40)
+        print("\n" + "=" * 40 + "\nPrescoring LLM Input\n" + "=" * 40)
         print(f"Compressed JD Profile:\n{compressed_jd.profile_text}\n")
         print("Compressed Candidates Profiles sent to LLM:")
         for cc in candidates:
-            print(f"- ID: {cc.candidate_id}\nProfile Text:\n{cc.profile_text}\n" + "-"*20)
-        print("="*40 + "\n")
+            print(
+                f"- ID: {cc.candidate_id}\nProfile Text:\n{cc.profile_text}\n"
+                + "-" * 20
+            )
+        print("=" * 40 + "\n")
 
         score_results = await self.prescoring_client.prescore_candidates(
             candidates,
@@ -685,12 +1098,8 @@ class ScoringService:
             candidate_skills = self._extract_candidate_skill_names(
                 candidate,
             )
-            candidate_title = (
-                candidate.current_title or ""
-            ).lower()
-            experience_years = (
-                candidate.total_experience_months / 12
-            )
+            candidate_title = (candidate.current_title or "").lower()
+            experience_years = candidate.total_experience_months / 12
 
             mandatory_matches = len(
                 mandatory_skills & candidate_skills,
@@ -699,23 +1108,17 @@ class ScoringService:
                 optional_skills & candidate_skills,
             )
 
-            matches_experience = (
-                experience_years
-                >= max(job_description.min_experience - 1, 0)
+            matches_experience = experience_years >= max(
+                job_description.min_experience - 1, 0
             )
             matches_role_hint = (
-                any(
-                    term in candidate_title
-                    for term in job_title_terms
-                )
+                any(term in candidate_title for term in job_title_terms)
                 if job_title_terms
                 else False
             )
 
             has_relevant_skills = (
-                mandatory_matches > 0
-                or optional_matches > 0
-                or not mandatory_skills
+                mandatory_matches > 0 or optional_matches > 0 or not mandatory_skills
             )
 
             if not matches_experience:
@@ -727,10 +1130,12 @@ class ScoringService:
             sourced_candidates.append(
                 candidate,
             )
-        print("\n" + "="*40 + "\nSourced Candidates\n" + "="*40)
+        print("\n" + "=" * 40 + "\nSourced Candidates\n" + "=" * 40)
         for idx, candidate in enumerate(sourced_candidates):
-            print(f"{idx+1}. Name: {candidate.full_name} | ID: {candidate.id} | Email: {candidate.email} | Exp: {candidate.total_experience_months} months")
-        print("="*40 + "\n")
+            print(
+                f"{idx + 1}. Name: {candidate.full_name} | ID: {candidate.id} | Email: {candidate.email} | Exp: {candidate.total_experience_months} months"
+            )
+        print("=" * 40 + "\n")
 
         return sourced_candidates
 
@@ -738,15 +1143,11 @@ class ScoringService:
         self,
         candidate: Candidate,
     ) -> set[str]:
-        skill_names = {
-            skill.skill_name.strip().lower()
-            for skill in candidate.skills
-        }
+        skill_names = {skill.skill_name.strip().lower() for skill in candidate.skills}
 
         for experience in candidate.experiences:
             skill_names.update(
-                skill.skill_name.strip().lower()
-                for skill in experience.skills
+                skill.skill_name.strip().lower() for skill in experience.skills
             )
 
         return skill_names
@@ -841,13 +1242,10 @@ class ScoringService:
         pipeline_entry: object,
     ) -> PipelineSnapshotResponse:
         return PipelineSnapshotResponse(
-            id=getattr(pipeline_entry, "id"),
-            candidate_id=getattr(
-                pipeline_entry,
-                "candidate_id",
-            ),
-            jd_id=getattr(pipeline_entry, "jd_id"),
-            stage=getattr(pipeline_entry, "stage"),
+            id=pipeline_entry.id,
+            candidate_id=pipeline_entry.candidate_id,
+            jd_id=pipeline_entry.jd_id,
+            stage=pipeline_entry.stage,
             recruiter_notes=getattr(
                 pipeline_entry,
                 "recruiter_notes",
@@ -858,10 +1256,7 @@ class ScoringService:
                 "hiring_manager_notes",
                 None,
             ),
-            created_at=getattr(
-                pipeline_entry,
-                "created_at",
-            ),
+            created_at=pipeline_entry.created_at,
             hm_decision=getattr(pipeline_entry, "hm_decision", None),
             interview_link=getattr(pipeline_entry, "interview_link", None),
             interview_datetime=getattr(pipeline_entry, "interview_datetime", None),
@@ -875,9 +1270,7 @@ class ScoringService:
         job_description: JobDescription,
     ) -> CompressedJobDescription:
         mandatory_skills = [
-            skill.skill_name
-            for skill in job_description.skills
-            if skill.is_mandatory
+            skill.skill_name for skill in job_description.skills if skill.is_mandatory
         ]
 
         optional_skills = [
@@ -903,15 +1296,9 @@ class ScoringService:
         self,
         candidate: Candidate,
     ) -> CompressedCandidate:
-        global_skills = ", ".join(
-            skill.skill_name
-            for skill in candidate.skills
-        )
+        global_skills = ", ".join(skill.skill_name for skill in candidate.skills)
 
-        experience_titles = [
-            experience.title
-            for experience in candidate.experiences
-        ]
+        experience_titles = [experience.title for experience in candidate.experiences]
 
         profile_text = (
             f"Title: {candidate.current_title or ''}\n"
@@ -960,9 +1347,7 @@ class ScoringService:
             current_title=candidate.current_title,
             location=candidate.location,
             summary=candidate.summary,
-            total_experience_months=(
-                candidate.total_experience_months
-            ),
+            total_experience_months=(candidate.total_experience_months),
             skills=[
                 CandidateSkillInput(
                     skill_name=skill.skill_name,
@@ -1057,6 +1442,14 @@ class ScoringService:
             current_user=current_user,
         )
 
+    async def _transition_to_active_if_needed(self, job_description_id: UUID) -> None:
+        active_status_id = await self.repository.get_status_by_code("ACTIVE")
+        if active_status_id:
+            await self.repository.update_job_description_status(
+                job_description_id,
+                active_status_id,
+            )
+
     async def _get_authorized_job_description(
         self,
         job_description_id: UUID,
@@ -1119,8 +1512,12 @@ class ScoringService:
         notes_by_candidate: dict[UUID, str],
     ) -> int:
         if current_user.role != UserRole.recruiter:
-            raise ScoringBaseException(message="Access denied", details="Only recruiters are allowed to share shortlists.", status_code=403)
-            
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Only recruiters are allowed to share shortlists.",
+                status_code=403,
+            )
+
         # 1. Validate that all submitted candidates already exist in the pipeline for this job description
         invalid_ids = await self.repository.validate_candidates_belong_to_job(
             job_description_id,
@@ -1133,18 +1530,22 @@ class ScoringService:
                 details=f"Invalid candidate IDs for this job description: {invalid_str}",
                 status_code=400,
             )
-            
+
         # 2. Perform the update
         shared_count = await self.repository.share_shortlist_with_hiring_manager(
             job_description_id,
             candidate_ids,
             notes_by_candidate,
         )
-        
+
         # 3. Commit transaction successfully
         await self.repository.db.commit()
-        logger.info("Shortlist shared: JobDescription %s successfully committed sharing for %s candidates", job_description_id, shared_count)
-        
+        logger.info(
+            "Shortlist shared: JobDescription %s successfully committed sharing for %s candidates",
+            job_description_id,
+            shared_count,
+        )
+
         # 4. Best-effort notification dispatch to the Hiring Manager
         try:
             # Load JobDescription along with recruiter and hiring_manager relations
@@ -1161,13 +1562,19 @@ class ScoringService:
 
             if jd and jd.hiring_manager:
                 notification_service = NotificationService(self.repository.db)
-                frontend_base = settings.ALLOWED_ORIGINS[0] if settings.ALLOWED_ORIGINS else "http://localhost:5173"
-                absolute_target_url = f"{frontend_base}/hm/shared-campaigns/{job_description_id}"
-                
+                frontend_base = (
+                    settings.ALLOWED_ORIGINS[0]
+                    if settings.ALLOWED_ORIGINS
+                    else "http://localhost:5173"
+                )
+                absolute_target_url = (
+                    f"{frontend_base}/hm/shared-campaigns/{job_description_id}"
+                )
+
                 email_body = (
                     f"Hello {jd.hiring_manager.name},\n\n"
                     f"{jd.recruiter.name} has shared a new candidate shortlist for "
-                    f"\"{jd.title}\" with you.\n\n"
+                    f'"{jd.title}" with you.\n\n'
                     f"There are {len(candidate_ids)} recommended candidates ready for your review."
                 )
 
@@ -1175,30 +1582,45 @@ class ScoringService:
                     title="New Shortlist Shared",
                     body=email_body,
                     action_text="Review Candidates",
-                    action_url=absolute_target_url
+                    action_url=absolute_target_url,
                 )
 
                 await notification_service.notify(
                     user=jd.hiring_manager,
                     notification_type=NotificationType.SHORTLIST_SHARED,
                     title="New Candidate Shortlist Shared",
-                    message=f"A new shortlist for \"{jd.title}\" has been shared with you by {jd.recruiter.name}. Review the recommended candidates.",
+                    message=f'A new shortlist for "{jd.title}" has been shared with you by {jd.recruiter.name}. Review the recommended candidates.',
                     target_url=f"/hm/shared-campaigns/{job_description_id}",
-                    metadata={"job_description_id": str(job_description_id), "candidate_count": len(candidate_ids)},
+                    metadata={
+                        "job_description_id": str(job_description_id),
+                        "candidate_count": len(candidate_ids),
+                    },
                     send_in_app=True,
                     send_email=True,
                     email_subject=f"New candidate shortlist for {jd.title}",
-                    email_html=email_html
+                    email_html=email_html,
                 )
-                logger.info("Hiring Manager notification created and email sent for shortlist share on campaign %s", job_description_id)
+                logger.info(
+                    "Hiring Manager notification created and email sent for shortlist share on campaign %s",
+                    job_description_id,
+                )
             elif not jd:
-                logger.warning("Could not send shortlist share notification: Job description %s not found.", job_description_id)
+                logger.warning(
+                    "Could not send shortlist share notification: Job description %s not found.",
+                    job_description_id,
+                )
             else:
-                logger.warning("Could not send shortlist share notification: Job description %s has no assigned Hiring Manager.", job_description_id)
+                logger.warning(
+                    "Could not send shortlist share notification: Job description %s has no assigned Hiring Manager.",
+                    job_description_id,
+                )
         except Exception as e:
             # Notification failures must NEVER rollback or fail the shortlist sharing transaction
-            logger.exception("Hiring Manager email failed: Failed to send shortlist shared notification: %s", str(e))
-        
+            logger.exception(
+                "Hiring Manager email failed: Failed to send shortlist shared notification: %s",
+                str(e),
+            )
+
         return shared_count
 
     async def get_hm_shared_campaigns(
@@ -1206,28 +1628,48 @@ class ScoringService:
         current_user: AuthenticatedUserContext,
     ) -> list[HMCampaignResponse]:
         if current_user.role != UserRole.hiring_manager:
-            raise ScoringBaseException(message="Access denied", details="Only hiring managers can view shared campaigns.", status_code=403)
-            
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Only hiring managers can view shared campaigns.",
+                status_code=403,
+            )
+
         jds = await self.repository.get_hm_campaigns(current_user.user_id)
-        
+
         from src.data.models.postgres.pipeline import HiringManagerDecision
-        
+
         response = []
         for jd in jds:
-            shared_entries = [p for p in jd.pipeline_entries if p.shared_with_hiring_manager]
-            
+            shared_entries = [
+                p for p in jd.pipeline_entries if p.shared_with_hiring_manager
+            ]
+
             # calculate counts
             shared_candidate_count = len(shared_entries)
-            accepted_candidate_count = sum(1 for p in shared_entries if p.hm_decision == HiringManagerDecision.INTERVIEW_SENT)
-            rejected_candidate_count = sum(1 for p in shared_entries if p.hm_decision == HiringManagerDecision.REJECTED)
-            pending_candidate_count = sum(1 for p in shared_entries if p.hm_decision == HiringManagerDecision.PENDING)
-            
+            accepted_candidate_count = sum(
+                1
+                for p in shared_entries
+                if p.hm_decision == HiringManagerDecision.INTERVIEW_SENT
+            )
+            rejected_candidate_count = sum(
+                1
+                for p in shared_entries
+                if p.hm_decision == HiringManagerDecision.REJECTED
+            )
+            pending_candidate_count = sum(
+                1
+                for p in shared_entries
+                if p.hm_decision == HiringManagerDecision.PENDING
+            )
+
             # calculate latest shared date
-            shared_dates = [p.shared_at for p in shared_entries if p.shared_at is not None]
+            shared_dates = [
+                p.shared_at for p in shared_entries if p.shared_at is not None
+            ]
             shared_at = max(shared_dates) if shared_dates else None
-            
+
             recruiter_name = jd.recruiter.name if jd.recruiter else "Unknown Recruiter"
-            
+
             response.append(
                 HMCampaignResponse(
                     id=jd.id,
@@ -1241,7 +1683,7 @@ class ScoringService:
                     pending_candidate_count=pending_candidate_count,
                 )
             )
-            
+
         return response
 
     async def get_hm_shared_candidates(
@@ -1250,13 +1692,17 @@ class ScoringService:
         current_user: AuthenticatedUserContext,
     ) -> list[SharedCampaignCandidateResponse]:
         if current_user.role != UserRole.hiring_manager:
-            raise ScoringBaseException(message="Access denied", details="Only hiring managers can view shared candidates.", status_code=403)
-            
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Only hiring managers can view shared candidates.",
+                status_code=403,
+            )
+
         rows = await self.repository.get_shared_candidates_for_hm(
             job_description_id,
             current_user.user_id,
         )
-        
+
         return [
             SharedCampaignCandidateResponse(
                 candidate_id=cand.id,
@@ -1286,10 +1732,13 @@ class ScoringService:
         decision: HiringManagerDecision,
         remarks: str | None,
     ) -> Pipeline:
-        from src.data.models.postgres.pipeline import HiringManagerDecision
         if current_user.role != UserRole.hiring_manager:
-            raise ScoringBaseException(message="Access denied", details="Only hiring managers can submit candidate reviews.", status_code=403)
-            
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Only hiring managers can submit candidate reviews.",
+                status_code=403,
+            )
+
         pipeline_entry = await self.repository.submit_hm_review(
             job_description_id,
             candidate_id,
@@ -1297,17 +1746,19 @@ class ScoringService:
             decision,
             remarks,
         )
-        
+
         if not pipeline_entry:
             raise ScoringBaseException(
                 message="Review failed",
                 details="Failed to submit review. Candidate may not be shared, or job description is not assigned to you.",
                 status_code=400,
             )
-            
+
         # Publish CANDIDATE_REVIEWED event (stub/log for future integration)
-        print(f"[EVENT] CANDIDATE_REVIEWED: Candidate {candidate_id} reviewed for JobDescription {job_description_id}. Decision: {decision}")
-        
+        print(
+            f"[EVENT] CANDIDATE_REVIEWED: Candidate {candidate_id} reviewed for JobDescription {job_description_id}. Decision: {decision}"
+        )
+
         return pipeline_entry
 
     async def schedule_interview(
@@ -1322,15 +1773,14 @@ class ScoringService:
     ) -> Pipeline:
         from src.data.models.postgres.pipeline import HiringManagerDecision
         from src.data.models.postgres.user import User
-        from datetime import UTC
-        
+
         if current_user.role != UserRole.hiring_manager:
             raise ScoringBaseException(
                 message="Access denied",
                 details="Only hiring managers can schedule interviews.",
-                status_code=403
+                status_code=403,
             )
-            
+
         # 1. Authorize: Load JobDescription along with recruiter relation
         stmt = (
             select(JobDescription)
@@ -1341,14 +1791,14 @@ class ScoringService:
         )
         res = await self.repository.db.execute(stmt)
         jd = res.scalar_one_or_none()
-        
+
         if not jd or jd.hiring_manager_id != current_user.user_id:
             raise ScoringBaseException(
                 message="Access denied",
                 details="Hiring manager does not own this campaign or job description not found.",
-                status_code=403
+                status_code=403,
             )
-            
+
         # 2. Validate candidate is shared
         pipeline_entry = await self.repository.get_pipeline_entry(
             job_description_id,
@@ -1358,33 +1808,32 @@ class ScoringService:
             raise ScoringBaseException(
                 message="Access denied",
                 details="Candidate shortlist is not shared with the hiring manager.",
-                status_code=403
+                status_code=403,
             )
-            
+
         # 3. Validate candidate email exists
         candidate = await self.repository.get_candidate_by_id(candidate_id)
         if not candidate:
             raise CandidateNotFound(
-                details="Candidate could not be found",
-                error_code="CANDIDATE_NOT_FOUND"
+                details="Candidate could not be found", error_code="CANDIDATE_NOT_FOUND"
             )
         if not candidate.email or not candidate.email.strip():
             raise ScoringBaseException(
                 message="Validation failed",
                 details="Candidate email address is missing. Cannot send interview invitation.",
-                status_code=400
+                status_code=400,
             )
 
         # 4. Dispatch Email to Candidate
         notification_service = NotificationService(self.repository.db)
-        
+
         date_str = interview_datetime.strftime("%B %d, %Y")
         time_str = interview_datetime.strftime("%I:%M %p")
-        
+
         candidate_body = (
             f"Hello {candidate.full_name},\n\n"
             f"Congratulations! You have been selected for an interview for the "
-            f"\"{jd.title}\" role.\n\n"
+            f'"{jd.title}" role.\n\n'
             f"Please find the details below:\n"
             f"- **Date:** {date_str}\n"
             f"- **Time:** {time_str}\n"
@@ -1398,17 +1847,19 @@ class ScoringService:
             title="Interview Invitation",
             body=candidate_body,
             action_text="Join Interview",
-            action_url=interview_link
+            action_url=interview_link,
         )
-        
+
         # This will raise exception if Brevo client fails
         await notification_service.send_email(
             recipient_email=candidate.email,
             recipient_name=candidate.full_name,
             subject=f"Interview Invitation – {jd.title}",
-            html_content=candidate_html
+            html_content=candidate_html,
         )
-        logger.info("Hiring Manager email sent successfully to candidate %s", candidate.email)
+        logger.info(
+            "Hiring Manager email sent successfully to candidate %s", candidate.email
+        )
 
         # 5. Only AFTER successful email dispatch, update pipeline in DB
         pipeline_entry.hm_decision = HiringManagerDecision.INTERVIEW_SENT
@@ -1417,22 +1868,32 @@ class ScoringService:
         pipeline_entry.interview_timezone = timezone
         pipeline_entry.interview_message = message
         pipeline_entry.interview_sent_at = datetime.now(UTC)
-        
+
         await self.repository.db.commit()
-        logger.info("Pipeline status updated to INTERVIEW_SENT for candidate %s on campaign %s", candidate_id, job_description_id)
+        logger.info(
+            "Pipeline status updated to INTERVIEW_SENT for candidate %s on campaign %s",
+            candidate_id,
+            job_description_id,
+        )
 
         # 6. Recruiter Notification (best-effort)
         try:
-            res_hm = await self.repository.db.execute(select(User).where(User.id == current_user.user_id))
+            res_hm = await self.repository.db.execute(
+                select(User).where(User.id == current_user.user_id)
+            )
             hm_user = res_hm.scalar_one_or_none()
             hm_name = hm_user.name if hm_user else "Hiring Manager"
 
             recruiter_user = jd.recruiter
-            frontend_base = settings.ALLOWED_ORIGINS[0] if settings.ALLOWED_ORIGINS else "http://localhost:5173"
-            
+            frontend_base = (
+                settings.ALLOWED_ORIGINS[0]
+                if settings.ALLOWED_ORIGINS
+                else "http://localhost:5173"
+            )
+
             recruiter_body = (
                 f"Hello {recruiter_user.name},\n\n"
-                f"{hm_name} has scheduled an interview with {candidate.full_name} for your job description \"{jd.title}\".\n\n"
+                f'{hm_name} has scheduled an interview with {candidate.full_name} for your job description "{jd.title}".\n\n'
                 f"Interview Details:\n"
                 f"- **Date & Time:** {date_str} at {time_str} ({timezone})\n"
                 f"- **Link:** {interview_link}\n"
@@ -1441,27 +1902,43 @@ class ScoringService:
                 title="Interview Scheduled",
                 body=recruiter_body,
                 action_text="View Candidate Detail",
-                action_url=f"{frontend_base}/recruiter/job-descriptions/{job_description_id}/candidates/{candidate_id}"
+                action_url=f"{frontend_base}/recruiter/job-descriptions/{job_description_id}/candidates/{candidate_id}",
             )
 
             await notification_service.notify(
                 user=recruiter_user,
                 notification_type=NotificationType.INTERVIEW_INVITATION,
                 title="Interview Scheduled",
-                message=f"{hm_name} has scheduled an interview with {candidate.full_name} for \"{jd.title}\".",
+                message=f'{hm_name} has scheduled an interview with {candidate.full_name} for "{jd.title}".',
                 target_url=f"/recruiter/job-descriptions/{job_description_id}/candidates/{candidate_id}",
                 metadata={
                     "job_description_id": str(job_description_id),
                     "candidate_id": str(candidate_id),
-                    "candidate_name": candidate.full_name
+                    "candidate_name": candidate.full_name,
                 },
                 send_in_app=True,
                 send_email=True,
                 email_subject=f"Interview scheduled for {candidate.full_name}",
-                email_html=recruiter_html
+                email_html=recruiter_html,
             )
-            logger.info("Hiring Manager notification created and Recruiter email sent successfully for interview on candidate %s", candidate_id)
+            logger.info(
+                "Hiring Manager notification created and Recruiter email sent successfully for interview on candidate %s",
+                candidate_id,
+            )
         except Exception as recruiter_notify_err:
-            logger.warning("Failed to send recruiter notification for interview invitation: %s", str(recruiter_notify_err))
+            logger.warning(
+                "Failed to send recruiter notification for interview invitation: %s",
+                str(recruiter_notify_err),
+            )
 
         return pipeline_entry
+
+    async def close(self) -> None:
+        """Close any active resources, clients, or connection pools."""
+        if hasattr(self, "search_client") and self.search_client:
+            client = self.search_client
+            self.search_client = None
+            try:
+                await client.close()
+            except Exception as e:
+                logger.warning("Error during search client cleanup: %s", str(e))

@@ -1,16 +1,14 @@
 import asyncio
-from uuid import uuid4, UUID
 from pprint import pprint
-from datetime import datetime, UTC
 
-from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
-from src.schemas.job_description_schema import (
-    JobDescriptionExtractRequest,
-    JobDescriptionCreateRequest,
-    JDSkillCreateRequest,
-)
 from src.core.services.job_description_service import JobDescriptionService
 from src.data.clients.postgres import async_session_local
+from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
+from src.schemas.job_description_schema import (
+    JDSkillCreateRequest,
+    JobDescriptionCreateRequest,
+    JobDescriptionExtractRequest,
+)
 
 
 async def main():
@@ -52,6 +50,7 @@ async def main():
     # Let's query recruiters from database first to use a valid one
     async with async_session_local() as db:
         from sqlalchemy import select
+
         from src.data.models.postgres.user import User
         result = await db.execute(select(User).where(User.role == "recruiter"))
         recruiter = result.scalars().first()
