@@ -197,7 +197,7 @@ async def get_task_result(
     task_service: ScoringTaskService = Depends(
         get_scoring_task_service,
     ),
-):
+) -> PipelineExecutionResponse:
     await task_service.recover_stale_tasks(settings.SCORING_TASK_TIMEOUT_MINUTES)
     task = await task_service.get_task_by_id(task_id)
     if not task:

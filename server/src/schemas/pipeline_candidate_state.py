@@ -60,35 +60,35 @@ class PipelineCandidateState:
     diagnostics: CandidateDiagnostics = field(default_factory=CandidateDiagnostics)
 
     # Atomic state transition methods
-    def mark_acquired(self, duration_ms: float = 0.0):
+    def mark_acquired(self, duration_ms: float = 0.0) -> None:
         self.acquisition = StageStatus.SUCCESS
         self.diagnostics.acquisition = StageOutcome(
             status=StageStatus.SUCCESS, duration_ms=duration_ms)
 
-    def mark_prescored(self, prescore: int, duration_ms: float = 0.0):
+    def mark_prescored(self, prescore: int, duration_ms: float = 0.0) -> None:
         self.prescoring = StageStatus.SUCCESS
         self.metrics.prescore = prescore
         self.diagnostics.prescoring = StageOutcome(
             status=StageStatus.SUCCESS, duration_ms=duration_ms)
 
-    def mark_skipped_threshold(self):
+    def mark_skipped_threshold(self) -> None:
         self.terminal_outcome = CandidateTerminalOutcome.SKIPPED_THRESHOLD
         self.synchronization = StageStatus.SKIPPED
         self.scoring = StageStatus.SKIPPED
         self.persistence = StageStatus.SKIPPED
 
-    def mark_skipped_top_k(self, rank: int):
+    def mark_skipped_top_k(self, rank: int) -> None:
         self.terminal_outcome = CandidateTerminalOutcome.SKIPPED_TOP_K
         self.metrics.prescore_rank = rank
         self.synchronization = StageStatus.SKIPPED
         self.scoring = StageStatus.SKIPPED
         self.persistence = StageStatus.SKIPPED
 
-    def mark_selected(self, rank: int):
+    def mark_selected(self, rank: int) -> None:
         self.terminal_outcome = CandidateTerminalOutcome.PENDING
         self.metrics.prescore_rank = rank
 
-    def mark_synchronization_success(self, duration_ms: float = 0.0):
+    def mark_synchronization_success(self, duration_ms: float = 0.0) -> None:
         self.synchronization = StageStatus.SUCCESS
         self.diagnostics.synchronization = StageOutcome(
             status=StageStatus.SUCCESS, duration_ms=duration_ms)
@@ -96,7 +96,7 @@ class PipelineCandidateState:
     def mark_synchronization_failed(self,
             error_code: str,
             error_message: str,
-            duration_ms: float = 0.0):
+            duration_ms: float = 0.0) -> None:
         self.synchronization = StageStatus.FAILED
         self.terminal_outcome = CandidateTerminalOutcome.FAILED_SYNCHRONIZATION
         self.scoring = StageStatus.SKIPPED
@@ -111,7 +111,7 @@ class PipelineCandidateState:
     def mark_scoring_success(self,
             final_score: float,
             confidence: float,
-            duration_ms: float = 0.0):
+            duration_ms: float = 0.0) -> None:
         self.scoring = StageStatus.SUCCESS
         self.metrics.final_score = final_score
         self.metrics.confidence = confidence
@@ -121,7 +121,7 @@ class PipelineCandidateState:
     def mark_scoring_failed(self,
             error_code: str,
             error_message: str,
-            duration_ms: float = 0.0):
+            duration_ms: float = 0.0) -> None:
         self.scoring = StageStatus.FAILED
         self.terminal_outcome = CandidateTerminalOutcome.FAILED_SCORING
         self.persistence = StageStatus.SKIPPED
@@ -132,7 +132,7 @@ class PipelineCandidateState:
             duration_ms=duration_ms
         )
 
-    def mark_persistence_success(self, duration_ms: float = 0.0):
+    def mark_persistence_success(self, duration_ms: float = 0.0) -> None:
         self.persistence = StageStatus.SUCCESS
         self.terminal_outcome = CandidateTerminalOutcome.SUCCESS
         self.diagnostics.persistence = StageOutcome(
@@ -141,7 +141,7 @@ class PipelineCandidateState:
     def mark_persistence_failed(self,
         error_code: str,
         error_message: str,
-        duration_ms: float = 0.0):
+        duration_ms: float = 0.0) -> None:
         self.persistence = StageStatus.FAILED
         self.terminal_outcome = CandidateTerminalOutcome.FAILED_PERSISTENCE
         self.diagnostics.persistence = StageOutcome(

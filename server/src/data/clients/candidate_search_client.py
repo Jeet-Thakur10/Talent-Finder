@@ -138,5 +138,7 @@ class CandidateSearchClient:
     async def __aenter__(self) -> CandidateSearchClient:
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(  # type: ignore[no-untyped-def]
+            self, exc_type, exc_val, exc_tb
+            ) -> None: 
         await self.close()

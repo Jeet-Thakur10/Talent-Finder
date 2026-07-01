@@ -283,7 +283,7 @@ async def async_run_scoring_pipeline(
 
 
 @celery_app.task(bind=True)
-def run_scoring_pipeline_task(
+def run_scoring_pipeline_task( # type: ignore[no-untyped-def]
     self,
     task_id_str: str,
     recruiter_id_str: str,
