@@ -6,7 +6,7 @@ from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
 
 from src.config.settings import settings
 from src.schemas.candidate_search_request import CandidateSearchRequest
-from src.schemas.search_attempt import SearchAttempt, SearchOptimizationPlan
+from src.schemas.search_attempt import SearchOptimizationPlan
 
 
 class CandidateSearchStrategyAgent:

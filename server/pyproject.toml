@@ -60,7 +60,7 @@ select = [
     "SIM",
     "C4",
 ]
-ignore = ["B008", "N818"]
+ignore = ["B008", "N818", "B905"]
 
 [tool.ruff.format]
 quote-style = "double"

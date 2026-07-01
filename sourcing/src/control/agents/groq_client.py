@@ -77,7 +77,7 @@ class RotationalChatGroq(ChatGroq):
                 print(f"Groq request succeeded using key {active_idx + 1}/{num_keys}.")
                 logger.info(f"Groq request succeeded using key {active_idx + 1}/{num_keys}.")
                 return res
-            except RateLimitError as exc:
+            except RateLimitError:
                 print(f"Groq key {active_idx + 1}/{num_keys} exhausted.\n")
                 logger.warning(f"Groq key {active_idx + 1}/{num_keys} exhausted.")
                 
@@ -122,7 +122,7 @@ class RotationalChatGroq(ChatGroq):
                 print(f"Groq request succeeded using key {active_idx + 1}/{num_keys}.")
                 logger.info(f"Groq request succeeded using key {active_idx + 1}/{num_keys}.")
                 return res
-            except RateLimitError as exc:
+            except RateLimitError:
                 print(f"Groq key {active_idx + 1}/{num_keys} exhausted.\n")
                 logger.warning(f"Groq key {active_idx + 1}/{num_keys} exhausted.")
                 

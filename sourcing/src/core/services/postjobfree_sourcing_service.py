@@ -98,7 +98,7 @@ class PostJobFreeSourcingService:
         existing_ids = {c.candidate_id for c in existing_candidates}
         candidates_remaining = max(request.required_candidates - existing_count, 0)
 
-        print(f"\n[PostJobFreeSourcingService] Starting Adaptive Sourcing Loop:")
+        print("\n[PostJobFreeSourcingService] Starting Adaptive Sourcing Loop:")
         print(f"  Required candidates: {request.required_candidates}")
         print(f"  Existing matching candidates: {existing_count}")
         print(f"  Initial candidates remaining: {candidates_remaining}")
@@ -158,7 +158,6 @@ class PostJobFreeSourcingService:
                 optimized_req,
             )
 
-            import urllib.parse
             params = {
                 "q": search_request.required_words,
                 "n": search_request.excluded_words,
@@ -168,7 +167,7 @@ class PostJobFreeSourcingService:
             }
             url = f"https://www.postjobfree.com/resumes?{urllib.parse.urlencode(params)}"
 
-            print(f"\n" + "-" * 50)
+            print("\n" + "-" * 50)
             print(f"STARTING SEARCH ATTEMPT {current_attempt}")
             print(f"  Title Used: '{optimized_req.title}'")
             print(f"  Skills Used: {optimized_req.skills}")
@@ -333,7 +332,7 @@ class PostJobFreeSourcingService:
                             continue
 
                         if stored_candidate.id in request.exclude_candidate_ids:
-                            print(f"     [Scrape] Excluded: candidate ID in exclude_candidate_ids.")
+                            print("     [Scrape] Excluded: candidate ID in exclude_candidate_ids.")
                             continue
 
                         if stored_candidate.id not in existing_ids:
@@ -389,8 +388,8 @@ class PostJobFreeSourcingService:
             attempts_history.append(attempt_stat)
 
             # Log search attempt details clearly
-            print(f"\n==================================================")
-            print(f"SEARCH ATTEMPT SUMMARY:")
+            print("\n==================================================")
+            print("SEARCH ATTEMPT SUMMARY:")
             print(f"  Attempt Number: {current_attempt}")
             print(f"  Generated Query URL: {url}")
             print(f"  Title Used: '{optimized_req.title}'")
@@ -400,7 +399,7 @@ class PostJobFreeSourcingService:
             print(f"  Candidates Persisted: {candidates_persisted_this_attempt}")
             print(f"  New Unique Candidates Persisted: {new_candidates_persisted}")
             print(f"  Candidates Remaining: {candidates_remaining}")
-            print(f"==================================================\n")
+            print("==================================================\n")
 
             if no_improvement_count >= settings.MAX_CONSECUTIVE_NO_IMPROVEMENT:
                 print(f"[PostJobFreeSourcingService] Terminating loop early: {no_improvement_count} consecutive no-improvement attempts.")
@@ -410,7 +409,7 @@ class PostJobFreeSourcingService:
         stop_reason = "TARGET_SATISFIED" if candidates_remaining == 0 else (
             "NO_IMPROVEMENT" if no_improvement_count >= settings.MAX_CONSECUTIVE_NO_IMPROVEMENT else "MAX_ATTEMPTS_REACHED"
         )
-        print(f"\n[PostJobFreeSourcingService] Sourcing Loop Complete:")
+        print("\n[PostJobFreeSourcingService] Sourcing Loop Complete:")
         print(f"  Stopping Reason: {stop_reason}")
         print(f"  Total Attempts: {current_attempt}")
         print(f"  Final Candidates Remaining: {candidates_remaining}")

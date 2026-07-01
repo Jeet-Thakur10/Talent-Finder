@@ -5,7 +5,6 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sqlalchemy import func
-from sqlalchemy import desc
 
 from src.data.models.postgres.candidate_skill import (
     CandidateSkill,
@@ -14,11 +13,7 @@ from src.schemas.candidate_search_request import (
     CandidateSearchRequest,
 )
 
-from src.schemas.candidate_search_request import (
-    CandidateSearchRequest,
-)
 from src.schemas.compressed_candidate import CompressedCandidate
-import src.data.models.postgres
 
 from src.data.models.postgres.candidate import Candidate
 from src.schemas.resume_candidate_output import (
@@ -32,9 +27,6 @@ from src.data.models.postgres.candidate_experience import (
 )
 from src.data.models.postgres.candidate_experience_skill import (
     CandidateExperienceSkill,
-)
-from src.data.models.postgres.candidate_skill import (
-    CandidateSkill,
 )
 
 from src.schemas.candidate_details_response import (

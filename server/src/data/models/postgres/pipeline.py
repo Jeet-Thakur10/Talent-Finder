@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import enum
 from datetime import datetime
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from src.data.models.postgres.job_description import JobDescription
 
 
-class HiringManagerDecision(str, enum.Enum):
+class HiringManagerDecision(StrEnum):
     PENDING = "PENDING"
     INTERVIEW_SENT = "INTERVIEW_SENT"
     REJECTED = "REJECTED"

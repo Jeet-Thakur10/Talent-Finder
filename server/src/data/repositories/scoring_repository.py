@@ -16,7 +16,7 @@ from src.data.models.postgres.candidate_experience_skill import (
 from src.data.models.postgres.candidate_job_score import CandidateJobScore
 from src.data.models.postgres.candidate_skill import CandidateSkill
 from src.data.models.postgres.job_description import JobDescription
-from src.data.models.postgres.pipeline import Pipeline
+from src.data.models.postgres.pipeline import HiringManagerDecision, Pipeline
 from src.schemas.candidate_search_schema import CandidateDetailsResponse
 from src.schemas.scoring_schema import (
     CandidateScoreOutput,
@@ -684,7 +684,7 @@ class ScoringRepository:
             .join(Pipeline, Pipeline.jd_id == JobDescription.id)
             .where(
                 JobDescription.hiring_manager_id == hiring_manager_id,
-                Pipeline.shared_with_hiring_manager == True,
+                Pipeline.shared_with_hiring_manager.is_(True),
             )
             .distinct()
         )
@@ -709,7 +709,7 @@ class ScoringRepository:
             )
             .where(
                 Pipeline.jd_id == job_description_id,
-                Pipeline.shared_with_hiring_manager == True,
+                Pipeline.shared_with_hiring_manager.is_(True),
             )
             .order_by(desc(CandidateJobScore.final_score))
         )

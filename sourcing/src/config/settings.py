@@ -1,6 +1,7 @@
-import os
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+import logging
 
 # Resolve absolute path to sourcing/.env relative to this file
 current_dir = Path(__file__).resolve().parent
@@ -51,7 +52,6 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Log configuration status at startup
-import logging
 logger = logging.getLogger(__name__)
 try:
     from urllib.parse import urlparse

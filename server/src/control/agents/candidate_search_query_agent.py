@@ -78,7 +78,7 @@ class CandidateSearchQueryAgent:
                 # Return default/fallback request
                 return CandidateSearchRequest(
                     title=job_description.title,
-                    skills=[s for s in skill_names],
+                    skills=list(skill_names),
                     min_experience=job_description.min_experience,
                     min_candidates=min_candidates,
                     max_source_resumes=max_source_resumes,

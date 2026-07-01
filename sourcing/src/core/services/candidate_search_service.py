@@ -26,7 +26,7 @@ class CandidateSearchService:
         request: CandidateSearchRequest,
     ) -> CandidateSearchResponse:
 
-        print(f"\n[SourcingService] Received CandidateSearchRequest:")
+        print("\n[SourcingService] Received CandidateSearchRequest:")
         print(f"  title: {request.title}")
         print(f"  skills: {request.skills}")
         print(f"  min_experience: {request.min_experience}")
@@ -48,22 +48,22 @@ class CandidateSearchService:
         num_returned = len(candidates)
         num_excluded = num_matched - num_returned
 
-        print(f"\n[SourcingService] Local database search results:")
+        print("\n[SourcingService] Local database search results:")
         print(f"  Candidates matched locally: {num_matched}")
         print(f"  Candidates excluded: {num_excluded}")
         print(f"  Candidates returned: {num_returned}")
 
         if len(candidates) >= request.required_candidates:
-            print(f"\n[SourcingService] Decision Point:")
-            print(f"  External scraping is NOT triggered.")
+            print("\n[SourcingService] Decision Point:")
+            print("  External scraping is NOT triggered.")
             print(f"  Reason: Local matched candidates ({len(candidates)}) meets or exceeds required_candidates ({request.required_candidates}).")
 
             selected_candidates = candidates[:request.required_candidates]
             
-            print(f"\n[SourcingService] Completion:")
+            print("\n[SourcingService] Completion:")
             print(f"  Requested candidates: {request.required_candidates}")
             print(f"  Candidates returned: {len(selected_candidates)}")
-            print(f"  Target satisfied: True")
+            print("  Target satisfied: True")
             print()
 
             return CandidateSearchResponse(
@@ -75,8 +75,8 @@ class CandidateSearchService:
                 sourced=False,
             )
 
-        print(f"\n[SourcingService] Decision Point:")
-        print(f"  External scraping IS triggered.")
+        print("\n[SourcingService] Decision Point:")
+        print("  External scraping IS triggered.")
         print(f"  Reason: Local matched candidates ({len(candidates)}) is less than required_candidates ({request.required_candidates}).")
 
         try:
@@ -95,7 +95,7 @@ class CandidateSearchService:
         selected_candidates = candidates[:request.required_candidates]
         target_satisfied = len(selected_candidates) >= request.required_candidates
 
-        print(f"\n[SourcingService] Completion:")
+        print("\n[SourcingService] Completion:")
         print(f"  Requested candidates: {request.required_candidates}")
         print(f"  Candidates returned: {len(selected_candidates)}")
         print(f"  Target satisfied: {target_satisfied}")

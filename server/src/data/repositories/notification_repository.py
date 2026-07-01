@@ -69,7 +69,7 @@ class NotificationRepository:
             update(Notification)
             .where(
                 Notification.user_id == user_id,
-                Notification.is_read == False,
+                Notification.is_read.is_(False),
             )
             .values(is_read=True)
         )
@@ -85,7 +85,7 @@ class NotificationRepository:
             .select_from(Notification)
             .where(
                 Notification.user_id == user_id,
-                Notification.is_read == False,
+                Notification.is_read.is_(False),
             )
         )
         result = await self.db.execute(stmt)

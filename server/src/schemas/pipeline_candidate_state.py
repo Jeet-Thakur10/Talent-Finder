@@ -1,15 +1,15 @@
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 
-class StageStatus(str, Enum):
+class StageStatus(StrEnum):
     PENDING = "PENDING"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
 
-class CandidateTerminalOutcome(str, Enum):
+class CandidateTerminalOutcome(StrEnum):
     PENDING = "PENDING"
     SUCCESS = "SUCCESS"
     FAILED_SYNCHRONIZATION = "FAILED_SYNCHRONIZATION"

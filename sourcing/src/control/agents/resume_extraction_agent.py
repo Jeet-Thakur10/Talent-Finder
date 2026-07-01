@@ -155,7 +155,7 @@ class ResumeExtractionAgent:
                 failure_stage=stage,
             )
 
-        except RateLimitError as exc:
+        except RateLimitError:
             stage = "Provider rate limiting"
             error_code = "EXTRACTION_RATE_LIMIT"
             error_msg = "Groq Rate Limit (429)."
@@ -181,7 +181,7 @@ class ResumeExtractionAgent:
                 failure_stage=stage,
             )
 
-        except (httpx.TimeoutException, asyncio.TimeoutError, TimeoutError) as exc:
+        except (httpx.TimeoutException, asyncio.TimeoutError, TimeoutError):
             stage = "Groq API"
             error_code = "EXTRACTION_TIMEOUT"
             error_msg = "Groq request timed out."
@@ -207,7 +207,7 @@ class ResumeExtractionAgent:
                 failure_stage=stage,
             )
 
-        except httpx.RequestError as exc:
+        except httpx.RequestError:
             stage = "Network errors"
             error_code = "EXTRACTION_NETWORK"
             error_msg = "Groq request failed due to connection issue."

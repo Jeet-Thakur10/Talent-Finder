@@ -67,14 +67,14 @@ class CandidateSearchClient:
                     f"Sourcing Service: {e}"
                 ),
                 status_code=500,
-            )
+            ) from e
         except Exception as e:
             if isinstance(e, SourcingServiceClientError):
                 raise e
             raise SourcingServiceClientError(
                 details=f"Unexpected error in sourcing client: {str(e)}",
                 status_code=500,
-            )
+            ) from e
 
     async def get_candidate_details(
         self,
@@ -122,14 +122,14 @@ class CandidateSearchClient:
                     f"Sourcing Service: {e}"
                 ),
                 status_code=500,
-            )
+            ) from e
         except Exception as e:
             if isinstance(e, SourcingServiceClientError):
                 raise e
             raise SourcingServiceClientError(
                 details=f"Unexpected error in sourcing client: {str(e)}",
                 status_code=500,
-            )
+            ) from e
 
     async def close(self) -> None:
         """Close the underlying HTTP client transport."""

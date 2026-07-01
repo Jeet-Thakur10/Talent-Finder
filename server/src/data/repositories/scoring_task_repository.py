@@ -125,7 +125,7 @@ class ScoringTaskRepository:
                         or_(
                             ScoringTask.started_at < cutoff_time,
                             and_(
-                                ScoringTask.started_at == None,
+                                ScoringTask.started_at.is_(None),
                                 ScoringTask.created_at < cutoff_time,
                             ),
                         ),

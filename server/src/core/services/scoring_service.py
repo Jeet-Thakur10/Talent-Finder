@@ -36,6 +36,8 @@ from src.data.models.postgres.candidate import Candidate
 from src.data.models.postgres.candidate_job_score import CandidateJobScore
 from src.data.models.postgres.job_description import JobDescription
 from src.data.models.postgres.notification import NotificationType
+from src.data.models.postgres.pipeline import HiringManagerDecision, Pipeline
+from src.data.models.postgres.user import User
 from src.data.repositories.scoring_repository import ScoringRepository
 from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
 from src.schemas.candidate_search_schema import (
@@ -276,18 +278,17 @@ class ScoringService:
                 if (context and cid in context.candidates)
                 else None
             )
-            if state:
-                if state.scoring == StageStatus.SUCCESS:
-                    if persistence_failed_flag:
-                        state.mark_persistence_failed(
-                            error_code="DB_PERSISTENCE_FAILED",
-                            error_message=persistence_error_str,
-                            duration_ms=per_task_persist_duration,
-                        )
-                    else:
-                        state.mark_persistence_success(
-                            duration_ms=per_task_persist_duration
-                        )
+            if state and state.scoring == StageStatus.SUCCESS:
+                if persistence_failed_flag:
+                    state.mark_persistence_failed(
+                        error_code="DB_PERSISTENCE_FAILED",
+                        error_message=persistence_error_str,
+                        duration_ms=per_task_persist_duration,
+                    )
+                else:
+                    state.mark_persistence_success(
+                        duration_ms=per_task_persist_duration
+                    )
 
         if persistence_failed_flag:
             raise ScoringBaseException(
@@ -716,11 +717,11 @@ class ScoringService:
             for c in context.candidates.values()
             if c.persistence == StageStatus.SUCCESS and c.candidate_id in selected_ids
         )
-        persist_failed = sum(
-            1
-            for c in context.candidates.values()
-            if c.persistence == StageStatus.FAILED and c.candidate_id in selected_ids
-        )
+        # persist_failed = sum(
+        #     1
+        #     for c in context.candidates.values()
+        #     if c.persistence == StageStatus.FAILED and c.candidate_id in selected_ids
+        # )
 
         # Check validation invariants
         inv1 = selected_count == (sync_success + sync_failed)
@@ -1842,8 +1843,6 @@ Reason:
         timezone: str,
         message: str | None,
     ) -> Pipeline:
-        from src.data.models.postgres.pipeline import HiringManagerDecision
-        from src.data.models.postgres.user import User
 
         if current_user.role != UserRole.hiring_manager:
             raise ScoringBaseException(

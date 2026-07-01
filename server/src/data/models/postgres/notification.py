@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import enum
 from datetime import datetime
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from src.data.models.postgres.user import User
 
 
-class NotificationType(str, enum.Enum):
+class NotificationType(StrEnum):
     SCORING_COMPLETED = "SCORING_COMPLETED"
     SHORTLIST_SHARED = "SHORTLIST_SHARED"
     CANDIDATE_ACCEPTED = "CANDIDATE_ACCEPTED"

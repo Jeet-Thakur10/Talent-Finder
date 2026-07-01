@@ -23,8 +23,8 @@ if not env_file_path.exists():
     )
 
 class Settings(BaseSettings):
-    DATABASE_URL: str  # Required field - removing fallback value to prevent silent
-    failure
+    DATABASE_URL: str   # Required field - removing fallback value to prevent silent
+                        # failure
     PORT: int = 8000
     HOST: str = "127.0.0.1"
 

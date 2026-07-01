@@ -1,6 +1,6 @@
 import asyncio
 import hashlib
-from uuid import uuid4, UUID
+from uuid import uuid4
 from datetime import datetime, UTC
 from sqlalchemy import delete
 from src.data.clients.postgres import async_session_local

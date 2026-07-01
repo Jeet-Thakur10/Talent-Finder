@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from uuid import UUID
 
 from src.config.settings import settings
 from src.data.clients.candidate_search_client import CandidateSearchClient
+from src.schemas.sync_result import CandidateSyncResultItem, SyncBatchResult
 
 if TYPE_CHECKING:
     from src.core.services.scoring_service import ScoringService
@@ -41,9 +43,6 @@ class CandidateSynchronizationService:
             selected_candidate_ids: A list of candidate UUIDs
             selected for deep scoring.
         """
-        import time
-
-        from src.schemas.sync_result import CandidateSyncResultItem, SyncBatchResult
 
         batch_result = SyncBatchResult()
 
