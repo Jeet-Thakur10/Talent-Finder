@@ -99,7 +99,7 @@ async def seed_job_description_statuses(
 async def seed_master_data(db: AsyncSession) -> None:
     # Update table schemas if needed
     await db.execute(text("""
-        ALTER TABLE job_descriptions 
+        ALTER TABLE job_descriptions
         ADD COLUMN IF NOT EXISTS hiring_manager_id UUID REFERENCES users(id)
     """))
     await db.commit()

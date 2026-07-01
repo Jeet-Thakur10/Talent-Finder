@@ -43,7 +43,6 @@ def get_generic_email_html(
             <td style="padding: 40px 40px 32px 40px;">
               <h1 style="margin: 0 0 20px 0; font-size: 22px; font-weight: 700; color: #0f172a; line-height: 1.3;">{title}</h1>
               <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #334155;">{body}</p>
-              
               {action_button_html}
             </td>
           </tr>

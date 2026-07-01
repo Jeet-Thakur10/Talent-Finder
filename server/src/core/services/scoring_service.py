@@ -7,18 +7,15 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.config.settings import settings
-from src.core.services.notification_service import NotificationService
-from src.data.models.postgres.notification import NotificationType
-from src.utils.email_templates import get_generic_email_html
-
-logger = logging.getLogger(__name__)
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.control.agents.candidate_search_query_agent import CandidateSearchQueryAgent
+from src.control.agents.scoring_agent import (
+    CandidatePrescoringClient,
+    CandidateScoringClient,
+)
 from src.core.exceptions.job_description_exception import (
     RecruiterAccessRequired,
 )
@@ -31,16 +28,14 @@ from src.core.services.candidate_acquisition_service import CandidateAcquisition
 from src.core.services.candidate_synchronization_service import (
     CandidateSynchronizationService,
 )
+from src.core.services.notification_service import NotificationService
 from src.core.services.progress_reporter import PipelineProgressReporter
 from src.core.services.resume_parser import ResumeParser
-from src.core.services.scoring_ai_client import (
-    CandidatePrescoringClient,
-    CandidateScoringClient,
-)
 from src.data.clients.candidate_search_client import CandidateSearchClient
 from src.data.models.postgres.candidate import Candidate
 from src.data.models.postgres.candidate_job_score import CandidateJobScore
 from src.data.models.postgres.job_description import JobDescription
+from src.data.models.postgres.notification import NotificationType
 from src.data.repositories.scoring_repository import ScoringRepository
 from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
 from src.schemas.candidate_search_schema import (
@@ -82,7 +77,9 @@ from src.schemas.scoring_schema import (
     PipelineStageUpdateRequest,
     SharedCampaignCandidateResponse,
 )
+from src.utils.email_templates import get_generic_email_html
 
+logger = logging.getLogger(__name__)
 
 class ScoringService:
     def __init__(self, db: AsyncSession):
@@ -165,7 +162,10 @@ class ScoringService:
                         if state.scoring == StageStatus.PENDING:
                             state.mark_scoring_failed(
                                 error_code="NO_CANDIDATE_RECORD_IN_DB",
-                                error_message="Candidate record does not exist in local database",
+                                error_message=(
+                                    "Candidate record does not exist "
+                                    "in local database"
+                                ),
                             )
             return CandidateBatchScoreOutput(
                 scores=[],
@@ -493,7 +493,8 @@ class ScoringService:
 
         await progress_reporter.update_stage("SYNCHRONIZING")
 
-        # 7. Pass selected candidate IDs to CandidateSynchronizationService (returns result batch)
+        # 7. Pass selected candidate IDs to CandidateSynchronizationService
+        # (returns result batch)
         sync_result = await self.synchronization_service.synchronize_candidates(
             top_candidate_ids
         )
@@ -514,10 +515,13 @@ class ScoringService:
                     )
                 else:
                     state.mark_synchronization_failed(
-                        error_code="SYNC_OMITTED",
-                        error_message="Sourcing service failed to process candidate profile",
-                        duration_ms=0.0,
-                    )
+                    error_code="SYNC_OMITTED",
+                    error_message=(
+                        "Sourcing service failed to process "
+                        "candidate profile"
+                    ),
+                    duration_ms=0.0,
+                )
 
         # 8. Load the selected Candidate ORM objects from local DB
         db_candidates = await self.repository.get_candidates_by_ids(top_candidate_ids)
@@ -525,7 +529,8 @@ class ScoringService:
 
         await progress_reporter.update_stage("DEEP_SCORING")
 
-        # 9. Execute deep scoring on the selected candidates, passing the coordinator context
+        # 9. Execute deep scoring on the selected candidates, passing the coordinator
+        # context
         deep_score_output = await self.score_candidates_for_job_description(
             job_description_id,
             current_user,
@@ -545,7 +550,11 @@ class ScoringService:
                 f"   Final Score: {score.final_score} | Confidence: {score.confidence}%"
             )
             print(
-                f"   Breakdown -> Skills: {score.skills_score} | Exp: {score.experience_score} | Recency: {score.recency_score} | Role Fit: {score.role_fit_score} | Edu: {score.education_score}"
+                f"   Breakdown -> Skills: {score.skills_score} | "
+                f"Exp: {score.experience_score} | "
+                f"Recency: {score.recency_score} | "
+                f"Role Fit: {score.role_fit_score} | "
+                f"Edu: {score.education_score}"
             )
             print(f"   Matched Mandatory Skills: {score.matched_mandatory_skills}")
             print(f"   Missing Mandatory Skills: {score.missing_mandatory_skills}")
@@ -622,9 +631,16 @@ class ScoringService:
 
         if not (inv1 and inv2):
             discrepancy_msg = (
-                f"Pipeline Consistency Discrepancy Found!\n"
-                f"Assertion Invariant 1 (Selected == Completed + Failed): {inv1} (Selected: {selected_candidate_count}, Completed: {completed_count}, Failed: {failed_count})\n"
-                f"Assertion Invariant 2 (Completed == API Returned): {inv2} (Completed: {completed_count}, API Returned: {api_returned_count})"
+                "Pipeline Consistency Discrepancy Found!\n"
+                "Assertion Invariant 1 "
+                "(Selected == Completed + Failed): "
+                f"{inv1} (Selected: {selected_candidate_count}, "
+                f"Completed: {completed_count}, "
+                f"Failed: {failed_count})\n"
+                "Assertion Invariant 2 "
+                "(Completed == API Returned): "
+                f"{inv2} (Completed: {completed_count}, "
+                f"API Returned: {api_returned_count})"
             )
             logger.error(discrepancy_msg)
 
@@ -718,25 +734,45 @@ class ScoringService:
         reasons = []
         if not inv1:
             reasons.append(
-                f"Selected count ({selected_count}) != Sync Success ({sync_success}) + Sync Failed ({sync_failed})"
+
+                    f"Selected count ({selected_count}) != "
+                    f"Sync Success ({sync_success}) + "
+                    f"Sync Failed ({sync_failed})"
+
             )
+
         if not inv2:
             reasons.append(
-                f"Sync Success ({sync_success}) != Deep Score Success ({deep_success}) + Deep Score Failed ({deep_failed})"
+
+                    f"Sync Success ({sync_success}) != "
+                    f"Deep Score Success ({deep_success}) + "
+                    f"Deep Score Failed ({deep_failed})"
+
             )
+
         if not inv3:
             reasons.append(
-                f"Deep Score Success ({deep_success}) != Persist Success ({persist_success})"
+
+                    f"Deep Score Success ({deep_success}) != "
+                    f"Persist Success ({persist_success})"
+
             )
+
         if not inv4:
             reasons.append(
-                f"Persist Success ({persist_success}) != API Returned Count ({api_returned_count})"
+
+                    f"Persist Success ({persist_success}) != "
+                    f"API Returned Count ({api_returned_count})"
+
             )
 
         reason_str = (
             "\n".join(reasons)
             if reasons
-            else "All database invariants and API serialization mappings are fully consistent."
+            else (
+                "All database invariants and API serialization mappings "
+                "are fully consistent."
+            )
         )
 
         report = f"""
@@ -1133,7 +1169,10 @@ Reason:
         print("\n" + "=" * 40 + "\nSourced Candidates\n" + "=" * 40)
         for idx, candidate in enumerate(sourced_candidates):
             print(
-                f"{idx + 1}. Name: {candidate.full_name} | ID: {candidate.id} | Email: {candidate.email} | Exp: {candidate.total_experience_months} months"
+                f"{idx + 1}. Name: {candidate.full_name} | "
+                f"ID: {candidate.id} | "
+                f"Email: {candidate.email} | "
+                f"Exp: {candidate.total_experience_months} months"
             )
         print("=" * 40 + "\n")
 
@@ -1518,7 +1557,8 @@ Reason:
                 status_code=403,
             )
 
-        # 1. Validate that all submitted candidates already exist in the pipeline for this job description
+        # 1. Validate that all submitted candidates already exist in the
+        # pipeline for this job description
         invalid_ids = await self.repository.validate_candidates_belong_to_job(
             job_description_id,
             candidate_ids,
@@ -1527,7 +1567,10 @@ Reason:
             invalid_str = ", ".join(str(cid) for cid in invalid_ids)
             raise ScoringBaseException(
                 message="Validation failed",
-                details=f"Invalid candidate IDs for this job description: {invalid_str}",
+                details=(
+                    "Invalid candidate IDs for this job description: "
+                    f"{invalid_str}"
+                ),
                 status_code=400,
             )
 
@@ -1541,7 +1584,10 @@ Reason:
         # 3. Commit transaction successfully
         await self.repository.db.commit()
         logger.info(
-            "Shortlist shared: JobDescription %s successfully committed sharing for %s candidates",
+            (
+                "Shortlist shared: JobDescription %s successfully "
+                "committed sharing for %s candidates"
+            ),
             job_description_id,
             shared_count,
         )
@@ -1575,7 +1621,10 @@ Reason:
                     f"Hello {jd.hiring_manager.name},\n\n"
                     f"{jd.recruiter.name} has shared a new candidate shortlist for "
                     f'"{jd.title}" with you.\n\n'
-                    f"There are {len(candidate_ids)} recommended candidates ready for your review."
+                    (
+                        f"There are {len(candidate_ids)} recommended candidates "
+                        "ready for your review."
+                    )
                 )
 
                 email_html = get_generic_email_html(
@@ -1589,7 +1638,11 @@ Reason:
                     user=jd.hiring_manager,
                     notification_type=NotificationType.SHORTLIST_SHARED,
                     title="New Candidate Shortlist Shared",
-                    message=f'A new shortlist for "{jd.title}" has been shared with you by {jd.recruiter.name}. Review the recommended candidates.',
+                    message=(
+                        f'A new shortlist for "{jd.title}" has been shared with you '
+                        f"by {jd.recruiter.name}. "
+                        "Review the recommended candidates."
+                    ),
                     target_url=f"/hm/shared-campaigns/{job_description_id}",
                     metadata={
                         "job_description_id": str(job_description_id),
@@ -1601,24 +1654,37 @@ Reason:
                     email_html=email_html,
                 )
                 logger.info(
-                    "Hiring Manager notification created and email sent for shortlist share on campaign %s",
+                    (
+                        "Hiring Manager notification created and email sent "
+                        "for shortlist share on campaign %s"
+                    ),
                     job_description_id,
                 )
             elif not jd:
                 logger.warning(
-                    "Could not send shortlist share notification: Job description %s not found.",
+                    (
+                        "Could not send shortlist share notification: "
+                        "Job description %s not found."
+                    ),
                     job_description_id,
                 )
             else:
                 logger.warning(
-                    "Could not send shortlist share notification: Job description %s has no assigned Hiring Manager.",
+                    (
+                        "Could not send shortlist share notification: "
+                        "Job description %s has no assigned Hiring Manager."
+                    ),
                     job_description_id,
                 )
         except Exception as e:
-            # Notification failures must NEVER rollback or fail the shortlist sharing transaction
+            # Notification failures must NEVER rollback or fail the shortlist sharing
+            # transaction
             logger.exception(
-                "Hiring Manager email failed: Failed to send shortlist shared notification: %s",
-                str(e),
+                (
+                    "Hiring Manager email failed: Failed to send "
+                    "shortlist shared notification: %s"
+                ),
+                e,
             )
 
         return shared_count
@@ -1750,13 +1816,18 @@ Reason:
         if not pipeline_entry:
             raise ScoringBaseException(
                 message="Review failed",
-                details="Failed to submit review. Candidate may not be shared, or job description is not assigned to you.",
+                details=(
+                    "Failed to submit review. Candidate may not be shared, "
+                    "or job description is not assigned to you."
+                ),
                 status_code=400,
             )
 
         # Publish CANDIDATE_REVIEWED event (stub/log for future integration)
         print(
-            f"[EVENT] CANDIDATE_REVIEWED: Candidate {candidate_id} reviewed for JobDescription {job_description_id}. Decision: {decision}"
+            f"[EVENT] CANDIDATE_REVIEWED: Candidate {candidate_id} "
+            f"reviewed for JobDescription {job_description_id}. "
+            f"Decision: {decision}"
         )
 
         return pipeline_entry
@@ -1795,7 +1866,9 @@ Reason:
         if not jd or jd.hiring_manager_id != current_user.user_id:
             raise ScoringBaseException(
                 message="Access denied",
-                details="Hiring manager does not own this campaign or job description not found.",
+                details=("Hiring manager does not own this campaign or "
+                    "job description not found."
+                    ),
                 status_code=403,
             )
 
@@ -1820,7 +1893,10 @@ Reason:
         if not candidate.email or not candidate.email.strip():
             raise ScoringBaseException(
                 message="Validation failed",
-                details="Candidate email address is missing. Cannot send interview invitation.",
+                details=(
+                    "Candidate email address is missing. "
+                    "Cannot send interview invitation."
+                    ),
                 status_code=400,
             )
 
@@ -1893,8 +1969,9 @@ Reason:
 
             recruiter_body = (
                 f"Hello {recruiter_user.name},\n\n"
-                f'{hm_name} has scheduled an interview with {candidate.full_name} for your job description "{jd.title}".\n\n'
-                f"Interview Details:\n"
+                f"{hm_name} has scheduled an interview with "
+                f'{candidate.full_name} for your job description "{jd.title}".\n\n'
+                "Interview Details:\n"
                 f"- **Date & Time:** {date_str} at {time_str} ({timezone})\n"
                 f"- **Link:** {interview_link}\n"
             )
@@ -1909,8 +1986,14 @@ Reason:
                 user=recruiter_user,
                 notification_type=NotificationType.INTERVIEW_INVITATION,
                 title="Interview Scheduled",
-                message=f'{hm_name} has scheduled an interview with {candidate.full_name} for "{jd.title}".',
-                target_url=f"/recruiter/job-descriptions/{job_description_id}/candidates/{candidate_id}",
+                message=(
+                    f'{hm_name} has scheduled an interview with '
+                    f'{candidate.full_name} for "{jd.title}".'
+                ),
+                target_url=(
+                    f"/recruiter/job-descriptions/{job_description_id}/"
+                    f"candidates/{candidate_id}"
+                ),
                 metadata={
                     "job_description_id": str(job_description_id),
                     "candidate_id": str(candidate_id),
@@ -1922,7 +2005,10 @@ Reason:
                 email_html=recruiter_html,
             )
             logger.info(
-                "Hiring Manager notification created and Recruiter email sent successfully for interview on candidate %s",
+                (
+                    "Hiring Manager notification created and Recruiter "
+                    "email sent successfully for interview on candidate %s"
+                ),
                 candidate_id,
             )
         except Exception as recruiter_notify_err:

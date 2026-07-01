@@ -9,6 +9,11 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
 
 from src.config.settings import settings
+from src.control.agents.prompts import (
+    CANDIDATE_DEEP_SCORING_PROMPT,
+    CANDIDATE_PRESCORING_PROMPT,
+    RESUME_EXTRACTION_PROMPT,
+)
 from src.schemas.scoring_schema import (
     CandidateEvaluationOutput,
     CandidatePrescoreBatchOutput,
@@ -25,6 +30,7 @@ from src.schemas.scoring_schema import (
 class ResumeExtractionResult:
     payload: dict[str, object]
     provider: str
+
 
 class ResumeExtractionClient:
     def __init__(self) -> None:
@@ -51,19 +57,14 @@ class ResumeExtractionClient:
             print(f"Attempting Groq extraction with model: {self.groq_model}")
 
             # 1. Grab the exact schema keys (full_name, experiences, etc.) dynamically
-            schema_json = json.dumps(ResumeCandidateOutput.model_json_schema(), indent=2)
+            schema_json = json.dumps(
+                ResumeCandidateOutput.model_json_schema(), indent=2
+                )
+
+            system_content = RESUME_EXTRACTION_PROMPT.format(schema_json=schema_json)
 
             messages = [
-                SystemMessage(
-                    content=(
-                        "Extract candidate information from the resume.\n"
-                        "Return all available information.\n"
-                        "Do not invent information that is not present.\n"
-                        "Dates should be returned in ISO format (YYYY-MM-DD) whenever possible.\n\n"
-                        "CRITICAL: You must respond strictly with a valid JSON object matching this exact schema layout:\n"
-                        f"{schema_json}"
-                    )
-                ),
+                SystemMessage(content=system_content),
                 HumanMessage(
                     content=resume_text.strip(),
                 ),
@@ -97,6 +98,7 @@ class CandidateScoringResult:
     payload: CandidateEvaluationOutput | None
     provider: str
 
+
 class CandidateScoringClient:
     def __init__(self) -> None:
         self.provider = settings.SCORING_LLM_PROVIDER
@@ -114,6 +116,7 @@ class CandidateScoringClient:
                 method="json_mode",
             )
         )
+
     async def score_candidate(
         self,
         job_description: JobDescriptionScoringInput,
@@ -138,62 +141,12 @@ class CandidateScoringClient:
                 ),
             }
 
+            system_content = CANDIDATE_DEEP_SCORING_PROMPT.format(
+                schema_json=schema_json
+            )
+
             messages = [
-                SystemMessage(
-                    content=(
-                        "You are an expert technical recruiter.\n\n"
-
-                        "Compare the candidate against the job description.\n\n"
-
-                        "Your responsibilities:\n"
-                        "- identify mandatory skill matches\n"
-                        "- identify optional skill matches\n"
-                        "- identify missing mandatory skills\n"
-                        "- evaluate role fit\n"
-                        "- evaluate education alignment\n\n"
-
-                        "IMPORTANT:\n"
-                        "- Be strict about mandatory skills.\n"
-                        "- Do not invent skills or experience.\n"
-                        "- Copy candidate_id exactly from the input.\n"
-                        "- Do not generate a new candidate_id.\n\n"
-
-                        "Skill Proficiency Matching:\n"
-                        "- When comparing skills, assess the proficiency level match.\n"
-                        "- For each matched skill (mandatory or optional), append a pipe and match quality float.\n"
-                        "- Format: \"SkillName|quality\" where quality is a float between 0.0 and 1.0.\n"
-                        "- Match quality values:\n"
-                        "  1.0 = exact proficiency match, or candidate exceeds required level, or no proficiency specified on either side\n"
-                        "  0.75 = candidate is roughly one level below the required proficiency (slight gap)\n"
-                        "  0.4 = candidate is two or more levels below the required proficiency (significant gap)\n"
-                        "- If a skill is completely absent from the candidate, do NOT include it in matched lists. Put it in missing_mandatory_skills instead (without a pipe suffix).\n"
-                        "- Examples:\n"
-                        "  JD requires \"Advanced Python\", candidate has \"Advanced Python\" → \"Python|1.0\"\n"
-                        "  JD requires \"Advanced Python\", candidate has \"Expert Python\" → \"Python|1.0\"\n"
-                        "  JD requires \"Advanced Python\", candidate has \"Python\" (intermediate inferred) → \"Python|0.75\"\n"
-                        "  JD requires \"Advanced Python\", candidate has \"Basic Python\" → \"Python|0.4\"\n"
-                        "  JD requires \"Python\", candidate has \"Python\" → \"Python|1.0\"\n"
-                        "  JD requires \"Kubernetes\", candidate has no Kubernetes → missing_mandatory_skills: [\"Kubernetes\"]\n"
-                        "- Document any proficiency gaps in the explanation weaknesses list.\n\n"
-
-                        "Role Fit Scoring (0-12):\n"
-                        "- 0 = no alignment\n"
-                        "- 6 = moderate alignment\n"
-                        "- 12 = excellent alignment\n\n"
-
-                        "Education Scoring (0-8):\n"
-                        "- 8 = exact match\n"
-                        "- 7 = higher qualification\n"
-                        "- 6 = related field\n"
-                        "- 4 = same level only\n"
-                        "- 0 = poor match\n\n"
-
-                        "Confidence must be between 0 and 100.\n\n"
-
-                        "Return JSON matching this schema:\n"
-                        f"{schema_json}"
-                    )
-                ),
+                SystemMessage(content=system_content),
                 HumanMessage(
                     content=json.dumps(
                         payload,
@@ -449,10 +402,12 @@ class CandidateScoringClient:
 
         return 3.5
 
+
 @dataclass(slots=True)
 class CandidatePrescoringResult:
     payload: CandidatePrescoreBatchOutput | None
     provider: str
+
 
 class CandidatePrescoringClient:
     def __init__(self) -> None:
@@ -494,37 +449,10 @@ class CandidatePrescoringClient:
             ],
         }
 
+        system_content = CANDIDATE_PRESCORING_PROMPT.format(schema_json=schema_json)
+
         messages = [
-            SystemMessage(
-                content=(
-                    "You are a recruiting pre-screening engine.\n\n"
-
-                    "Evaluate each candidate using broad semantic matching.\n"
-                    "Assign a preliminary score from 0 to 100 indicating how promising "
-                    "the candidate is for further evaluation.\n\n"
-
-                    "Use the FULL scoring range, not just 0, 50, or 100.\n"
-                    "Choose the score that best reflects the overall strength of the match.\n\n"
-
-                    "Scoring guide:\n"
-                    "90-100 : Exceptional match, highly recommended.\n"
-                    "75-89  : Strong match with only minor gaps.\n"
-                    "60-74  : Good match but several noticeable gaps.\n"
-                    "40-59  : Partial match, worth reviewing if needed.\n"
-                    "20-39  : Weak match with significant gaps.\n"
-                    "0-19   : Clear mismatch.\n\n"
-
-                    "Do NOT round to multiples of 10 or 25 unless they are truly appropriate.\n"
-                    "Scores such as 67, 73, 81, 88, and 94 are perfectly acceptable.\n\n"
-
-                    "IMPORTANT:\n"
-                    "- Copy candidate_id exactly.\n"
-                    "- Return only valid JSON.\n\n"
-
-                    "Return JSON matching:\n"
-                    f"{schema_json}"
-                )
-            ),
+            SystemMessage(content=system_content),
             HumanMessage(
                 content=json.dumps(
                     payload,

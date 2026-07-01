@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class CandidateSynchronizationService:
-    """Service responsible for ensuring candidate details profiles are synchronized locally.
+    """Service responsible for ensuring candidate details profiles
+    are synchronized locally.
 
     It coordinates checking candidate presence, querying external sourced details,
     and persisting them idempotently inside transaction scopes.
@@ -33,10 +34,12 @@ class CandidateSynchronizationService:
         self,
         selected_candidate_ids: list[UUID],
     ) -> SyncBatchResult:
-        """Verify which candidates exist locally, check freshness, and synchronize stale/missing ones.
+        """Verify which candidates exist locally, check freshness,
+        and synchronize stale/missing ones.
 
         Args:
-            selected_candidate_ids: A list of candidate UUIDs selected for deep scoring.
+            selected_candidate_ids: A list of candidate UUIDs
+            selected for deep scoring.
         """
         import time
 
@@ -68,8 +71,13 @@ class CandidateSynchronizationService:
             if candidate is None:
                 missing_ids.append(cid)
                 logger.info(
-                    "Synchronization Decision: candidate_id=%s, local_existence=False, local_updated_at=None, "
-                    "freshness_decision=missing, status=synchronized, reason_for_synchronization=missing",
+                    (
+                        "Synchronization Decision: candidate_id=%s, "
+                        "local_existence=False, local_updated_at=None, "
+                        "freshness_decision=missing, "
+                        "status=synchronized, "
+                        "reason_for_synchronization=missing"
+                    ),
                     cid,
                 )
             else:
@@ -81,16 +89,26 @@ class CandidateSynchronizationService:
                 if time_diff > threshold:
                     stale_ids.append(cid)
                     logger.info(
-                        "Synchronization Decision: candidate_id=%s, local_existence=True, local_updated_at=%s, "
-                        "freshness_decision=stale, status=synchronized, reason_for_synchronization=stale",
+                        (
+                            "Synchronization Decision: candidate_id=%s, "
+                            "local_existence=True, local_updated_at=%s, "
+                            "freshness_decision=stale, "
+                            "status=synchronized, "
+                            "reason_for_synchronization=stale"
+                        ),
                         cid,
                         candidate.updated_at,
                     )
                 else:
                     fresh_ids.append(cid)
                     logger.info(
-                        "Synchronization Decision: candidate_id=%s, local_existence=True, local_updated_at=%s, "
-                        "freshness_decision=fresh, status=skipped, reason_for_synchronization=skipped",
+                        (
+                            "Synchronization Decision: candidate_id=%s, "
+                            "local_existence=True, local_updated_at=%s, "
+                            "freshness_decision=fresh, "
+                            "status=skipped, "
+                            "reason_for_synchronization=skipped"
+                        ),
                         cid,
                         candidate.updated_at,
                     )
@@ -139,7 +157,10 @@ class CandidateSynchronizationService:
                     candidate_id=cid,
                     success=False,
                     error_code="CANDIDATE_OMITTED_IN_RESPONSE",
-                    error_message="Candidate details not returned by external sourcing service",
+                    error_message=(
+                        "Candidate details not returned by "
+                        "external sourcing service"
+                    ),
                     duration_ms=api_duration,
                 )
 

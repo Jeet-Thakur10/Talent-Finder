@@ -10,7 +10,6 @@ from src.config.settings import settings
 
 ## my imports , the models, base and settings
 from src.data.clients.postgres import Base
-import src.data.models.postgres
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -23,7 +23,8 @@ class JobDescriptionExtractionAgent:
         )
         self._llm = ChatHuggingFace(llm=self._endpoint)
 
-        # with_structured_output using json_mode returns a dictionary matching the schema
+        # with_structured_output using json_mode returns a dictionary matching
+        # the schema
         self._structured_llm = self._llm.with_structured_output(
             JobDescriptionExtraction,
             method="json_mode",
@@ -57,5 +58,6 @@ class JobDescriptionExtractionAgent:
             traceback.print_exc()
             print("-------------------------------------------\n")
 
-            # Return a default JobDescriptionExtraction model with all fields set to null/empty
+            # Return a default JobDescriptionExtraction model with all fields set
+            # to null/empty
             return JobDescriptionExtraction()

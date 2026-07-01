@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from uuid import UUID
-from typing import Optional
+
 
 class StageStatus(str, Enum):
     PENDING = "PENDING"
@@ -21,16 +21,16 @@ class CandidateTerminalOutcome(str, Enum):
 @dataclass
 class StageOutcome:
     status: StageStatus = StageStatus.PENDING
-    error_code: Optional[str] = None
-    error_message: Optional[str] = None
+    error_code: str | None = None
+    error_message: str | None = None
     duration_ms: float = 0.0
 
 @dataclass
 class CandidateMetrics:
-    prescore: Optional[int] = None
-    prescore_rank: Optional[int] = None
-    final_score: Optional[float] = None
-    confidence: Optional[float] = None
+    prescore: int | None = None
+    prescore_rank: int | None = None
+    final_score: float | None = None
+    confidence: float | None = None
 
 @dataclass
 class CandidateDiagnostics:
@@ -43,18 +43,18 @@ class CandidateDiagnostics:
 @dataclass
 class PipelineCandidateState:
     candidate_id: UUID
-    profile_text: Optional[str] = None
-    
+    profile_text: str | None = None
+
     # Terminal Outcome
     terminal_outcome: CandidateTerminalOutcome = CandidateTerminalOutcome.PENDING
-    
+
     # Lifecycle Stage Statuses
     acquisition: StageStatus = StageStatus.PENDING
     prescoring: StageStatus = StageStatus.PENDING
     synchronization: StageStatus = StageStatus.PENDING
     scoring: StageStatus = StageStatus.PENDING
     persistence: StageStatus = StageStatus.PENDING
-    
+
     # Metrics and Diagnostics (Typed Dataclasses)
     metrics: CandidateMetrics = field(default_factory=CandidateMetrics)
     diagnostics: CandidateDiagnostics = field(default_factory=CandidateDiagnostics)
@@ -62,12 +62,14 @@ class PipelineCandidateState:
     # Atomic state transition methods
     def mark_acquired(self, duration_ms: float = 0.0):
         self.acquisition = StageStatus.SUCCESS
-        self.diagnostics.acquisition = StageOutcome(status=StageStatus.SUCCESS, duration_ms=duration_ms)
+        self.diagnostics.acquisition = StageOutcome(
+            status=StageStatus.SUCCESS, duration_ms=duration_ms)
 
     def mark_prescored(self, prescore: int, duration_ms: float = 0.0):
         self.prescoring = StageStatus.SUCCESS
         self.metrics.prescore = prescore
-        self.diagnostics.prescoring = StageOutcome(status=StageStatus.SUCCESS, duration_ms=duration_ms)
+        self.diagnostics.prescoring = StageOutcome(
+            status=StageStatus.SUCCESS, duration_ms=duration_ms)
 
     def mark_skipped_threshold(self):
         self.terminal_outcome = CandidateTerminalOutcome.SKIPPED_THRESHOLD
@@ -88,9 +90,13 @@ class PipelineCandidateState:
 
     def mark_synchronization_success(self, duration_ms: float = 0.0):
         self.synchronization = StageStatus.SUCCESS
-        self.diagnostics.synchronization = StageOutcome(status=StageStatus.SUCCESS, duration_ms=duration_ms)
+        self.diagnostics.synchronization = StageOutcome(
+            status=StageStatus.SUCCESS, duration_ms=duration_ms)
 
-    def mark_synchronization_failed(self, error_code: str, error_message: str, duration_ms: float = 0.0):
+    def mark_synchronization_failed(self,
+            error_code: str,
+            error_message: str,
+            duration_ms: float = 0.0):
         self.synchronization = StageStatus.FAILED
         self.terminal_outcome = CandidateTerminalOutcome.FAILED_SYNCHRONIZATION
         self.scoring = StageStatus.SKIPPED
@@ -102,13 +108,20 @@ class PipelineCandidateState:
             duration_ms=duration_ms
         )
 
-    def mark_scoring_success(self, final_score: float, confidence: float, duration_ms: float = 0.0):
+    def mark_scoring_success(self,
+            final_score: float,
+            confidence: float,
+            duration_ms: float = 0.0):
         self.scoring = StageStatus.SUCCESS
         self.metrics.final_score = final_score
         self.metrics.confidence = confidence
-        self.diagnostics.scoring = StageOutcome(status=StageStatus.SUCCESS, duration_ms=duration_ms)
+        self.diagnostics.scoring = StageOutcome(
+            status=StageStatus.SUCCESS, duration_ms=duration_ms)
 
-    def mark_scoring_failed(self, error_code: str, error_message: str, duration_ms: float = 0.0):
+    def mark_scoring_failed(self,
+            error_code: str,
+            error_message: str,
+            duration_ms: float = 0.0):
         self.scoring = StageStatus.FAILED
         self.terminal_outcome = CandidateTerminalOutcome.FAILED_SCORING
         self.persistence = StageStatus.SKIPPED
@@ -122,9 +135,13 @@ class PipelineCandidateState:
     def mark_persistence_success(self, duration_ms: float = 0.0):
         self.persistence = StageStatus.SUCCESS
         self.terminal_outcome = CandidateTerminalOutcome.SUCCESS
-        self.diagnostics.persistence = StageOutcome(status=StageStatus.SUCCESS, duration_ms=duration_ms)
+        self.diagnostics.persistence = StageOutcome(
+            status=StageStatus.SUCCESS, duration_ms=duration_ms)
 
-    def mark_persistence_failed(self, error_code: str, error_message: str, duration_ms: float = 0.0):
+    def mark_persistence_failed(self,
+        error_code: str,
+        error_message: str,
+        duration_ms: float = 0.0):
         self.persistence = StageStatus.FAILED
         self.terminal_outcome = CandidateTerminalOutcome.FAILED_PERSISTENCE
         self.diagnostics.persistence = StageOutcome(

@@ -123,9 +123,11 @@ class ScoringTaskService:
 
                     email_body = (
                         f"Hello {user.name},\n\n"
-                        f"We are writing to inform you that the candidate evaluation pipeline for your job description "
+                        f"We are writing to inform you that the candidate "
+                        "evaluation pipeline for your job description "
                         f'"{jd.title}" has failed and could not be completed.\n\n'
-                        f"Please visit the Tasks center to review the status of your tasks."
+                        f"Please visit the Tasks center to review the "
+                        "status of your tasks."
                     )
 
                     email_html = get_generic_email_html(
@@ -139,7 +141,10 @@ class ScoringTaskService:
                         user=user,
                         notification_type=NotificationType.SYSTEM,
                         title="Scoring Failed",
-                        message=f'Candidate evaluation for "{jd.title}" could not be completed.',
+                        message=(
+                            f'Candidate evaluation for "{jd.title}" '
+                            'could not be completed.'
+                        ),
                         target_url="/recruiter/tasks",
                         metadata={
                             "job_description_id": str(task.job_description_id),
@@ -151,12 +156,19 @@ class ScoringTaskService:
                         email_html=email_html,
                     )
                     logger.info(
-                        "Pipeline failure notification sent successfully for recovered stale task %s",
+                        (
+                            "Pipeline failure notification sent successfully "
+                            "for recovered stale task %s",
+                        ),
                         task.id,
                     )
                 else:
                     logger.warning(
-                        "Could not send failure notification for recovered task %s: User or JobDescription not found.",
+                        (
+                            "Could not send failure notification for "
+                            "recovered task %s: "
+                            "User or JobDescription not found."
+                        ),
                         task.id,
                     )
             except Exception as ne:

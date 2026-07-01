@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import delete, select
 
-from src.core.services.scoring_ai_client import CandidateScoringResult
+from src.control.agents.scoring_agent import CandidateScoringResult
 from src.core.services.scoring_service import ScoringService
 from src.data.clients.postgres import async_session_local
 from src.data.models.postgres.candidate import Candidate

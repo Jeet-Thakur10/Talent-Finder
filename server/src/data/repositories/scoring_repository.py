@@ -424,8 +424,9 @@ class ScoringRepository:
         """Upsert a candidate profile and all nested child entities.
 
         This method is idempotent:
-        - If a candidate with this ID exists, updates all mutable fields and synchronizes
-          the nested skills, experiences (including experience skills), and educations.
+        - If a candidate with this ID exists, updates all mutable fields and
+          synchronizes the nested skills, experiences (including experience skills),
+          and educations.
         - If the candidate does not exist, creates the entire hierarchy.
         """
         existing_candidate = await self.get_candidate_by_id(candidate_details.id)
@@ -523,7 +524,9 @@ class ScoringRepository:
                 if ext.id not in matched_exps and ext.id is not None:
                     existing_candidate.experiences.remove(ext)
 
-            # 4. Synchronize Educations (match by (institution_name, degree, field_of_study))
+            # 4. Synchronize Educations (match by (
+            # institution_name, degree, field_of_study
+            # ))
             matched_edus = set()
             for inc in candidate_details.educations:
                 key = (inc.institution_name, inc.degree, inc.field_of_study)
@@ -560,7 +563,8 @@ class ScoringRepository:
             return existing_candidate
 
         else:
-            # Create a completely new candidate using details and the exact id from details
+            # Create a completely new candidate using details
+            # and the exact id from details
             new_candidate = Candidate(
                 id=candidate_details.id,
                 full_name=candidate_details.full_name,
@@ -646,7 +650,8 @@ class ScoringRepository:
         )
         await self.db.execute(reset_query)
 
-        # 2. For selected candidates, mark as shared, update notes, set PENDING, and clear HM notes
+        # 2. For selected candidates, mark as shared, update notes, set PENDING,
+        # and clear HM notes
         shared_count = 0
         for candidate_id in candidate_ids:
             pipeline_entry = await self.get_pipeline_entry(

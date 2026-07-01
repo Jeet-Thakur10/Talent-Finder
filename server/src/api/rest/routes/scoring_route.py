@@ -81,7 +81,11 @@ async def list_recruiter_tasks(
             matched_candidate_count=task.matched_candidate_count,
             eligible_candidate_count=task.eligible_candidate_count,
             selected_candidate_count=task.selected_candidate_count,
-            job_description_title=task.job_description.title if task.job_description else "Unknown Position",
+            job_description_title=(
+                task.job_description.title
+                if task.job_description
+                else "Unknown Position"
+            ),
         )
         for task in tasks
     ]
@@ -506,7 +510,10 @@ async def schedule_interview(
         message=data.message,
     )
     return InterviewScheduleResponse(
-        message="Interview scheduled successfully and invitation email sent to candidate.",
+        message=(
+            "Interview scheduled successfully and invitation "
+            "email sent to candidate."
+        ),
         candidate_id=pipeline_entry.candidate_id,
         hm_decision=pipeline_entry.hm_decision,
         interview_link=pipeline_entry.interview_link,

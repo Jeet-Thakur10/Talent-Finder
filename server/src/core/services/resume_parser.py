@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from src.core.services.scoring_ai_client import ResumeExtractionClient
+from src.control.agents.scoring_agent import ResumeExtractionClient
 from src.schemas.scoring_schema import (
     ParsedCandidateProfile,
     ParsedEducation,

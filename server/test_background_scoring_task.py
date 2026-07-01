@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import delete, select
 
-from src.core.services.scoring_ai_client import CandidateScoringResult
+from src.control.agents.scoring_agent import CandidateScoringResult
 from src.core.services.scoring_task_service import ScoringTaskService
 from src.core.tasks import async_run_scoring_pipeline
 from src.data.clients.postgres import async_session_local
@@ -233,7 +233,7 @@ async def run_verification():
         # So we can temporarily mock or subclass ScoringService or mock its internal client instances:
 
         # We can temporarily patch CandidateScoringClient and CandidatePrescoringClient:
-        from src.core.services.scoring_ai_client import (
+        from src.control.agents.scoring_agent import (
             CandidatePrescoringClient,
             CandidateScoringClient,
         )

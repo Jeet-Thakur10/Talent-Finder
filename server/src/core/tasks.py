@@ -91,13 +91,18 @@ async def async_run_scoring_pipeline(
                             if settings.ALLOWED_ORIGINS
                             else "http://localhost:5173"
                         )
-                        absolute_target_url = f"{frontend_base}/recruiter/job-descriptions/{job_description_id}/candidates"
+                        absolute_target_url = (
+                            f"{frontend_base}/recruiter/job-descriptions/"
+                            f"{job_description_id}/candidates"
+                        )
 
                         email_body = (
                             f"Hello {user.name},\n\n"
-                            f"Great news! The candidate evaluation pipeline for your job description "
+                            f"Great news! The candidate evaluation pipeline for "
+                            "your job description "
                             f'"{jd.title}" has completed successfully.\n\n'
-                            f"You can now review the candidate scores and shortlist recommendations "
+                            f"You can now review the candidate scores and shortlist "
+                            "recommendations "
                             f"on the recruiter candidate board."
                         )
 
@@ -112,8 +117,14 @@ async def async_run_scoring_pipeline(
                             user=user,
                             notification_type=NotificationType.SCORING_COMPLETED,
                             title="Scoring Completed",
-                            message=f'Candidate evaluation has completed for "{jd.title}". Your shortlisted candidates are now available for review.',
-                            target_url=f"/recruiter/job-descriptions/{job_description_id}/candidates",
+                            message=(
+                                f'Candidate evaluation has completed for "{jd.title}". '
+                                "Your shortlisted candidates are now available for "
+                                "review."
+                            ),
+                            target_url=(
+                                f"/recruiter/job-descriptions/{job_description_id}/candidates"
+                            ),
                             metadata={
                                 "job_description_id": str(job_description_id),
                                 "task_id": str(task_id),
@@ -124,12 +135,16 @@ async def async_run_scoring_pipeline(
                             email_html=email_html,
                         )
                         logger.info(
-                            "Pipeline completed notification sent successfully for task %s",
+                            (
+                                "Pipeline completed notification sent "
+                                "successfully for task %s"
+                            ),
                             task_id,
                         )
                     else:
                         logger.warning(
-                            "Could not send pipeline success notification: User or JobDescription not found."
+                            "Could not send pipeline success notification: "
+                             "User or JobDescription not found."
                         )
                 except Exception as ne:
                     logger.warning(
@@ -200,9 +215,12 @@ async def async_run_scoring_pipeline(
 
                             email_body = (
                                 f"Hello {user.name},\n\n"
-                                f"We are writing to inform you that the candidate evaluation pipeline for your job description "
-                                f'"{jd.title}" has failed and could not be completed.\n\n'
-                                f"Please visit the Tasks center to review the status of your tasks."
+                                "We are writing to inform you that the candidate "
+                                "evaluation "
+                                f'pipeline for your job description "{jd.title}" '
+                                "has failed and could not be completed.\n\n"
+                                "Please visit the Tasks center to review the "
+                                "status of your tasks."
                             )
 
                             email_html = get_generic_email_html(
@@ -216,7 +234,10 @@ async def async_run_scoring_pipeline(
                                 user=user,
                                 notification_type=NotificationType.SYSTEM,
                                 title="Scoring Failed",
-                                message=f'Candidate evaluation for "{jd.title}" could not be completed.',
+                                message=(
+                                    f'Candidate evaluation for "{jd.title}" '
+                                    "could not be completed."
+                                ),
                                 target_url="/recruiter/tasks",
                                 metadata={
                                     "job_description_id": str(job_description_id),
@@ -228,12 +249,18 @@ async def async_run_scoring_pipeline(
                                 email_html=email_html,
                             )
                             logger.info(
-                                "Pipeline failure notification sent successfully for task %s",
+                                (
+                                    "Pipeline failure notification sent "
+                                    "successfully for task %s"
+                                ),
                                 task_id,
                             )
                         else:
                             logger.warning(
-                                "Could not send pipeline failure notification: User or JobDescription not found."
+
+                                    "Could not send pipeline failure notification: "
+                                    "User or JobDescription not found."
+
                             )
                     except Exception as ne:
                         logger.warning(
@@ -245,7 +272,10 @@ async def async_run_scoring_pipeline(
 
             except Exception as fe:
                 logger.error(
-                    "Critical: Failed to persist task failure state to DB for task %s. Error: %s",
+                    (
+                        "Critical: Failed to persist task failure state to DB "
+                        "for task %s. Error: %s"
+                    ),
                     task_id,
                     str(fe),
                     exc_info=True,

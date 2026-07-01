@@ -7,7 +7,8 @@ from src.core.services.scoring_task_service import ScoringTaskService
 
 
 class PipelineProgressReporter(ABC):
-    """Abstract interface for reporting stage transitions in the scoring pipeline."""
+    """Abstract interface for reporting stage transitions in the
+      scoring pipeline."""
 
     @abstractmethod
     async def update_stage(self, stage: str) -> None:
@@ -16,14 +17,16 @@ class PipelineProgressReporter(ABC):
 
 
 class NoOpProgressReporter(PipelineProgressReporter):
-    """A no-op implementation of PipelineProgressReporter for when progress updates are not needed (e.g. sync runs, tests)."""
+    """A no-op implementation of PipelineProgressReporter for when
+      progress updates are not needed (e.g. sync runs, tests)."""
 
     async def update_stage(self, stage: str) -> None:
         pass
 
 
 class DatabaseProgressReporter(PipelineProgressReporter):
-    """Database-backed implementation of PipelineProgressReporter that updates a ScoringTask table record via ScoringTaskService."""
+    """Database-backed implementation of PipelineProgressReporter that
+    updates a ScoringTask table record via ScoringTaskService."""
 
     def __init__(self, scoring_task_service: ScoringTaskService, task_id: UUID):
         self.service = scoring_task_service

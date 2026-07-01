@@ -171,3 +171,93 @@ Respond ONLY with a valid JSON object matching this exact schema:
 
 {schema_json}
 """
+
+
+RESUME_EXTRACTION_PROMPT = """Extract candidate information from the resume.
+Return all available information.
+Do not invent information that is not present.
+Dates should be returned in ISO format (YYYY-MM-DD) whenever possible.
+
+CRITICAL: You must respond strictly with a valid JSON object matching this exact schema layout:
+{schema_json}"""
+
+
+CANDIDATE_DEEP_SCORING_PROMPT = """You are an expert technical recruiter.
+
+Compare the candidate against the job description.
+
+Your responsibilities:
+- identify mandatory skill matches
+- identify optional skill matches
+- identify missing mandatory skills
+- evaluate role fit
+- evaluate education alignment
+
+IMPORTANT:
+- Be strict about mandatory skills.
+- Do not invent skills or experience.
+- Copy candidate_id exactly from the input.
+- Do not generate a new candidate_id.
+
+Skill Proficiency Matching:
+- When comparing skills, assess the proficiency level match.
+- For each matched skill (mandatory or optional), append a pipe and match quality float.
+- Format: "SkillName|quality" where quality is a float between 0.0 and 1.0.
+- Match quality values:
+  1.0 = exact proficiency match, or candidate exceeds required level, or no proficiency specified on either side
+  0.75 = candidate is roughly one level below the required proficiency (slight gap)
+  0.4 = candidate is two or more levels below the required proficiency (significant gap)
+- If a skill is completely absent from the candidate, do NOT include it in matched lists. Put it in missing_mandatory_skills instead (without a pipe suffix).
+- Examples:
+  JD requires "Advanced Python", candidate has "Advanced Python" -> "Python|1.0"
+  JD requires "Advanced Python", candidate has "Expert Python" -> "Python|1.0"
+  JD requires "Advanced Python", candidate has "Python" (intermediate inferred) -> "Python|0.75"
+  JD requires "Advanced Python", candidate has "Basic Python" -> "Python|0.4"
+  JD requires "Python", candidate has "Python" -> "Python|1.0"
+  JD requires "Kubernetes", candidate has no Kubernetes -> missing_mandatory_skills: ["Kubernetes"]
+- Document any proficiency gaps in the explanation weaknesses list.
+
+Role Fit Scoring (0-12):
+- 0 = no alignment
+- 6 = moderate alignment
+- 12 = excellent alignment
+
+Education Scoring (0-8):
+- 8 = exact match
+- 7 = higher qualification
+- 6 = related field
+- 4 = same level only
+- 0 = poor match
+
+Confidence must be between 0 and 100.
+
+Return JSON matching this schema:
+{schema_json}"""
+
+
+CANDIDATE_PRESCORING_PROMPT = """You are a recruiting pre-screening engine.
+
+Evaluate each candidate using broad semantic matching.
+Assign a preliminary score from 0 to 100 indicating how promising the candidate is for further evaluation.
+
+Use the FULL scoring range, not just 0, 50, or 100.
+Choose the score that best reflects the overall strength of the match.
+
+Scoring guide:
+90-100 : Exceptional match, highly recommended.
+75-89  : Strong match with only minor gaps.
+60-74  : Good match but several noticeable gaps.
+40-59  : Partial match, worth reviewing if needed.
+20-39  : Weak match with significant gaps.
+0-19   : Clear mismatch.
+
+Do NOT round to multiples of 10 or 25 unless they are truly appropriate.
+Scores such as 67, 73, 81, 88, and 94 are perfectly acceptable.
+
+IMPORTANT:
+- Copy candidate_id exactly.
+- Return only valid JSON.
+
+Return JSON matching:
+{schema_json}"""
+

@@ -10,7 +10,7 @@ from uuid import uuid4
 
 import pytest
 
-from src.core.services.scoring_ai_client import CandidateScoringClient
+from src.control.agents.scoring_agent import CandidateScoringClient
 from src.schemas.scoring_schema import (
     CandidateEducationInput,
     CandidateEvaluationOutput,

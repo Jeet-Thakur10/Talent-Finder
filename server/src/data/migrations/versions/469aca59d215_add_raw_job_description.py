@@ -1,7 +1,7 @@
 """add_raw_job_description
 
 Revision ID: 469aca59d215
-Revises: 
+Revises:
 Create Date: 2026-06-25 12:03:06.982174
 
 """

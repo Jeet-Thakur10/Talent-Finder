@@ -37,7 +37,10 @@ class BrevoClient:
                 subject,
                 html_content[:150] + "...",
             )
-            print(f"[BREVO SIMULATION] Email sent to {recipient_email} - Subject: {subject}")
+            print(
+                f"[BREVO SIMULATION] Email sent to {recipient_email} "
+                f"- Subject: {subject}"
+            )
             return
 
         headers = {

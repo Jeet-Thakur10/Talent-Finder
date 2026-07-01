@@ -29,7 +29,8 @@ class CandidateSearchQueryAgent:
         )
         self._llm = ChatHuggingFace(llm=self._endpoint)
 
-        # with_structured_output using json_mode returns a dictionary matching the schema
+        # with_structured_output using json_mode returns a dictionary matching
+        # the schema
         self._structured_llm = self._llm.with_structured_output(
             CandidateSearchQueryOutput,
             method="json_mode",
@@ -37,7 +38,11 @@ class CandidateSearchQueryAgent:
 
     def generate_search_query(
         self,
-        job_description: JobDescription | JobDescriptionResponse | JobDescriptionScoringInput,
+        job_description: (
+            JobDescription
+            | JobDescriptionResponse
+            | JobDescriptionScoringInput
+        ),
         min_candidates: int,
         max_source_resumes: int,
     ) -> CandidateSearchRequest:
@@ -82,7 +87,8 @@ class CandidateSearchQueryAgent:
             # Validate the returned dictionary into CandidateSearchQueryOutput model
             query_output = CandidateSearchQueryOutput.model_validate(result_dict)
 
-            # Construct the final CandidateSearchRequest schema combining generated and passed fields
+            # Construct the final CandidateSearchRequest schema combining generated
+            # and passed fields
             return CandidateSearchRequest(
                 title=query_output.title,
                 skills=query_output.skills,

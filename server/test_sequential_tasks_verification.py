@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import delete, select
 
-from src.core.services.scoring_ai_client import CandidateScoringResult
+from src.control.agents.scoring_agent import CandidateScoringResult
 from src.core.services.scoring_task_service import ScoringTaskService
 from src.data.clients.postgres import get_background_scoped_db_context
 from src.data.models.postgres.candidate import Candidate
@@ -277,7 +277,7 @@ def run_verification():
         )
         return CandidateScoringResult(payload=score, provider="mock")
 
-    from src.core.services.scoring_ai_client import (
+    from src.control.agents.scoring_agent import (
         CandidatePrescoringClient,
         CandidateScoringClient,
     )

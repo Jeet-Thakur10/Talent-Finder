@@ -1,3 +1,5 @@
+# Log configuration status at startup
+import logging
 from pathlib import Path
 from typing import Literal
 
@@ -11,12 +13,18 @@ env_file_path = server_dir / ".env"
 
 if not env_file_path.exists():
     raise RuntimeError(
-        f"Critical Configuration Error: The required environment file '.env' was not found at the expected absolute path: {env_file_path.as_posix()}. "
-        "Please check your deployment and working directory structure."
+
+            "Critical Configuration Error: The required "
+            "environment file '.env' was not found at the "
+            f"expected absolute path: {env_file_path.as_posix()}. "
+            "Please check your deployment and working "
+            "directory structure."
+
     )
 
 class Settings(BaseSettings):
-    DATABASE_URL: str  # Required field - removing fallback value to prevent silent failure
+    DATABASE_URL: str  # Required field - removing fallback value to prevent silent
+    failure
     PORT: int = 8000
     HOST: str = "127.0.0.1"
 
@@ -46,7 +54,7 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]
 
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.3-70b-versatile" # llama3-70b-8192 llama-3.3-70b-versatile
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
     SCORING_LLM_PROVIDER: str = "groq"
 
@@ -80,9 +88,6 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
-
-# Log configuration status at startup
-import logging
 
 logger = logging.getLogger(__name__)
 # Mask database URL password for security

@@ -39,6 +39,14 @@ dev = [
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+exclude = [
+    "test_*.py",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/utils/email_templates.py" = ["E501"]
+"src/data/migrations/versions/*.py" = ["E501"]
+"src/control/agents/prompts.py" =["E501"]
 
 [tool.ruff.lint]
 select = [
