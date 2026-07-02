@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class SearchAttempt(BaseModel):
     attempt_number: int
     title: str

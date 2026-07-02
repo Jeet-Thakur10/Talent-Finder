@@ -1,7 +1,7 @@
-from pathlib import Path
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
 import logging
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Resolve absolute path to sourcing/.env relative to this file
 current_dir = Path(__file__).resolve().parent
@@ -10,8 +10,11 @@ env_file_path = sourcing_dir / ".env"
 
 if not env_file_path.exists():
     raise RuntimeError(
-        f"Critical Configuration Error: Sourcing environment file '.env' was not found at expected path: {env_file_path.as_posix()}. "
-        "Please check your deployment and working directory structure."
+
+            "Critical Configuration Error: Sourcing environment file '.env' "
+            f"was not found at expected path: {env_file_path.as_posix()}. "
+            "Please check your deployment and working directory structure."
+
     )
 
 class Settings(BaseSettings):

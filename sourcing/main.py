@@ -3,15 +3,14 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.config.settings import settings
 
-from src.api.rest.routes.health import (
-    router as health_router,
-)
 from src.api.rest.routes.candidate_route import (
     router as candidate_router,
 )
-
+from src.api.rest.routes.health import (
+    router as health_router,
+)
+from src.config.settings import settings
 from src.data.clients.init_db import (
     init_db,
 )

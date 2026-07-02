@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
+
 from langchain_core.messages import HumanMessage, SystemMessage
-from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
 
 from src.config.settings import settings
+from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
 from src.schemas.candidate_search_request import CandidateSearchRequest
 from src.schemas.search_attempt import SearchOptimizationPlan
 
@@ -58,13 +59,19 @@ class CandidateSearchStrategyAgent:
         ]
 
         try:
-            result: SearchOptimizationPlan = await self._structured_llm.ainvoke(messages)
+            result: SearchOptimizationPlan = (
+                await self._structured_llm.ainvoke(messages)
+                )
             return result
         except Exception as exc:
             # Fallback optimization plan on error: drop some skills
             print(f"[CandidateSearchStrategyAgent] Error invoking Groq LLM: {exc}")
             # Try to return a safe fallback: keep original title, suggest first 3 skills
-            fallback_skills = original_request.skills[:3] if original_request.skills else []
+            fallback_skills = (
+                original_request.skills[:3]
+                if original_request.skills
+                else []
+            )
             return SearchOptimizationPlan(
                 inferred_role="Backend Engineer",
                 representative_title=original_request.title,

@@ -56,10 +56,14 @@ class CandidateSearchService:
         if len(candidates) >= request.required_candidates:
             print("\n[SourcingService] Decision Point:")
             print("  External scraping is NOT triggered.")
-            print(f"  Reason: Local matched candidates ({len(candidates)}) meets or exceeds required_candidates ({request.required_candidates}).")
+            print(
+                "  Reason: Local matched candidates "
+                f"({len(candidates)}) meets or exceeds "
+                f"required_candidates ({request.required_candidates})."
+            )
 
             selected_candidates = candidates[:request.required_candidates]
-            
+
             print("\n[SourcingService] Completion:")
             print(f"  Requested candidates: {request.required_candidates}")
             print(f"  Candidates returned: {len(selected_candidates)}")
@@ -77,7 +81,11 @@ class CandidateSearchService:
 
         print("\n[SourcingService] Decision Point:")
         print("  External scraping IS triggered.")
-        print(f"  Reason: Local matched candidates ({len(candidates)}) is less than required_candidates ({request.required_candidates}).")
+        print(
+            "  Reason: Local matched candidates "
+            f"({len(candidates)}) is less than "
+            f"required_candidates ({request.required_candidates})."
+        )
 
         try:
             await self._sourcing_service.source_candidates(
@@ -108,4 +116,4 @@ class CandidateSearchService:
                 selected_candidates,
             ),
             sourced=True,
-        )
+        )

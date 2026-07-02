@@ -2,19 +2,18 @@ from __future__ import annotations
 
 import json
 import logging
-import asyncio
-import httpx
-from pydantic import ValidationError
-from groq import RateLimitError, APIError
-from langchain_core.exceptions import OutputParserException
 
+import httpx
+from groq import APIError, RateLimitError
+from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import (
     HumanMessage,
     SystemMessage,
 )
-from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
+from pydantic import ValidationError
 
 from src.config.settings import settings
+from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
 from src.schemas.resume_candidate_output import (
     ResumeCandidateOutput,
 )
@@ -124,7 +123,7 @@ class ResumeExtractionAgent:
         except (ValidationError, OutputParserException) as exc:
             print("Groq extraction completed.\n")
             print("Validating structured output...\n")
-            
+
             if isinstance(exc, ValidationError):
                 stage = "Pydantic validation"
                 error_code = "EXTRACTION_VALIDATION"
@@ -181,7 +180,7 @@ class ResumeExtractionAgent:
                 failure_stage=stage,
             )
 
-        except (httpx.TimeoutException, asyncio.TimeoutError, TimeoutError):
+        except (httpx.TimeoutException, TimeoutError):
             stage = "Groq API"
             error_code = "EXTRACTION_TIMEOUT"
             error_msg = "Groq request timed out."

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import random
 import urllib.parse
+
 import httpx
 
 from src.config.settings import settings
@@ -17,6 +18,7 @@ from src.core.services.postjobfree_resume_parser import (
 from src.core.services.postjobfree_search_parser import (
     PostJobFreeSearchParser,
 )
+from src.core.services.search_query_optimizer import SearchQueryOptimizer
 from src.handlers.http_clients.postjobfree_client import (
     PostJobFreeClient,
 )
@@ -27,7 +29,6 @@ from src.schemas.postjobfree_search_request import (
     PostJobFreeSearchRequest,
 )
 from src.schemas.search_attempt import SearchAttempt
-from src.core.services.search_query_optimizer import SearchQueryOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,8 @@ class PostJobFreeSourcingService:
         request: CandidateSearchRequest,
     ) -> None:
 
-        # 1. Pre-generate the optimization plan once at the beginning of the sourcing session
+        # 1. Pre-generate the optimization plan once at the beginning of
+        # the sourcing session
         await self._optimizer.initialize(request)
 
         plan = self._optimizer.get_plan()
@@ -87,8 +89,10 @@ class PostJobFreeSourcingService:
         best_resumes_found = 0
         no_improvement_count = 0
 
-        seen_queries = set()  # To track executed queries: tuple(title, tuple(sorted_skills))
-        processed_resume_urls = set()  # To track processed resume URLs across attempts
+        # To track executed queries: tuple(title, tuple(sorted_skills))
+        seen_queries = set()
+        # To track processed resume URLs across attempts
+        processed_resume_urls = set()
 
         # Load existing candidates matching the original request
         existing_candidates = await self._candidate_service.search_candidates(
@@ -117,7 +121,12 @@ class PostJobFreeSourcingService:
             # Check proactive timeout
             elapsed = asyncio.get_event_loop().time() - start_time
             if elapsed > settings.SOURCING_LOOP_TIMEOUT_SECONDS:
-                print(f"  [PostJobFreeSourcingService] Approaching timeout limit ({elapsed:.1f}s / {settings.SOURCING_LOOP_TIMEOUT_SECONDS}s). Terminating loop early.")
+                print(
+                    "[PostJobFreeSourcingService] Approaching timeout limit "
+                    f"({elapsed:.1f}s / "
+                    f"{settings.SOURCING_LOOP_TIMEOUT_SECONDS}s). "
+                    "Terminating loop early."
+                )
                 break
 
             try:
@@ -127,7 +136,10 @@ class PostJobFreeSourcingService:
                     attempts_history,
                 )
             except Exception as opt_err:
-                print(f"  [Attempt {current_attempt}] Strategy optimization failed: {opt_err}")
+                print(
+                    f"  [Attempt {current_attempt}] "
+                    f"Strategy optimization failed: {opt_err}"
+                )
                 break
 
             # Check query deduplication using normalized representation
@@ -136,7 +148,10 @@ class PostJobFreeSourcingService:
                 tuple(sorted(skill.strip().lower() for skill in optimized_req.skills))
             )
             if normalized_query in seen_queries:
-                print(f"  [Attempt {current_attempt}] Skipped duplicate query: Title='{optimized_req.title}', Skills={optimized_req.skills}")
+                print(
+                    f"  [Attempt {current_attempt}] Skipped duplicate query: "
+                    f"Title='{optimized_req.title}', Skills={optimized_req.skills}"
+                )
                 attempt_stat = SearchAttempt(
                     attempt_number=current_attempt,
                     title=optimized_req.title,
@@ -199,18 +214,30 @@ class PostJobFreeSourcingService:
                     # Check proactive timeout
                     elapsed = asyncio.get_event_loop().time() - start_time
                     if elapsed > settings.SOURCING_LOOP_TIMEOUT_SECONDS:
-                        print(f"  [PostJobFreeSourcingService] Approaching timeout limit ({elapsed:.1f}s / {settings.SOURCING_LOOP_TIMEOUT_SECONDS}s). Stopping attempt loop.")
+                        print(
+                            "[PostJobFreeSourcingService] Approaching timeout limit "
+                            f"({elapsed:.1f}s / "
+                            f"{settings.SOURCING_LOOP_TIMEOUT_SECONDS}s). "
+                            "Stopping attempt loop."
+                        )
                         break
 
                     # Stopping condition check during loop
-                    current_missing = max(request.required_candidates - len(existing_ids), 0)
+                    current_missing = max(
+                        request.required_candidates - len(existing_ids), 0)
                     if current_missing == 0:
-                        print("  Reached target candidates count mid-scrape. Stopping attempt loop.")
+                        print(
+                            "  Reached target candidates count "
+                            "mid-scrape. Stopping attempt loop."
+                        )
                         break
 
                     # Resume URL Deduplication: skip if already processed in this run
                     if result.resume_url in processed_resume_urls:
-                        print(f"     [Scrape] Skipped duplicate URL (already processed in this run): {result.resume_url}")
+                        print(
+                            "     [Scrape] Skipped duplicate URL "
+                            f"(already processed in this run): {result.resume_url}"
+                        )
                         continue
 
                     processed_resume_urls.add(result.resume_url)
@@ -225,18 +252,30 @@ class PostJobFreeSourcingService:
                             )
                             print("Resume downloaded successfully.\n")
                         except Exception as exc:
-                            if isinstance(exc, (httpx.TimeoutException, asyncio.TimeoutError, TimeoutError)):
+                            if isinstance(
+                                exc,
+                                (
+                                    httpx.TimeoutException,
+                                    asyncio.TimeoutError,
+                                    TimeoutError,
+                                ),
+                            ):
                                 stage = "Resume download"
                                 error_code = "EXTRACTION_TIMEOUT"
                                 error_msg = "Resume download request timed out."
                             elif isinstance(exc, httpx.RequestError):
                                 stage = "Resume download"
                                 error_code = "EXTRACTION_NETWORK"
-                                error_msg = "Resume download failed due to network issue."
+                                error_msg = (
+                                    "Resume download failed due to network issue."
+                                )
                             else:
                                 stage = "Resume download"
                                 error_code = "EXTRACTION_UNKNOWN"
-                                error_msg = f"Resume download failed with unexpected error: {str(exc)}"
+                                error_msg = (
+                                    "Resume download failed with unexpected error: "
+                                    f"{str(exc)}"
+                                )
 
                             logger.error(
                                 "Resume extraction failed during stage: '%s'\n"
@@ -302,10 +341,12 @@ class PostJobFreeSourcingService:
                         # 5. Persistence stage
                         print("Persisting candidate...\n")
                         try:
-                            stored_candidate = await self._candidate_service.create_candidate(
-                                candidate=extraction_result.payload,
-                                resume_text=resume.raw_resume_text,
-                                source_type="postjobfree",
+                            stored_candidate = (
+                                await self._candidate_service.create_candidate(
+                                    candidate=extraction_result.payload,
+                                    resume_text=resume.raw_resume_text,
+                                    source_type="postjobfree",
+                                )
                             )
                             await self._candidate_service.commit()
                             print("Candidate persisted successfully.\n")
@@ -332,15 +373,24 @@ class PostJobFreeSourcingService:
                             continue
 
                         if stored_candidate.id in request.exclude_candidate_ids:
-                            print("     [Scrape] Excluded: candidate ID in exclude_candidate_ids.")
+                            print(
+                                "     [Scrape] Excluded: candidate ID "
+                                "in exclude_candidate_ids."
+                            )
                             continue
 
                         if stored_candidate.id not in existing_ids:
                             new_candidates_persisted += 1
                             existing_ids.add(stored_candidate.id)
-                            print(f"     [Scrape] Successfully stored new unique candidate: {stored_candidate.id}")
+                            print(
+                                "     [Scrape] Successfully stored new "
+                                f"unique candidate: {stored_candidate.id}"
+                            )
                         else:
-                            print(f"     [Scrape] Duplicate candidate ID: {stored_candidate.id}")
+                            print(
+                                "     [Scrape] Duplicate candidate ID: "
+                                f"{stored_candidate.id}"
+                            )
 
                         # Delay between requests
                         sleep_seconds = random.randint(10, 15)
@@ -362,16 +412,25 @@ class PostJobFreeSourcingService:
                         print("Candidate rejected.\n")
 
             # Recompute remaining needed candidates
-            candidates_remaining = max(request.required_candidates - len(existing_ids), 0)
+            candidates_remaining = max(
+                request.required_candidates - len(existing_ids), 0)
 
             # Evaluate improvement stopping condition
             if resumes_found > best_resumes_found or new_candidates_persisted > 0:
                 no_improvement_count = 0
                 best_resumes_found = max(best_resumes_found, resumes_found)
-                print(f"  Attempt {current_attempt} improved the candidate pool (New unique persisted: {new_candidates_persisted}, Resumes: {resumes_found}).")
+                print(
+                    f"  Attempt {current_attempt} improved the candidate pool "
+                    f"(New unique persisted: {new_candidates_persisted}, "
+                    f"Resumes: {resumes_found})."
+                )
             else:
                 no_improvement_count += 1
-                print(f"  Attempt {current_attempt} failed to improve the candidate pool. Consecutive no-improvement count: {no_improvement_count}.")
+                print(
+                    f"  Attempt {current_attempt} failed to improve the candidate "
+                    f"pool. Consecutive no-improvement count: "
+                    f"{no_improvement_count}."
+                )
 
             # Record stats in attempt history
             attempt_stat = SearchAttempt(
@@ -402,12 +461,21 @@ class PostJobFreeSourcingService:
             print("==================================================\n")
 
             if no_improvement_count >= settings.MAX_CONSECUTIVE_NO_IMPROVEMENT:
-                print(f"[PostJobFreeSourcingService] Terminating loop early: {no_improvement_count} consecutive no-improvement attempts.")
+                print(
+                    "[PostJobFreeSourcingService] Terminating loop early: "
+                    f"{no_improvement_count} consecutive no-improvement attempts."
+                )
                 break
 
         # Log final loop status and stop reason
-        stop_reason = "TARGET_SATISFIED" if candidates_remaining == 0 else (
-            "NO_IMPROVEMENT" if no_improvement_count >= settings.MAX_CONSECUTIVE_NO_IMPROVEMENT else "MAX_ATTEMPTS_REACHED"
+        stop_reason = (
+            "TARGET_SATISFIED"
+            if candidates_remaining == 0
+            else (
+                "NO_IMPROVEMENT"
+                if no_improvement_count >= settings.MAX_CONSECUTIVE_NO_IMPROVEMENT
+                else "MAX_ATTEMPTS_REACHED"
+            )
         )
         print("\n[PostJobFreeSourcingService] Sourcing Loop Complete:")
         print(f"  Stopping Reason: {stop_reason}")

@@ -51,3 +51,21 @@ ignore = [
     "B905",
 ]
 
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint.per-file-ignores]
+"src/control/agents/prompts.py" = ["E501"]
+"src/control/agents/candidate_search_strategy_agent.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.13"
+
+strict = true
+
+disallow_untyped_defs = true
+
+no_implicit_optional = true
+
+"src/data/migrations/versions/*.py" = ["E501"]
