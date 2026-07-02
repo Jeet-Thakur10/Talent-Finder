@@ -140,5 +140,5 @@ class CandidateSearchClient:
 
     async def __aexit__(  # type: ignore[no-untyped-def]
             self, exc_type, exc_val, exc_tb
-            ) -> None: 
+            ) -> None:
         await self.close()

@@ -7,6 +7,7 @@ from datetime import date
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
+from pydantic import SecretStr
 
 from src.config.settings import settings
 from src.control.agents.prompts import (
@@ -38,7 +39,7 @@ class ResumeExtractionClient:
         self.groq_model = settings.GROQ_MODEL
 
         self.llm = ChatGroq(
-            api_key=settings.GROQ_API_KEY,
+            api_key=SecretStr(settings.GROQ_API_KEY),
             model=self.groq_model,
             temperature=0,
         )
@@ -71,7 +72,7 @@ class ResumeExtractionClient:
             ]
 
             result: ResumeCandidateOutput = (
-                self.structured_llm.invoke(
+                self.structured_llm.invoke( # type: ignore[assignment]
                     messages,
                 )
             )
@@ -105,7 +106,7 @@ class CandidateScoringClient:
         self.groq_model = settings.GROQ_MODEL
 
         self.llm = ChatGroq(
-            api_key=settings.GROQ_API_KEY,
+            api_key=SecretStr(settings.GROQ_API_KEY),
             model=self.groq_model,
             temperature=0,
         )
@@ -156,7 +157,7 @@ class CandidateScoringClient:
             ]
 
             result: CandidateEvaluationOutput = (
-                await self.structured_llm.ainvoke(
+                await self.structured_llm.ainvoke( # type: ignore[assignment]
                     messages,
                 )
             )
@@ -168,7 +169,7 @@ class CandidateScoringClient:
             )
 
             return CandidateScoringResult(
-                payload=score,
+                payload=score,  # type: ignore[arg-type]
                 provider="groq",
             )
 
@@ -272,7 +273,7 @@ class CandidateScoringClient:
             missing_mandatory_skills=(
                 evaluation.missing_mandatory_skills
             ),
-            explanation=evaluation.explanation.model_dump(),
+            explanation=evaluation.explanation.model_dump(),  # type: ignore[arg-type]
         )
 
     def _calculate_skills_score(
@@ -412,7 +413,7 @@ class CandidatePrescoringResult:
 class CandidatePrescoringClient:
     def __init__(self) -> None:
         self.llm = ChatGroq(
-            api_key=settings.GROQ_API_KEY,
+            api_key=SecretStr(settings.GROQ_API_KEY),
             model=settings.GROQ_MODEL,
             temperature=0,
         )
@@ -461,6 +462,6 @@ class CandidatePrescoringClient:
             ),
         ]
 
-        return await self.structured_llm.ainvoke(
+        return await self.structured_llm.ainvoke( # type: ignore[return-value]
             messages,
         )

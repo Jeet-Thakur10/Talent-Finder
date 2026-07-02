@@ -23,7 +23,7 @@ if not env_file_path.exists():
     )
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "" # Required field - removing fallback value to prevent 
+    DATABASE_URL: str = "" # Required field - removing fallback value to prevent
                            # silent failure
     PORT: int = 8000
     HOST: str = "127.0.0.1"
@@ -76,9 +76,9 @@ class Settings(BaseSettings):
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
-    def parse_origins( 
+    def parse_origins(
         cls, v : str | list[str]
-        ) -> list[str]: 
+        ) -> list[str]:
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
         return v

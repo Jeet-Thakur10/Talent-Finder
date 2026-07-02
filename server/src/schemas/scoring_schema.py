@@ -155,7 +155,6 @@ class CandidateScoreExplanation(BaseModel):
     strengths: list[str]
     weaknesses: list[str]
 
-# adding an experimental evaluation schema
 
 class CandidateEvaluationOutput(BaseModel):
     candidate_id: UUID
