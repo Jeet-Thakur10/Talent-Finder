@@ -17,7 +17,7 @@ from src.data.clients.postgres import get_background_scoped_db_context
 from src.data.models.postgres.job_description import JobDescription
 from src.data.models.postgres.notification import NotificationType
 from src.data.models.postgres.user import User
-from src.schemas.auth_schema import AuthenticatedUserContext
+from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
 from src.schemas.scoring_schema import PipelineExecutionRequest
 from src.utils.email_templates import get_generic_email_html
 
@@ -48,7 +48,7 @@ async def async_run_scoring_pipeline(
 
                 current_user = AuthenticatedUserContext(
                     user_id=recruiter_id,
-                    role="recruiter",
+                    role=UserRole.recruiter,
                 )
                 exec_req = PipelineExecutionRequest(**request_data)
 

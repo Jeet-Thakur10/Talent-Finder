@@ -360,6 +360,15 @@ class ScoringRepository:
 
             existing = result.scalar_one_or_none()
 
+            explanation_dict: dict[str, object] = {}
+            if hasattr(score.explanation, "model_dump"):
+                for k, v in score.explanation.model_dump().items():
+                    explanation_dict[k] = v
+            elif isinstance(score.explanation, dict):
+                for k, v in score.explanation.items():
+                    if isinstance(k, str):
+                        explanation_dict[k] = v
+
             if existing:
                 existing.final_score = score.final_score
                 existing.confidence = score.confidence
@@ -376,14 +385,7 @@ class ScoringRepository:
 
                 existing.missing_mandatory_skills = score.missing_mandatory_skills
 
-                existing.explanation = (
-                    score.explanation.model_dump()
-                    if hasattr(
-                        score.explanation,
-                        "model_dump",
-                    )
-                    else score.explanation
-                )
+                existing.explanation = explanation_dict
 
                 existing.updated_at = now
 
@@ -402,14 +404,7 @@ class ScoringRepository:
                         matched_mandatory_skills=(score.matched_mandatory_skills),
                         matched_optional_skills=(score.matched_optional_skills),
                         missing_mandatory_skills=(score.missing_mandatory_skills),
-                        explanation=(
-                            score.explanation.model_dump()
-                            if hasattr(
-                                score.explanation,
-                                "model_dump",
-                            )
-                            else score.explanation
-                        ),
+                        explanation=explanation_dict,
                         created_at=now,
                         updated_at=now,
                     )
@@ -488,9 +483,9 @@ class ScoringRepository:
                     existing_exp_skills = list(matched_exp.skills)
 
                     # Remove deleted nested skills
-                    for skill in existing_exp_skills:
-                        if skill.skill_name not in incoming_exp_skills:
-                            matched_exp.skills.remove(skill)
+                    for exp_skill in existing_exp_skills:
+                        if exp_skill.skill_name not in incoming_exp_skills:
+                            matched_exp.skills.remove(exp_skill)
 
                     # Add new nested skills
                     existing_exp_skill_names = {
@@ -528,36 +523,36 @@ class ScoringRepository:
             # institution_name, degree, field_of_study
             # ))
             matched_edus = set()
-            for inc in candidate_details.educations:
-                key = (inc.institution_name, inc.degree, inc.field_of_study)
+            for inc_edu in candidate_details.educations:
+                edu_key = (inc_edu.institution_name, inc_edu.degree, inc_edu.field_of_study)
 
                 matched_edu = None
-                for ext in existing_candidate.educations:
-                    ext_key = (ext.institution_name, ext.degree, ext.field_of_study)
-                    if ext_key == key:
-                        matched_edu = ext
+                for ext_edu in existing_candidate.educations:
+                    ext_edu_key = (ext_edu.institution_name, ext_edu.degree, ext_edu.field_of_study)
+                    if ext_edu_key == edu_key:
+                        matched_edu = ext_edu
                         break
 
                 if matched_edu:
                     # Update mutable fields
-                    matched_edu.start_date = inc.start_date
-                    matched_edu.end_date = inc.end_date
+                    matched_edu.start_date = inc_edu.start_date
+                    matched_edu.end_date = inc_edu.end_date
                     matched_edus.add(matched_edu.id)
                 else:
                     # Insert new education
                     new_edu = CandidateEducation(
-                        institution_name=inc.institution_name,
-                        degree=inc.degree,
-                        field_of_study=inc.field_of_study,
-                        start_date=inc.start_date,
-                        end_date=inc.end_date,
+                        institution_name=inc_edu.institution_name,
+                        degree=inc_edu.degree,
+                        field_of_study=inc_edu.field_of_study,
+                        start_date=inc_edu.start_date,
+                        end_date=inc_edu.end_date,
                     )
                     existing_candidate.educations.append(new_edu)
 
             # Prune unmatched educations
-            for ext in list(existing_candidate.educations):
-                if ext.id not in matched_edus and ext.id is not None:
-                    existing_candidate.educations.remove(ext)
+            for ext_edu in list(existing_candidate.educations):
+                if ext_edu.id not in matched_edus and ext_edu.id is not None:
+                    existing_candidate.educations.remove(ext_edu)
 
             await self.db.flush()
             return existing_candidate

@@ -78,6 +78,7 @@ from src.schemas.scoring_schema import (
     PipelineSnapshotResponse,
     PipelineStageUpdateRequest,
     SharedCampaignCandidateResponse,
+    CandidateScoreOutput,
 )
 from src.utils.email_templates import get_generic_email_html
 
@@ -91,7 +92,7 @@ class ScoringService:
         self.prescoring_client = CandidatePrescoringClient()
 
         # Instantiate clients and agents
-        self.search_client = CandidateSearchClient()
+        self.search_client: CandidateSearchClient | None = CandidateSearchClient()
         self.search_query_agent = CandidateSearchQueryAgent()
 
         # Instantiate services
@@ -214,36 +215,36 @@ class ScoringService:
         scoring_duration = (time.perf_counter() - start_time) * 1000.0
         per_task_duration = scoring_duration / len(scoring_tasks)
 
-        candidate_scores = []
+        candidate_scores: list[CandidateScoreOutput] = []
         for cid, result in zip(task_candidate_ids, results):
-            state = (
+            cand_state = (
                 context.candidates[cid]
                 if (context and cid in context.candidates)
                 else None
             )
 
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 logger.error(
                     "Recoverable deep-scoring error encountered for a candidate: %s",
                     str(result),
                 )
-                if state:
-                    state.mark_scoring_failed(
+                if cand_state:
+                    cand_state.mark_scoring_failed(
                         error_code="LLM_SCORING_ERROR",
                         error_message=str(result),
                         duration_ms=per_task_duration,
                     )
-            elif result is not None and result.payload is not None:
+            elif result is not None and isinstance(result.payload, CandidateScoreOutput):
                 candidate_scores.append(result.payload)
-                if state:
-                    state.mark_scoring_success(
+                if cand_state:
+                    cand_state.mark_scoring_success(
                         final_score=result.payload.final_score,
                         confidence=result.payload.confidence,
                         duration_ms=per_task_duration,
                     )
             else:
-                if state:
-                    state.mark_scoring_failed(
+                if cand_state:
+                    cand_state.mark_scoring_failed(
                         error_code="LLM_SCORING_EMPTY",
                         error_message="AI client returned an empty scoring result",
                         duration_ms=per_task_duration,
@@ -273,20 +274,20 @@ class ScoringService:
         per_task_persist_duration = persist_duration / max(1, len(candidate_scores))
 
         for cid in task_candidate_ids:
-            state = (
+            cand_state = (
                 context.candidates[cid]
                 if (context and cid in context.candidates)
                 else None
             )
-            if state and state.scoring == StageStatus.SUCCESS:
+            if cand_state and cand_state.scoring == StageStatus.SUCCESS:
                 if persistence_failed_flag:
-                    state.mark_persistence_failed(
+                    cand_state.mark_persistence_failed(
                         error_code="DB_PERSISTENCE_FAILED",
                         error_message=persistence_error_str,
                         duration_ms=per_task_persist_duration,
                     )
                 else:
-                    state.mark_persistence_success(
+                    cand_state.mark_persistence_success(
                         duration_ms=per_task_persist_duration
                     )
 
@@ -540,29 +541,29 @@ class ScoringService:
         )
 
         print("\n" + "=" * 40 + "\nDeep Score Output\n" + "=" * 40)
-        for idx, score in enumerate(deep_score_output.scores):
+        for idx, deep_score in enumerate(deep_score_output.scores):
             c_name = (
-                candidate_lookup[score.candidate_id].full_name
-                if score.candidate_id in candidate_lookup
+                candidate_lookup[deep_score.candidate_id].full_name
+                if deep_score.candidate_id in candidate_lookup
                 else "Unknown"
             )
-            print(f"{idx + 1}. Name: {c_name} (ID: {score.candidate_id})")
+            print(f"{idx + 1}. Name: {c_name} (ID: {deep_score.candidate_id})")
             print(
-                f"   Final Score: {score.final_score} | Confidence: {score.confidence}%"
+                f"   Final Score: {deep_score.final_score} | Confidence: {deep_score.confidence}%"
             )
             print(
-                f"   Breakdown -> Skills: {score.skills_score} | "
-                f"Exp: {score.experience_score} | "
-                f"Recency: {score.recency_score} | "
-                f"Role Fit: {score.role_fit_score} | "
-                f"Edu: {score.education_score}"
+                f"   Breakdown -> Skills: {deep_score.skills_score} | "
+                f"Exp: {deep_score.experience_score} | "
+                f"Recency: {deep_score.recency_score} | "
+                f"Role Fit: {deep_score.role_fit_score} | "
+                f"Edu: {deep_score.education_score}"
             )
-            print(f"   Matched Mandatory Skills: {score.matched_mandatory_skills}")
-            print(f"   Missing Mandatory Skills: {score.missing_mandatory_skills}")
+            print(f"   Matched Mandatory Skills: {deep_score.matched_mandatory_skills}")
+            print(f"   Missing Mandatory Skills: {deep_score.missing_mandatory_skills}")
             explanation_summary = (
-                score.explanation.get("summary")
-                if isinstance(score.explanation, dict)
-                else getattr(score.explanation, "summary", "")
+                deep_score.explanation.get("summary")
+                if isinstance(deep_score.explanation, dict)
+                else getattr(deep_score.explanation, "summary", "")
             )
             print(f"   Explanation Summary: {explanation_summary}")
             print("-" * 20)
@@ -1077,6 +1078,8 @@ Reason:
         job_description = await self.repository.get_job_description_by_id(
             job_description_id,
         )
+        if job_description is None:
+            raise ValueError(f"Job Description with ID {job_description_id} not found")
 
         compressed_jd = self._build_compressed_job_description(
             job_description,
@@ -1110,6 +1113,8 @@ Reason:
         job_description = await self.repository.get_job_description_by_id(
             job_description_id,
         )
+        if job_description is None:
+            raise ValueError(f"Job Description with ID {job_description_id} not found")
 
         all_candidates = await self.repository.get_candidates_for_job_description()
 
@@ -1279,7 +1284,7 @@ Reason:
 
     def _build_pipeline_snapshot(
         self,
-        pipeline_entry: object,
+        pipeline_entry: Pipeline,
     ) -> PipelineSnapshotResponse:
         return PipelineSnapshotResponse(
             id=pipeline_entry.id,
@@ -1508,6 +1513,8 @@ Reason:
         job_description = await self.repository.get_job_description_by_id(
             job_description_id,
         )
+        if job_description is None:
+            raise ValueError(f"Job Description with ID {job_description_id} not found")
 
         return JobDescriptionResponse(
             id=job_description.id,
@@ -1622,10 +1629,8 @@ Reason:
                     f"Hello {jd.hiring_manager.name},\n\n"
                     f"{jd.recruiter.name} has shared a new candidate shortlist for "
                     f'"{jd.title}" with you.\n\n'
-                    (
-                        f"There are {len(candidate_ids)} recommended candidates "
-                        "ready for your review."
-                    )
+                    f"There are {len(candidate_ids)} recommended candidates "
+                    "ready for your review."
                 )
 
                 email_html = get_generic_email_html(
@@ -1780,7 +1785,7 @@ Reason:
                 final_score=score.final_score,
                 recruiter_notes=pipe.recruiter_notes,
                 shared_at=pipe.shared_at,
-                hm_decision=pipe.hm_decision,
+                hm_decision=pipe.hm_decision or HiringManagerDecision.PENDING,
                 hiring_manager_notes=pipe.hiring_manager_notes,
                 interview_link=pipe.interview_link,
                 interview_datetime=pipe.interview_datetime,
