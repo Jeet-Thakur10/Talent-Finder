@@ -1,4 +1,5 @@
 import hashlib
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -68,7 +69,7 @@ class CandidateService:
 
     async def get_candidates_by_ids(
         self,
-        candidate_ids: list,
+        candidate_ids: list[UUID],
     ) -> list[CandidateDetailsResponse]:
         return await self._repository.get_candidates_by_ids(
             candidate_ids,

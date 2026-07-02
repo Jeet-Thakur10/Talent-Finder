@@ -21,10 +21,10 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
     GROQ_SECOND_API_KEY: str = ""
     GROQ_API_KEYS: str = ""
-    DATABASE_URL: str
+    DATABASE_URL: str = ""
     PORT: int = 8001
     HOST: str = "127.0.0.1"
-    SECRET_KEY: str
+    SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
     SERVER_URL: str = "http://127.0.0.1:8000"
     RECRUITER_EMAIL: str = "11a08cnn@gmail.com"

@@ -11,6 +11,7 @@ from langchain_core.messages import (
     SystemMessage,
 )
 from pydantic import ValidationError
+from typing import cast
 
 from src.config.settings import settings
 from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
@@ -110,10 +111,11 @@ class ResumeExtractionAgent:
         print("Invoking Groq extraction...\n")
 
         try:
-            result: ResumeCandidateOutput = (
+            result = cast(
+                ResumeCandidateOutput,
                 self._structured_llm.invoke(
                     messages,
-                )
+                ),
             )
 
             print("Groq extraction completed.\n")

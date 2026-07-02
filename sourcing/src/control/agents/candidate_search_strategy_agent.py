@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import cast
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
@@ -59,9 +60,10 @@ class CandidateSearchStrategyAgent:
         ]
 
         try:
-            result: SearchOptimizationPlan = (
-                await self._structured_llm.ainvoke(messages)
-                )
+            result = cast(
+                SearchOptimizationPlan,
+                await self._structured_llm.ainvoke(messages),
+            )
             return result
         except Exception as exc:
             # Fallback optimization plan on error: drop some skills

@@ -333,8 +333,8 @@ class PostJobFreeSourcingService:
                             resume_url=result.resume_url,
                         )
 
-                        if not extraction_result.success:
-                            print(f"{extraction_result.error}\n")
+                        if not extraction_result.success or extraction_result.payload is None:
+                            print(f"{extraction_result.error or 'Payload is None'}\n")
                             print("Candidate rejected.\n")
                             continue
 

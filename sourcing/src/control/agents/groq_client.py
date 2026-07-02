@@ -18,7 +18,7 @@ class RotationalChatGroq(ChatGroq):
     _current_key_idx: ClassVar[int] = 0
     _keys: ClassVar[list[str]] = []
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         from src.config.settings import settings
 
         # Load keys from settings if they haven't been loaded yet
@@ -54,7 +54,7 @@ class RotationalChatGroq(ChatGroq):
             self.groq_api_key = SecretStr(active_key)
             self.client = None
             self.async_client = None
-            self.validate_environment()
+            self.validate_environment()  # type: ignore[operator]
 
         print(f"Using Groq key {active_idx + 1}/{len(RotationalChatGroq._keys)}.")
         logger.info(f"Using Groq key {active_idx + 1}/{len(RotationalChatGroq._keys)}.")

@@ -14,7 +14,7 @@ from src.schemas.search_attempt import SearchAttempt, SearchOptimizationPlan
 class SearchQueryOptimizer:
     def __init__(self, agent: CandidateSearchStrategyAgent) -> None:
         self._agent = agent
-        self._plan = None
+        self._plan: SearchOptimizationPlan | None = None
         self._strategies = [
             RepresentativeSkillsStrategy(),
             GeneralizedTitleStrategy(),

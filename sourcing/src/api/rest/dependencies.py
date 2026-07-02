@@ -52,7 +52,7 @@ def get_resume_extraction_agent() -> ResumeExtractionAgent:
     return ResumeExtractionAgent()
 
 
-async def get_postjobfree_client():
+async def get_postjobfree_client() -> AsyncGenerator[PostJobFreeClient, None]:
 
     client = PostJobFreeClient()
 
