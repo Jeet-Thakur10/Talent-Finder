@@ -4,6 +4,8 @@ import logging
 from collections.abc import Awaitable, Callable
 from uuid import UUID
 
+from pydantic import BaseModel
+
 from src.config.settings import settings
 from src.control.agents.candidate_search_query_agent import CandidateSearchQueryAgent
 from src.data.clients.candidate_search_client import CandidateSearchClient
@@ -12,8 +14,6 @@ from src.data.models.postgres.job_description import JobDescription
 from src.schemas.candidate_search_schema import CandidateSummary
 from src.schemas.job_description_schema import JobDescriptionResponse
 from src.schemas.scoring_schema import CompressedCandidate, JobDescriptionScoringInput
-
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,9 @@ class CandidateAcquisitionService:
 
     async def acquire_candidates(
         self,
-        job_description: JobDescription | JobDescriptionResponse | JobDescriptionScoringInput,
+        job_description: JobDescription
+        | JobDescriptionResponse
+        | JobDescriptionScoringInput,
         job_description_id: UUID,
         required_prescore_candidates: int,
     ) -> CandidateAcquisitionResult:
@@ -82,8 +84,7 @@ class CandidateAcquisitionService:
 
         # Step 2 — Convert local Candidates to unified CandidateSummary type
         local_summaries = [
-            self._to_candidate_summary(candidate)
-            for candidate in local_candidates
+            self._to_candidate_summary(candidate) for candidate in local_candidates
         ]
 
         # Step 3 — If local pool is sufficient, return ALL without truncation
@@ -121,7 +122,7 @@ class CandidateAcquisitionService:
         search_request.exclude_candidate_ids = [
             candidate.id for candidate in local_candidates
         ]
-        print(f"\n[ScoringService] LLM generated CandidateSearchRequest:")
+        print("\n[ScoringService] LLM generated CandidateSearchRequest:")
         print(f"  Generated title: {search_request.title}")
         print(f"  Generated skills (full list): {search_request.skills}")
         print(f"  min_experience: {search_request.min_experience}")
@@ -138,12 +139,15 @@ class CandidateAcquisitionService:
 
         # 4c. Call sourcing service
         from src.core.exceptions.scoring_exceptions import SourcingServiceClientError
+
         sourced_candidates = []
         try:
             response = await self._search_client.search_candidates(search_request)
             sourced_candidates = response.candidates
         except SourcingServiceClientError as e:
-            logger.warning("External sourcing client encountered a recoverable failure: %s", e)
+            logger.warning(
+                "External sourcing client encountered a recoverable failure: %s", e
+            )
 
         sourced_count = len(sourced_candidates)
 

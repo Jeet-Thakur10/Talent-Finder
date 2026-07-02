@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 from uuid import UUID
+
 import httpx
 
 from src.config.settings import settings
+from src.core.exceptions.scoring_exceptions import SourcingServiceClientError
 from src.schemas.candidate_search_schema import (
+    CandidateDetailsResponse,
     CandidateSearchRequest,
     CandidateSearchResponse,
-    CandidateDetailsResponse,
 )
-from src.core.exceptions.scoring_exceptions import SourcingServiceClientError
 
 
 class CandidateSearchClient:
@@ -32,7 +33,8 @@ class CandidateSearchClient:
             request: The CandidateSearchRequest schema containing search criteria.
 
         Returns:
-            CandidateSearchResponse containing the list of matching CandidateSummary items.
+            CandidateSearchResponse containing the list of matching CandidateSummary
+            items.
 
         Raises:
             SourcingServiceClientError on any HTTP or connection failures.
@@ -48,7 +50,10 @@ class CandidateSearchClient:
 
             if response.is_error:
                 raise SourcingServiceClientError(
-                    details=f"Sourcing service returned status code {response.status_code}: {response.text}",
+                    details=(
+                        f"Sourcing service returned status code "
+                        f"{response.status_code}: {response.text}"
+                    ),
                     status_code=response.status_code,
                 )
 
@@ -57,16 +62,19 @@ class CandidateSearchClient:
 
         except httpx.HTTPError as e:
             raise SourcingServiceClientError(
-                details=f"HTTP network error while communicating with Sourcing Service: {str(e)}",
+                details=(
+                    f"HTTP network error while communicating with "
+                    f"Sourcing Service: {e}"
+                ),
                 status_code=500,
-            )
+            ) from e
         except Exception as e:
             if isinstance(e, SourcingServiceClientError):
                 raise e
             raise SourcingServiceClientError(
                 details=f"Unexpected error in sourcing client: {str(e)}",
                 status_code=500,
-            )
+            ) from e
 
     async def get_candidate_details(
         self,
@@ -78,7 +86,8 @@ class CandidateSearchClient:
             candidate_ids: A list of candidate UUIDs.
 
         Returns:
-            A list of CandidateDetailsResponse containing full details of the candidates.
+            A list of CandidateDetailsResponse containing full details of the
+            candidates.
 
         Raises:
             SourcingServiceClientError on any HTTP or connection failures.
@@ -93,25 +102,34 @@ class CandidateSearchClient:
 
             if response.is_error:
                 raise SourcingServiceClientError(
-                    details=f"Sourcing service returned status code {response.status_code}: {response.text}",
+                    details=(
+                        f"Sourcing service returned status code "
+                        f"{response.status_code}: {response.text}"
+                    ),
                     status_code=response.status_code,
                 )
 
             response_json = response.json()
-            return [CandidateDetailsResponse.model_validate(item) for item in response_json]
+            return [
+                CandidateDetailsResponse.model_validate(item)
+                for item in response_json
+                ]
 
         except httpx.HTTPError as e:
             raise SourcingServiceClientError(
-                details=f"HTTP network error while communicating with Sourcing Service: {str(e)}",
+                details=(
+                    f"HTTP network error while communicating with "
+                    f"Sourcing Service: {e}"
+                ),
                 status_code=500,
-            )
+            ) from e
         except Exception as e:
             if isinstance(e, SourcingServiceClientError):
                 raise e
             raise SourcingServiceClientError(
                 details=f"Unexpected error in sourcing client: {str(e)}",
                 status_code=500,
-            )
+            ) from e
 
     async def close(self) -> None:
         """Close the underlying HTTP client transport."""
@@ -120,5 +138,7 @@ class CandidateSearchClient:
     async def __aenter__(self) -> CandidateSearchClient:
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(  # type: ignore[no-untyped-def]
+            self, exc_type, exc_val, exc_tb
+            ) -> None:
         await self.close()

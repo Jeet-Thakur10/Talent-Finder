@@ -13,34 +13,29 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4, UUID
-from datetime import datetime, timezone
+from uuid import uuid4
 
-from src.core.services.candidate_acquisition_service import CandidateAcquisitionService
-from src.core.services.candidate_synchronization_service import CandidateSynchronizationService
-from src.core.services.scoring_service import ScoringService
 from src.core.exceptions.scoring_exceptions import SourcingServiceClientError
-from src.schemas.candidate_search_schema import (
-    CandidateSearchRequest,
-    CandidateSearchResponse,
-    CandidateSummary,
+from src.core.services.candidate_acquisition_service import CandidateAcquisitionService
+from src.core.services.candidate_synchronization_service import (
+    CandidateSynchronizationService,
 )
-from src.schemas.scoring_schema import (
-    PipelineExecutionRequest,
-    CompressedCandidate,
-    CandidateScoreResponse,
-    CandidateScoreOutput,
-    CandidateScoreExplanation,
-)
+from src.core.services.scoring_service import ScoringService
 from src.schemas.job_description_schema import (
     JobDescriptionResponse,
-    JDSkillResponse,
+)
+from src.schemas.scoring_schema import (
+    CandidateScoreExplanation,
+    CandidateScoreOutput,
+    CompressedCandidate,
 )
 
-
 # Setup basic logger
-logging.basicConfig(level=logging.INFO, format="  [%(levelname)s] %(name)s: %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="  [%(levelname)s] %(name)s: %(message)s"
+)
 logger = logging.getLogger("test_pipeline_resilience")
 
 
@@ -67,6 +62,7 @@ def mock_compress(candidate: MagicMock) -> CompressedCandidate:
 
 # ── Test Cases ───────────────────────────────────────────────────────────────
 
+
 async def test_candidate_acquisition_resilience():
     """Verify that SourcingServiceClientError is caught and local candidates are returned."""
     logger.info("\n" + "=" * 80)
@@ -77,13 +73,12 @@ async def test_candidate_acquisition_resilience():
     local_search_fn = AsyncMock(return_value=local_candidates)
     compress_fn = MagicMock(side_effect=mock_compress)
     search_query_agent = MagicMock()
-    
+
     # Mock client to throw SourcingServiceClientError
     search_client = MagicMock()
     search_client.search_candidates = AsyncMock(
         side_effect=SourcingServiceClientError(
-            details="Sourcing service is down!",
-            status_code=503
+            details="Sourcing service is down!", status_code=503
         )
     )
 
@@ -109,7 +104,9 @@ async def test_candidate_acquisition_resilience():
 
     # Sourcing should fail, but local summaries must still be returned
     assert len(result.candidates) == len(local_candidates)
-    logger.info("  [PASS] Successfully caught SourcingServiceClientError and returned local candidates.")
+    logger.info(
+        "  [PASS] Successfully caught SourcingServiceClientError and returned local candidates."
+    )
 
 
 async def test_candidate_synchronization_resilience():
@@ -119,23 +116,25 @@ async def test_candidate_synchronization_resilience():
     logger.info("=" * 80)
 
     scoring_service = MagicMock()
-    
+
     # Mock upsert_candidate_profile to fail for the first candidate, but succeed for the second
     c1_id = uuid4()
     c2_id = uuid4()
-    
+
     async def mock_upsert(details):
         if details.id == c1_id:
             raise ValueError("Database constraint error for C1")
         return MagicMock()
-        
+
     scoring_service.upsert_candidate_profile = AsyncMock(side_effect=mock_upsert)
     scoring_service.repository.get_candidates_by_ids = AsyncMock(return_value=[])
 
     search_client = MagicMock()
     details_c1 = MagicMock(id=c1_id)
     details_c2 = MagicMock(id=c2_id)
-    search_client.get_candidate_details = AsyncMock(return_value=[details_c1, details_c2])
+    search_client.get_candidate_details = AsyncMock(
+        return_value=[details_c1, details_c2]
+    )
 
     sync_service = CandidateSynchronizationService(
         scoring_service=scoring_service,
@@ -144,10 +143,12 @@ async def test_candidate_synchronization_resilience():
 
     # Run synchronization. It should not raise an exception.
     await sync_service.synchronize_candidates([c1_id, c2_id])
-    
+
     # Assertions
     assert scoring_service.upsert_candidate_profile.call_count == 2
-    logger.info("  [PASS] Successfully caught individual upsert exception and proceeded to next candidate.")
+    logger.info(
+        "  [PASS] Successfully caught individual upsert exception and proceeded to next candidate."
+    )
 
 
 async def test_deep_scoring_isolation():
@@ -159,13 +160,15 @@ async def test_deep_scoring_isolation():
     # Initialize a mock DB session
     db_mock = MagicMock()
     service = ScoringService(db_mock)
-    
+
     c1 = make_fake_candidate(1)
     c2 = make_fake_candidate(2)
-    service.repository.get_candidates_for_job_description = AsyncMock(return_value=[c1, c2])
+    service.repository.get_candidates_for_job_description = AsyncMock(
+        return_value=[c1, c2]
+    )
     service.repository.upsert_candidate_scores = AsyncMock()
     service.repository.upsert_pipeline_entries = AsyncMock()
-    
+
     # Mock authorized JD using schema
     jd_resp = JobDescriptionResponse(
         id=uuid4(),
@@ -180,9 +183,9 @@ async def test_deep_scoring_isolation():
         preferred_qualifications="MS",
         employment_type_id=uuid4(),
         status_id=uuid4(),
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
-        skills=[]
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+        skills=[],
     )
     service._get_authorized_job_description = AsyncMock(return_value=jd_resp)
 
@@ -190,11 +193,9 @@ async def test_deep_scoring_isolation():
     async def mock_score_candidate(jd_input, cand_input):
         if cand_input.candidate_id == c1.id:
             raise ValueError("LLM request rate-limited for Candidate 1")
-        
+
         explanation = CandidateScoreExplanation(
-            summary="Fine fit",
-            strengths=["Python"],
-            weaknesses=[]
+            summary="Fine fit", strengths=["Python"], weaknesses=[]
         )
         score_output = CandidateScoreOutput(
             candidate_id=c2.id,
@@ -208,7 +209,7 @@ async def test_deep_scoring_isolation():
             matched_mandatory_skills=["Python"],
             matched_optional_skills=[],
             missing_mandatory_skills=[],
-            explanation=explanation
+            explanation=explanation,
         )
         return MagicMock(payload=score_output)
 
@@ -225,13 +226,15 @@ async def test_deep_scoring_isolation():
     assert len(output.scores) == 1
     assert output.scores[0].candidate_id == c2.id
     service.repository.upsert_candidate_scores.assert_called_once_with(
-        job_description_id=jd_resp.id,
-        scores=[output.scores[0]]
+        job_description_id=jd_resp.id, scores=[output.scores[0]]
     )
-    logger.info("  [PASS] Successfully isolated individual deep scoring exceptions using return_exceptions=True.")
+    logger.info(
+        "  [PASS] Successfully isolated individual deep scoring exceptions using return_exceptions=True."
+    )
 
 
 # ── Run All ──────────────────────────────────────────────────────────────────
+
 
 async def main():
     logger.info("Starting Pipeline Resilience Verification Script...")
@@ -252,6 +255,7 @@ async def main():
             failed += 1
             logger.error(f"[FAIL] {test_fn.__name__} failed: {e}")
             import traceback
+
             traceback.print_exc()
 
     logger.info("\n" + "=" * 80)

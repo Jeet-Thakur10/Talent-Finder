@@ -5,17 +5,16 @@ Revises: 2d682bdc9d5e
 Create Date: 2026-06-28 23:41:36.379766
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '235e3a881606'
-down_revision: Union[str, Sequence[str], None] = '2d682bdc9d5e'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = '2d682bdc9d5e'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -26,7 +25,7 @@ def upgrade() -> None:
     op.add_column('pipeline', sa.Column('interview_timezone', sa.String(), nullable=True))
     op.add_column('pipeline', sa.Column('interview_message', sa.Text(), nullable=True))
     op.add_column('pipeline', sa.Column('interview_sent_at', sa.DateTime(timezone=True), nullable=True))
-    
+
     # 1. Rename old enum type
     op.execute("ALTER TYPE hiring_manager_decision RENAME TO hiring_manager_decision_old")
     # 2. Create transition enum type
@@ -35,10 +34,10 @@ def upgrade() -> None:
     op.execute("ALTER TABLE pipeline ALTER COLUMN hm_decision TYPE hiring_manager_decision USING hm_decision::text::hiring_manager_decision")
     # 4. Drop the old enum type
     op.execute("DROP TYPE hiring_manager_decision_old")
-    
+
     # 5. Now update pipeline records from ACCEPTED to INTERVIEW_SENT
     op.execute("UPDATE pipeline SET hm_decision = 'INTERVIEW_SENT' WHERE hm_decision::text = 'ACCEPTED'")
-    
+
     # 6. Re-create final enum type ('PENDING', 'INTERVIEW_SENT', 'REJECTED')
     op.execute("ALTER TYPE hiring_manager_decision RENAME TO hiring_manager_decision_temp")
     op.execute("CREATE TYPE hiring_manager_decision AS ENUM ('PENDING', 'INTERVIEW_SENT', 'REJECTED')")
@@ -55,7 +54,7 @@ def downgrade() -> None:
     op.drop_column('pipeline', 'interview_timezone')
     op.drop_column('pipeline', 'interview_datetime')
     op.drop_column('pipeline', 'interview_link')
-    
+
     # 1. Rename old enum type
     op.execute("ALTER TYPE hiring_manager_decision RENAME TO hiring_manager_decision_old")
     # 2. Create transition enum type
@@ -64,10 +63,10 @@ def downgrade() -> None:
     op.execute("ALTER TABLE pipeline ALTER COLUMN hm_decision TYPE hiring_manager_decision USING hm_decision::text::hiring_manager_decision")
     # 4. Drop old enum type
     op.execute("DROP TYPE hiring_manager_decision_old")
-    
+
     # 5. Update pipeline records back
     op.execute("UPDATE pipeline SET hm_decision = 'ACCEPTED' WHERE hm_decision::text = 'INTERVIEW_SENT'")
-    
+
     # 6. Re-create the final downgrade enum type ('PENDING', 'ACCEPTED', 'REJECTED')
     op.execute("ALTER TYPE hiring_manager_decision RENAME TO hiring_manager_decision_temp")
     op.execute("CREATE TYPE hiring_manager_decision AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED')")

@@ -1,39 +1,41 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
+from src.data.models.postgres.pipeline import HiringManagerDecision
 
 from src.api.rest.dependencies import (
     get_authenticated_user_context,
     get_scoring_service,
     get_scoring_task_service,
 )
+from src.config.settings import settings
 from src.core.services.scoring_service import ScoringService
 from src.core.services.scoring_task_service import ScoringTaskService
 from src.schemas.auth_schema import AuthenticatedUserContext
 from src.schemas.scoring_schema import (
-    CandidateEvaluationBoardResponse,
     CandidateDetailsResponse,
+    CandidateEvaluationBoardResponse,
     CandidateImportRequest,
+    CandidateScoreResponse,
+    HiringManagerReviewRequest,
+    HiringManagerReviewResponse,
+    HMCampaignResponse,
+    InterviewScheduleRequest,
+    InterviewScheduleResponse,
     ParsedCandidateProfile,
     PipelineCandidateResult,
+    PipelineEnqueueResponse,
     PipelineExecutionRequest,
     PipelineExecutionResponse,
     PipelineNotesUpdateRequest,
     PipelineSnapshotResponse,
     PipelineStageUpdateRequest,
-    CandidateScoreResponse,
-    PipelineEnqueueResponse,
     PipelineTaskStatusResponse,
+    SharedCampaignCandidateResponse,
     ShortlistShareRequest,
     ShortlistShareResponse,
-    HiringManagerReviewRequest,
-    HiringManagerReviewResponse,
-    SharedCampaignCandidateResponse,
-    HMCampaignResponse,
-    InterviewScheduleRequest,
-    InterviewScheduleResponse,
 )
-from src.schemas.job_description_schema import JobDescriptionResponse
 
 router = APIRouter(prefix="/scoring", tags=["Scoring"])
 
@@ -66,6 +68,7 @@ async def list_recruiter_tasks(
         get_scoring_task_service,
     ),
 ) -> list[PipelineTaskStatusResponse]:
+    await task_service.recover_stale_tasks(settings.SCORING_TASK_TIMEOUT_MINUTES)
     tasks = await task_service.get_tasks_by_recruiter(current_user.user_id)
     return [
         PipelineTaskStatusResponse(
@@ -80,7 +83,11 @@ async def list_recruiter_tasks(
             matched_candidate_count=task.matched_candidate_count,
             eligible_candidate_count=task.eligible_candidate_count,
             selected_candidate_count=task.selected_candidate_count,
-            job_description_title=task.job_description.title if task.job_description else "Unknown Position",
+            job_description_title=(
+                task.job_description.title
+                if task.job_description
+                else "Unknown Position"
+            ),
         )
         for task in tasks
     ]
@@ -103,6 +110,7 @@ async def pipeline_prescore_and_score(
         get_scoring_task_service,
     ),
 ) -> PipelineEnqueueResponse:
+    await task_service.recover_stale_tasks(settings.SCORING_TASK_TIMEOUT_MINUTES)
     # 1. Authorize user has access to job description first
     await service._get_authorized_job_description(
         job_description_id,
@@ -149,6 +157,7 @@ async def get_task_status(
         get_scoring_task_service,
     ),
 ) -> PipelineTaskStatusResponse:
+    await task_service.recover_stale_tasks(settings.SCORING_TASK_TIMEOUT_MINUTES)
     task = await task_service.get_task_by_id(task_id)
     if not task:
         from fastapi import HTTPException
@@ -190,7 +199,8 @@ async def get_task_result(
     task_service: ScoringTaskService = Depends(
         get_scoring_task_service,
     ),
-):
+) -> PipelineExecutionResponse | JSONResponse:
+    await task_service.recover_stale_tasks(settings.SCORING_TASK_TIMEOUT_MINUTES)
     task = await task_service.get_task_by_id(task_id)
     if not task:
         from fastapi import HTTPException
@@ -203,7 +213,6 @@ async def get_task_result(
     )
 
     if task.status in ("PENDING", "RUNNING"):
-        from fastapi.responses import JSONResponse
         return JSONResponse(
             status_code=202,
             content={"status": task.status, "stage": task.current_stage},
@@ -216,7 +225,8 @@ async def get_task_result(
             detail=f"Task failed: {task.error_message}",
         )
 
-    return PipelineExecutionResponse(**task.final_response_payload)
+    payload = task.final_response_payload if task.final_response_payload is not None else {}
+    return PipelineExecutionResponse.model_validate(payload)
 
 
 @router.get(
@@ -448,10 +458,13 @@ async def submit_hm_candidate_review(
         decision=data.decision,
         remarks=data.remarks,
     )
+    hm_decision = pipeline_entry.hm_decision
+    if hm_decision is None:
+        hm_decision = data.decision
     return HiringManagerReviewResponse(
         message="Candidate review decision saved successfully.",
         candidate_id=pipeline_entry.candidate_id,
-        hm_decision=pipeline_entry.hm_decision,
+        hm_decision=hm_decision,
         hiring_manager_notes=pipeline_entry.hiring_manager_notes,
     )
 
@@ -501,12 +514,31 @@ async def schedule_interview(
         timezone=data.timezone,
         message=data.message,
     )
+    hm_decision = pipeline_entry.hm_decision
+    if hm_decision is None:
+        hm_decision = HiringManagerDecision.INTERVIEW_SENT
+
+    interview_link = pipeline_entry.interview_link
+    if interview_link is None:
+        interview_link = data.interview_link
+
+    interview_datetime = pipeline_entry.interview_datetime
+    if interview_datetime is None:
+        interview_datetime = data.interview_datetime
+
+    interview_timezone = pipeline_entry.interview_timezone
+    if interview_timezone is None:
+        interview_timezone = data.timezone
+
     return InterviewScheduleResponse(
-        message="Interview scheduled successfully and invitation email sent to candidate.",
+        message=(
+            "Interview scheduled successfully and invitation "
+            "email sent to candidate."
+        ),
         candidate_id=pipeline_entry.candidate_id,
-        hm_decision=pipeline_entry.hm_decision,
-        interview_link=pipeline_entry.interview_link,
-        interview_datetime=pipeline_entry.interview_datetime,
-        interview_timezone=pipeline_entry.interview_timezone,
+        hm_decision=hm_decision,
+        interview_link=interview_link,
+        interview_datetime=interview_datetime,
+        interview_timezone=interview_timezone,
         interview_message=pipeline_entry.interview_message,
     )

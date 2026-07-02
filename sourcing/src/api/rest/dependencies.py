@@ -3,8 +3,14 @@ from collections.abc import AsyncGenerator
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.control.agents.candidate_search_strategy_agent import (
+    CandidateSearchStrategyAgent,
+)
 from src.control.agents.resume_extraction_agent import (
     ResumeExtractionAgent,
+)
+from src.core.services.candidate_search_service import (
+    CandidateSearchService,
 )
 from src.core.services.candidate_service import (
     CandidateService,
@@ -12,23 +18,13 @@ from src.core.services.candidate_service import (
 from src.core.services.postjobfree_sourcing_service import (
     PostJobFreeSourcingService,
 )
+from src.core.services.search_query_optimizer import SearchQueryOptimizer
 from src.data.clients.postgres import (
     async_session_local,
 )
 from src.handlers.http_clients.postjobfree_client import (
     PostJobFreeClient,
 )
-from src.core.services.candidate_search_service import (
-    CandidateSearchService,
-)
-from src.control.agents.candidate_search_strategy_agent import CandidateSearchStrategyAgent
-from src.core.services.search_strategies import (
-    OriginalQueryStrategy,
-    MandatorySkillsStrategy,
-    TitleOnlyStrategy,
-    LLMOptimizationStrategy,
-)
-from src.core.services.search_query_optimizer import SearchQueryOptimizer
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -56,7 +52,7 @@ def get_resume_extraction_agent() -> ResumeExtractionAgent:
     return ResumeExtractionAgent()
 
 
-async def get_postjobfree_client():
+async def get_postjobfree_client() -> AsyncGenerator[PostJobFreeClient, None]:
 
     client = PostJobFreeClient()
 
@@ -69,13 +65,7 @@ async def get_postjobfree_client():
 
 def get_search_query_optimizer() -> SearchQueryOptimizer:
     agent = CandidateSearchStrategyAgent()
-    strategies = [
-        OriginalQueryStrategy(),
-        MandatorySkillsStrategy(),
-        TitleOnlyStrategy(),
-        LLMOptimizationStrategy(agent),
-    ]
-    return SearchQueryOptimizer(strategies)
+    return SearchQueryOptimizer(agent)
 
 
 def get_postjobfree_sourcing_service(

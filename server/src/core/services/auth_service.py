@@ -99,3 +99,16 @@ class AuthService:
         await self.auth_repository.save(
             user,
         )
+
+    async def get_user_by_id(self, user_id: UUID) -> UserResponse:
+        user = await self.auth_repository.get_user_by_id(
+            user_id,
+        )
+
+        if not user:
+            raise InvalidToken(
+                details="User not found",
+            )
+
+        return UserResponse.model_validate(user)
+

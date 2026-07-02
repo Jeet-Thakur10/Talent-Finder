@@ -1,7 +1,7 @@
 class ScoringBaseException(Exception):
     def __init__(
         self,
-        message: str,
+        message: str | None = None,
         details: str | None = None,
         error_code: str | None = None,
         status_code: int = 400,

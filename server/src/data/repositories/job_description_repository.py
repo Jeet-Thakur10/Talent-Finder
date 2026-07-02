@@ -12,6 +12,7 @@ from src.data.models.postgres.job_description_status import (
 )
 from src.data.models.postgres.user import User
 
+
 class JobDescriptionRepository:
 
     def __init__(self, db: AsyncSession):

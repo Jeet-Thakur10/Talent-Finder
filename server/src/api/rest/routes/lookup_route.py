@@ -22,7 +22,7 @@ async def get_employment_types(
     service: JobDescriptionService = Depends(
         get_job_description_service,
     ),
-):
+) -> list[EmploymentTypeResponse]:
     return await service.get_employment_types()
 
 
@@ -34,7 +34,7 @@ async def get_job_description_statuses(
     service: JobDescriptionService = Depends(
         get_job_description_service,
     ),
-):
+) -> list[JobDescriptionStatusResponse]:
     return await service.get_job_description_statuses()
 
 
@@ -46,5 +46,5 @@ async def get_hiring_managers(
     service: JobDescriptionService = Depends(
         get_job_description_service,
     ),
-):
+) -> list[HiringManagerResponse]:
     return await service.get_hiring_managers()

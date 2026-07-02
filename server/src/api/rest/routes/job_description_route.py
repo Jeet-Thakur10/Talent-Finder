@@ -12,9 +12,9 @@ from src.core.services.job_description_service import (
 from src.schemas.auth_schema import AuthenticatedUserContext
 from src.schemas.job_description_schema import (
     JobDescriptionCreateRequest,
+    JobDescriptionExtractRequest,
     JobDescriptionResponse,
     JobDescriptionUpdateRequest,
-    JobDescriptionExtractRequest,
 )
 
 router = APIRouter(prefix="/job-descriptions", tags=["Job Descriptions"])

@@ -1,17 +1,15 @@
 import asyncio
-from uuid import uuid4
-from pprint import pprint
 
-from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
-from src.schemas.job_description_schema import (
-    JobDescriptionExtractRequest,
-    JobDescriptionCreateRequest,
-    JDSkillCreateRequest,
-)
-from src.schemas.scoring_schema import PipelineExecutionRequest
 from src.core.services.job_description_service import JobDescriptionService
 from src.core.services.scoring_service import ScoringService
 from src.data.clients.postgres import async_session_local
+from src.schemas.auth_schema import AuthenticatedUserContext, UserRole
+from src.schemas.job_description_schema import (
+    JDSkillCreateRequest,
+    JobDescriptionCreateRequest,
+    JobDescriptionExtractRequest,
+)
+from src.schemas.scoring_schema import PipelineExecutionRequest
 
 
 async def main():
@@ -51,7 +49,9 @@ async def main():
     # Resolve recruiter ID
     async with async_session_local() as db:
         from sqlalchemy import select
+
         from src.data.models.postgres.user import User
+
         result = await db.execute(select(User).where(User.role == "recruiter"))
         recruiter = result.scalars().first()
         if not recruiter:
@@ -60,8 +60,7 @@ async def main():
         recruiter_id = recruiter.id
 
     current_user = AuthenticatedUserContext(
-        user_id=recruiter_id,
-        role=UserRole.recruiter
+        user_id=recruiter_id, role=UserRole.recruiter
     )
 
     # 1. Extract raw text
@@ -69,7 +68,9 @@ async def main():
     extract_data = JobDescriptionExtractRequest(raw_job_description=sample_jd)
     async with async_session_local() as db:
         jd_service = JobDescriptionService(db)
-        extract_res = await jd_service.extract_job_description(extract_data, current_user)
+        extract_res = await jd_service.extract_job_description(
+            extract_data, current_user
+        )
         print("Extraction complete.")
 
     # 2. Persist extracted JD (simulating user preview confirm)
@@ -91,7 +92,7 @@ async def main():
         preferred_qualifications=extract_res.preferred_qualifications,
         skills=skills_req,
         hiring_manager_id=extract_res.hiring_manager_id,
-        raw_job_description=sample_jd
+        raw_job_description=sample_jd,
     )
 
     async with async_session_local() as db:
@@ -108,21 +109,27 @@ async def main():
     async with async_session_local() as db:
         scoring_service = ScoringService(db)
         pipeline_res = await scoring_service.pipeline_prescore_and_score(
-            saved_jd.id,
-            current_user,
-            pipeline_req
+            saved_jd.id, current_user, pipeline_req
         )
         print("\nPipeline execution complete! Candidate match results:")
         for idx, candidate in enumerate(pipeline_res.candidates):
-            print(f"{idx+1}. {candidate.full_name} | Final Score: {candidate.final_score} | Confidence: {candidate.confidence}%")
+            print(
+                f"{idx + 1}. {candidate.full_name} | Final Score: {candidate.final_score} | Confidence: {candidate.confidence}%"
+            )
 
         # Cleanup saved JD
         from sqlalchemy import delete
+
         from src.data.models.postgres.candidate_job_score import CandidateJobScore
-        from src.data.models.postgres.pipeline import Pipeline
         from src.data.models.postgres.jd_skill import JDSkill
         from src.data.models.postgres.job_description import JobDescription
-        await db.execute(delete(CandidateJobScore).where(CandidateJobScore.job_description_id == saved_jd.id))
+        from src.data.models.postgres.pipeline import Pipeline
+
+        await db.execute(
+            delete(CandidateJobScore).where(
+                CandidateJobScore.job_description_id == saved_jd.id
+            )
+        )
         await db.execute(delete(Pipeline).where(Pipeline.jd_id == saved_jd.id))
         await db.execute(delete(JDSkill).where(JDSkill.jd_id == saved_jd.id))
         await db.execute(delete(JobDescription).where(JobDescription.id == saved_jd.id))

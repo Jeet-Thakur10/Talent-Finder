@@ -1,17 +1,19 @@
+import uuid
 from datetime import UTC, datetime
 from uuid import UUID
-import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.constants.job_description_constants import DRAFT
+from src.control.agents.job_description_extraction_agent import (
+    JobDescriptionExtractionAgent,
+)
 from src.core.exceptions.job_description_exception import (
     InvalidEmploymentType,
     InvalidJobDescriptionStatus,
     JobDescriptionNotFound,
     RecruiterAccessRequired,
 )
-from src.control.agents.job_description_extraction_agent import JobDescriptionExtractionAgent
 from src.data.models.postgres.jd_skill import JDSkill
 from src.data.models.postgres.job_description import JobDescription
 from src.data.repositories.job_description_repository import (
@@ -23,25 +25,21 @@ from src.schemas.job_description_schema import (
     HiringManagerResponse,
     JDSkillResponse,
     JobDescriptionCreateRequest,
-    JobDescriptionResponse,
-    JobDescriptionUpdateRequest,
-    JobDescriptionStatusResponse,
     JobDescriptionExtractRequest,
+    JobDescriptionResponse,
+    JobDescriptionStatusResponse,
+    JobDescriptionUpdateRequest,
 )
 
 
 class JobDescriptionService:
-
     def __init__(self, db: AsyncSession):
-        self.job_description_repository = (
-            JobDescriptionRepository(db)
-        )
+        self.job_description_repository = JobDescriptionRepository(db)
         self.extraction_agent = JobDescriptionExtractionAgent()
 
     async def create_job_description(
-            self,
-            data: JobDescriptionCreateRequest,
-            current_user: AuthenticatedUserContext) -> JobDescriptionResponse:
+        self, data: JobDescriptionCreateRequest, current_user: AuthenticatedUserContext
+    ) -> JobDescriptionResponse:
 
         if current_user.role != UserRole.recruiter:
             raise RecruiterAccessRequired(
@@ -59,10 +57,8 @@ class JobDescriptionService:
             raise InvalidEmploymentType(
                 details=f"Employment type '{data.employment_type_id}' does not exist"
             )
-        draft_status = (
-            await self.job_description_repository.get_status_by_code(
-                DRAFT,
-            )
+        draft_status = await self.job_description_repository.get_status_by_code(
+            DRAFT,
         )
 
         if not draft_status:
@@ -74,36 +70,25 @@ class JobDescriptionService:
 
         job_description = JobDescription(
             recruiter_id=current_user.user_id,
-
             title=data.title,
             department=data.department,
-
             job_purpose=data.job_purpose,
             responsibilities=data.responsibilities,
-
             min_experience=data.min_experience,
             max_experience=data.max_experience,
-
             location=data.location,
-
             employment_type_id=employment_type.id,
-
             education_requirement=data.education_requirement,
-
             preferred_qualifications=data.preferred_qualifications,
-
             status_id=draft_status.id,
             hiring_manager_id=data.hiring_manager_id,
             raw_job_description=data.raw_job_description,
-
             created_at=now,
             updated_at=now,
         )
 
-        job_description = (
-            await self.job_description_repository.create_job_description(
-                job_description,
-            )
+        job_description = await self.job_description_repository.create_job_description(
+            job_description,
         )
 
         skills = [
@@ -159,8 +144,7 @@ class JobDescriptionService:
             )
 
         job_description = await (
-            self.job_description_repository
-            .get_job_description_by_id(
+            self.job_description_repository.get_job_description_by_id(
                 job_description_id,
             )
         )
@@ -194,12 +178,8 @@ class JobDescriptionService:
         job_description.max_experience = data.max_experience
         job_description.location = data.location
         job_description.employment_type_id = employment_type.id
-        job_description.education_requirement = (
-            data.education_requirement
-        )
-        job_description.preferred_qualifications = (
-            data.preferred_qualifications
-        )
+        job_description.education_requirement = data.education_requirement
+        job_description.preferred_qualifications = data.preferred_qualifications
         job_description.hiring_manager_id = data.hiring_manager_id
         job_description.updated_at = datetime.now(UTC)
 
@@ -258,8 +238,8 @@ class JobDescriptionService:
         )
 
     async def get_job_descriptions(
-            self,
-            current_user: AuthenticatedUserContext) -> list[JobDescriptionResponse]:
+        self, current_user: AuthenticatedUserContext
+    ) -> list[JobDescriptionResponse]:
         if current_user.role != UserRole.recruiter:
             raise RecruiterAccessRequired(
                 details="Only recruiters can view job descriptions.",
@@ -267,8 +247,7 @@ class JobDescriptionService:
             )
 
         job_descriptions = (
-            await self.job_description_repository
-            .get_job_descriptions_by_recruiter(
+            await self.job_description_repository.get_job_descriptions_by_recruiter(
                 current_user.user_id,
             )
         )
@@ -276,7 +255,6 @@ class JobDescriptionService:
         responses = []
 
         for jd in job_descriptions:
-
             responses.append(
                 JobDescriptionResponse(
                     id=jd.id,
@@ -320,8 +298,7 @@ class JobDescriptionService:
             )
 
         job_description = await (
-            self.job_description_repository
-            .get_job_description_by_id(
+            self.job_description_repository.get_job_description_by_id(
                 job_description_id,
             )
         )
@@ -343,40 +320,27 @@ class JobDescriptionService:
         self,
     ) -> list[EmploymentTypeResponse]:
 
-        employment_types = (
-            await self.job_description_repository.get_employment_types()
-        )
+        employment_types = await self.job_description_repository.get_employment_types()
 
         return [
-            EmploymentTypeResponse.model_validate(
-                employment_type
-            )
+            EmploymentTypeResponse.model_validate(employment_type)
             for employment_type in employment_types
         ]
-
 
     async def get_job_description_statuses(
         self,
     ) -> list[JobDescriptionStatusResponse]:
 
-        statuses = (
-            await self.job_description_repository
-            .get_job_description_statuses()
-        )
+        statuses = await self.job_description_repository.get_job_description_statuses()
 
         return [
-            JobDescriptionStatusResponse.model_validate(
-                status
-            )
-            for status in statuses
+            JobDescriptionStatusResponse.model_validate(status) for status in statuses
         ]
 
     async def get_hiring_managers(
         self,
     ) -> list[HiringManagerResponse]:
-        hiring_managers = (
-            await self.job_description_repository.get_hiring_managers()
-        )
+        hiring_managers = await self.job_description_repository.get_hiring_managers()
 
         return [
             HiringManagerResponse(
@@ -406,7 +370,12 @@ class JobDescriptionService:
         if extracted.employment_type:
             et_lower = extracted.employment_type.lower()
             for et in employment_types:
-                if et.code.lower() in et_lower or et.name.lower() in et_lower or et_lower in et.code.lower() or et_lower in et.name.lower():
+                if (
+                    et.code.lower() in et_lower
+                    or et.name.lower() in et_lower
+                    or et_lower in et.code.lower()
+                    or et_lower in et.name.lower()
+                ):
                     matched_type = et
                     break
         if not matched_type and employment_types:
@@ -425,15 +394,21 @@ class JobDescriptionService:
 
         # 3. Construct response mapping
         dummy_jd_id = uuid.uuid4()
-        
-        responsibilities = "\n".join(extracted.responsibilities) if extracted.responsibilities else ""
-        preferred_qualifications = "\n".join(extracted.preferred_qualifications) if extracted.preferred_qualifications else None
+
+        responsibilities = (
+            "\n".join(extracted.responsibilities) if extracted.responsibilities else ""
+        )
+        preferred_qualifications = (
+            "\n".join(extracted.preferred_qualifications)
+            if extracted.preferred_qualifications
+            else None
+        )
 
         skills_list = [
             JDSkillResponse(
                 id=uuid.uuid4(),
                 skill_name=skill.skill_name,
-                is_mandatory=skill.is_mandatory
+                is_mandatory=skill.is_mandatory,
             )
             for skill in extracted.skills
         ]
@@ -454,5 +429,5 @@ class JobDescriptionService:
             hiring_manager_id=hiring_manager_id,
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
-            skills=skills_list
+            skills=skills_list,
         )

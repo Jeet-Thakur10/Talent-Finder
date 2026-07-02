@@ -7,12 +7,11 @@ from .candidate_skill import CandidateSkill
 from .employment_type import EmploymentType
 from .jd_skill import JDSkill
 from .job_description import JobDescription
-
 from .job_description_status import JobDescriptionStatus
-from .pipeline import Pipeline
-from .user import User
-from .scoring_task import ScoringTask
 from .notification import Notification, NotificationType
+from .pipeline import Pipeline
+from .scoring_task import ScoringTask
+from .user import User
 
 __all__ = [
     "User",

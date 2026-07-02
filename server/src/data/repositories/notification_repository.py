@@ -1,7 +1,9 @@
-from uuid import UUID
 from typing import Any
-from sqlalchemy import select, update, func
+from uuid import UUID
+
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.data.models.postgres.notification import Notification, NotificationType
 
 
@@ -67,7 +69,7 @@ class NotificationRepository:
             update(Notification)
             .where(
                 Notification.user_id == user_id,
-                Notification.is_read == False,
+                Notification.is_read.is_(False),
             )
             .values(is_read=True)
         )
@@ -83,7 +85,7 @@ class NotificationRepository:
             .select_from(Notification)
             .where(
                 Notification.user_id == user_id,
-                Notification.is_read == False,
+                Notification.is_read.is_(False),
             )
         )
         result = await self.db.execute(stmt)

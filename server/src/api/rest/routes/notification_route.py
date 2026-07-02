@@ -1,5 +1,7 @@
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
+
 from src.api.rest.dependencies import (
     get_authenticated_user_context,
     get_notification_service,
@@ -7,9 +9,9 @@ from src.api.rest.dependencies import (
 from src.core.services.notification_service import NotificationService
 from src.schemas.auth_schema import AuthenticatedUserContext
 from src.schemas.notification_schema import (
+    MessageResponse,
     NotificationResponse,
     UnreadCountResponse,
-    MessageResponse,
 )
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
@@ -24,7 +26,8 @@ async def list_notifications(
         get_notification_service,
     ),
 ) -> list[NotificationResponse]:
-    return await service.list_notifications(current_user.user_id)
+    notifications = await service.list_notifications(current_user.user_id)
+    return [NotificationResponse.model_validate(n) for n in notifications]
 
 
 @router.patch("/{notification_id}/read", response_model=NotificationResponse)
@@ -40,7 +43,7 @@ async def mark_as_read(
     result = await service.mark_as_read(notification_id, current_user.user_id)
     if not result:
         raise HTTPException(status_code=404, detail="Notification not found")
-    return result
+    return NotificationResponse.model_validate(result)
 
 
 @router.patch("/read-all", response_model=MessageResponse)
