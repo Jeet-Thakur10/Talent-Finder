@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from typing import Any
 from uuid import UUID
 
 from fastapi import Cookie, Depends
@@ -101,7 +102,7 @@ async def get_refresh_token_payload(
         default=None,
         alias=settings.REFRESH_TOKEN_COOKIE_NAME,
     ),
-) -> dict:
+) -> dict[str, Any]:
 
     if not refresh_token:
         raise InvalidToken(

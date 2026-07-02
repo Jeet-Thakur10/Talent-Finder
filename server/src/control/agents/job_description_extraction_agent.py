@@ -14,7 +14,7 @@ from src.schemas.job_description_extraction_schema import JobDescriptionExtracti
 class JobDescriptionExtractionAgent:
     def __init__(self) -> None:
         # Use LangChain's native HuggingFaceEndpoint and ChatHuggingFace wrapper
-        self._endpoint = HuggingFaceEndpoint(
+        self._endpoint = HuggingFaceEndpoint( # type: ignore[call-arg]
             repo_id=settings.HF_MODEL,
             task="text-generation",
             huggingfacehub_api_token=settings.HF_TOKEN,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import select, update
@@ -67,7 +68,7 @@ class ScoringTaskRepository:
     async def update_task_success(
         self,
         task_id: UUID,
-        payload: dict,
+        payload: dict[str, Any],
         matched: int,
         eligible: int | None,
         selected: int | None,

@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import Any
 
 from fastapi import APIRouter, Depends, Response
 
@@ -66,7 +67,7 @@ async def me(
 )
 async def refresh(
     response: Response,
-    payload: dict = Depends(
+    payload: dict[str, Any] = Depends(
         get_refresh_token_payload,
     ),
     auth_service: AuthService = Depends(

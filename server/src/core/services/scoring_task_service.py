@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,7 +38,7 @@ class ScoringTaskService:
     async def update_task_success(
         self,
         task_id: UUID,
-        payload: dict,
+        payload: dict[str, Any],
         matched: int,
         eligible: int | None,
         selected: int | None,

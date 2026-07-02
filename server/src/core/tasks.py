@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -27,7 +28,7 @@ async def async_run_scoring_pipeline(
     task_id: UUID,
     recruiter_id: UUID,
     job_description_id: UUID,
-    request_data: dict,
+    request_data: dict[str, Any],
 ) -> None:
     scoring_service = None
     pipeline_failed = False
@@ -282,13 +283,13 @@ async def async_run_scoring_pipeline(
                 )
 
 
-@celery_app.task(bind=True)
+@celery_app.task(bind=True) # type: ignore[untyped-decorator]
 def run_scoring_pipeline_task( # type: ignore[no-untyped-def]
     self,
     task_id_str: str,
     recruiter_id_str: str,
     job_description_id_str: str,
-    request_data: dict,
+    request_data: dict[str, Any],
 ) -> None:
     """Celery background task execution wrapper."""
     task_id = UUID(task_id_str)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Select, desc, select, update
@@ -31,7 +32,7 @@ class ScoringRepository:
     async def get_recruiter_id_by_job_description_id(
         self, job_description_id: UUID
     ) -> UUID | None:
-        query: Select = select(JobDescription.recruiter_id).where(
+        query: Select[tuple[UUID]] = select(JobDescription.recruiter_id).where(
             JobDescription.id == job_description_id
         )
         result = await self.db.execute(query)

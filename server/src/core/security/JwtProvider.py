@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID
 
 from jose import ExpiredSignatureError, JWTError, jwt
@@ -42,7 +43,7 @@ class JWTProvider:
             algorithm=settings.ALGORITHM,
         )
 
-    def decode_token(self, token: str) -> dict:
+    def decode_token(self, token: str) -> dict[str, Any]:
 
         try:
             payload = jwt.decode(
