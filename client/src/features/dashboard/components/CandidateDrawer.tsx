@@ -23,27 +23,33 @@ interface CandidateDrawerProps {
 const BREAKDOWN_ITEMS = [
   {
     key: "skill_score",
-    label: "Skill Score",
+    label: "Skills Match",
+    max: 40,
   },
   {
     key: "experience_score",
-    label: "Experience Score",
+    label: "Experience Level",
+    max: 25,
   },
   {
     key: "recency_score",
-    label: "Recency Score",
+    label: "Recency",
+    max: 15,
   },
   {
     key: "role_fit_score",
-    label: "Role Fit Score",
+    label: "Industry / Role Fit",
+    max: 12,
   },
   {
     key: "education_score",
-    label: "Education Score",
+    label: "Education Alignment",
+    max: 8,
   },
   {
     key: "confidence",
     label: "Confidence",
+    max: null,
   },
 ] as const;
 
@@ -264,7 +270,9 @@ export function CandidateDrawer({
 
                   <div className="metric-surface-value metric-surface-value-compact">
                     {board.score
-                      ? `${board.score[item.key]}%`
+                      ? item.max !== null
+                        ? `${Math.round(board.score[item.key])} / ${item.max}`
+                        : `${Math.round(board.score[item.key])}%`
                       : "--"}
                   </div>
                 </div>

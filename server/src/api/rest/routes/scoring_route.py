@@ -37,6 +37,8 @@ from src.schemas.scoring_schema import (
     ShortlistShareResponse,
 )
 
+from src.core.tasks import run_scoring_pipeline_task
+
 router = APIRouter(prefix="/scoring", tags=["Scoring"])
 
 
@@ -124,7 +126,6 @@ async def pipeline_prescore_and_score(
     )
 
     # 3. Dispatch worker job
-    from src.core.tasks import run_scoring_pipeline_task
     celery_res = run_scoring_pipeline_task.delay(
         str(task.id),
         str(current_user.user_id),
