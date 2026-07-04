@@ -17,7 +17,6 @@ dependencies = [
     "langchain-huggingface>=1.2.2",
     "numpy>=2.4.6",
     "passlib==1.7.4",
-    "psycopg2>=2.9.12",
     "psycopg[binary]>=3.3.4",
     "pydantic-settings>=2.14.1",
     "python-dotenv>=1.2.2",
