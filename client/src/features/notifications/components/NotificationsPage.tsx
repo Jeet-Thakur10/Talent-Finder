@@ -29,37 +29,37 @@ function getNotificationBadge(type: string) {
   switch (type) {
     case "SCORING_COMPLETED":
       return (
-        <span className="status-badge bg-sky-50 text-sky-700 border border-sky-200 text-[10px] !px-2.5 !py-0.5 rounded-full font-semibold">
+        <span className="status-badge bg-sky-50 text-sky-700 border-sky-200 text-[10px] !px-2.5 !py-0.5">
           Scoring Complete
         </span>
       );
     case "SHORTLIST_SHARED":
       return (
-        <span className="status-badge bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] !px-2.5 !py-0.5 rounded-full font-semibold">
+        <span className="status-badge bg-indigo-50 text-indigo-700 border-indigo-200 text-[10px] !px-2.5 !py-0.5">
           Shortlist Shared
         </span>
       );
     case "CANDIDATE_ACCEPTED":
       return (
-        <span className="status-badge bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] !px-2.5 !py-0.5 rounded-full font-semibold">
+        <span className="status-badge bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] !px-2.5 !py-0.5">
           Accepted
         </span>
       );
     case "INTERVIEW_INVITATION":
       return (
-        <span className="status-badge bg-amber-50 text-amber-700 border border-amber-200 text-[10px] !px-2.5 !py-0.5 rounded-full font-semibold">
+        <span className="status-badge bg-amber-50 text-amber-700 border-amber-200 text-[10px] !px-2.5 !py-0.5">
           Interview
         </span>
       );
     case "JD_CLOSED":
       return (
-        <span className="status-badge bg-rose-50 text-rose-700 border border-rose-200 text-[10px] !px-2.5 !py-0.5 rounded-full font-semibold">
+        <span className="status-badge bg-rose-50 text-rose-700 border-rose-200 text-[10px] !px-2.5 !py-0.5">
           Closed
         </span>
       );
     default:
       return (
-        <span className="status-badge bg-slate-50 text-slate-600 border border-slate-200 text-[10px] !px-2.5 !py-0.5 rounded-full font-semibold">
+        <span className="status-badge bg-slate-50 text-slate-600 border-slate-200 text-[10px] !px-2.5 !py-0.5">
           System
         </span>
       );
@@ -97,7 +97,7 @@ export function NotificationsPage() {
             <button
               type="button"
               onClick={markAllAsRead}
-              className="workspace-ghost-button !py-2.5 !px-4 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5 focus:outline-none"
+              className="workspace-ghost-button !px-4 !py-2.5 text-xs"
             >
               <svg
                 className="w-4 h-4 text-slate-500"
@@ -118,7 +118,7 @@ export function NotificationsPage() {
         </div>
       </div>
 
-      <div className="surface-card">
+      <div className="surface-card surface-card-hero overflow-hidden">
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-16 space-y-3">
             <svg
@@ -175,8 +175,8 @@ export function NotificationsPage() {
         )}
 
         {!isLoading && !error && notifications.length === 0 && (
-          <div className="py-20 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+          <div className="workspace-empty-state border-none shadow-none max-w-none py-16">
+            <div className="workspace-empty-icon mb-4 h-16 w-16 rounded-full">
               <svg
                 className="w-8 h-8 text-slate-400"
                 fill="none"
@@ -204,25 +204,24 @@ export function NotificationsPage() {
               <div
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
-                className={`group flex items-start gap-4 p-5 hover:bg-slate-50/70 transition cursor-pointer text-left ${
-                  !notification.is_read ? "bg-indigo-50/20" : ""
+                className={`group flex items-start gap-4 p-5 transition cursor-pointer text-left ${
+                  !notification.is_read ? "bg-blue-50/35 hover:bg-blue-50/55" : "hover:bg-slate-50/70"
                 }`}
               >
-                {/* Unread indicator dot */}
                 <div className="flex h-5 items-center justify-center shrink-0">
                   <div
                     className={`h-2.5 w-2.5 rounded-full ${
-                      !notification.is_read ? "bg-indigo-600" : "bg-transparent border border-slate-300"
+                      !notification.is_read ? "bg-blue-600" : "bg-transparent border border-slate-300"
                     }`}
                   />
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2.5">
                       {getNotificationBadge(notification.notification_type)}
                       <h4
-                        className={`text-sm tracking-tight ${
+                        className={`min-w-0 break-words text-sm tracking-tight ${
                           !notification.is_read
                             ? "font-semibold text-slate-950"
                             : "font-medium text-slate-800"

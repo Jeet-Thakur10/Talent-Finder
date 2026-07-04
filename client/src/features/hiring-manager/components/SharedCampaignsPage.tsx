@@ -39,7 +39,6 @@ export function SharedCampaignsPage() {
           </div>
         </div>
       ) : error ? (
-        /* 3. Error State */
         <div className="surface-card p-8 text-center max-w-lg mx-auto border border-rose-200/50 bg-rose-50/20 rounded-2xl">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 border border-rose-200">
             <svg className="h-6 w-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -61,9 +60,8 @@ export function SharedCampaignsPage() {
           </div>
         </div>
       ) : campaigns.length === 0 ? (
-        /* 4. Empty State */
-        <div className="surface-card p-12 text-center max-w-xl mx-auto border border-slate-200/60 rounded-[2rem] bg-white">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 shadow-sm">
+        <div className="workspace-empty-state">
+          <div className="workspace-empty-icon bg-blue-50 text-blue-600 border-blue-100">
             <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
@@ -74,73 +72,71 @@ export function SharedCampaignsPage() {
           </p>
         </div>
       ) : (
-        /* 5. Campaign List */
         <div className="workspace-grid grid-cols-1">
-          {/* Desktop Table View */}
-          <div className="hidden lg:block overflow-hidden bg-white border border-slate-200/80 rounded-2xl shadow-sm">
-            <table className="min-w-full divide-y divide-slate-100 text-left">
-              <thead className="bg-slate-50/70">
+          <div className="workspace-table-wrap hidden lg:block">
+            <table className="workspace-table">
+              <thead>
                 <tr>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Position</th>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Recruiter</th>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Shared Date</th>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Candidates Stats</th>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400 text-right">Action</th>
+                  <th scope="col">Position</th>
+                  <th scope="col">Recruiter</th>
+                  <th scope="col">Shared Date</th>
+                  <th scope="col">Candidates Stats</th>
+                  <th scope="col" className="text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody>
                 {campaigns.map((campaign) => (
                   <tr
                     key={campaign.id}
                     onClick={() => navigate(`/hm/shared-campaigns/${campaign.id}`)}
-                    className="hover:bg-slate-50/50 transition cursor-pointer"
+                    className="workspace-table-row cursor-pointer"
                   >
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm font-semibold text-slate-900 group">
-                      <div className="flex flex-col">
-                        <span className="text-slate-900 group-hover:text-slate-700 font-semibold leading-tight">
+                    <td className="workspace-table-cell">
+                      <div className="flex min-w-0 flex-col">
+                        <span className="workspace-table-title">
                           {campaign.title}
                         </span>
-                        <span className="text-[11px] text-slate-400 font-normal mt-0.5">
+                        <span className="workspace-table-meta">
                           {campaign.department || "No Department"}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm text-slate-500">
+                    <td className="workspace-table-cell">
                       {campaign.recruiter_name}
                     </td>
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm text-slate-500">
+                    <td className="workspace-table-cell">
                       {formatDate(campaign.shared_at)}
                     </td>
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                    <td className="workspace-table-cell">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="status-badge rounded-md bg-slate-100 text-slate-700 border-slate-200">
                           {campaign.shared_candidate_count} Shared
                         </span>
                         {campaign.pending_candidate_count > 0 && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                          <span className="status-badge rounded-md bg-blue-50 text-blue-700 border-blue-100">
                             {campaign.pending_candidate_count} Pending
                           </span>
                         )}
                         {campaign.accepted_candidate_count > 0 && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                          <span className="status-badge rounded-md bg-emerald-50 text-emerald-700 border-emerald-100">
                             {campaign.accepted_candidate_count} Accepted
                           </span>
                         )}
                         {campaign.rejected_candidate_count > 0 && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-rose-50 text-rose-700 border border-rose-100">
+                          <span className="status-badge rounded-md bg-rose-50 text-rose-700 border-rose-100">
                             {campaign.rejected_candidate_count} Rejected
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm text-right">
+                    <td className="workspace-table-cell text-right">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/hm/shared-campaigns/${campaign.id}`);
                         }}
-                        className="workspace-ghost-button !py-1.5 !px-3.5 text-xs font-medium flex items-center gap-1.5 border border-slate-200 hover:border-slate-300 rounded-xl cursor-pointer ml-auto focus:outline-none"
+                        className="workspace-ghost-button ml-auto !px-3.5 !py-1.5 text-xs"
                       >
                         Open Campaign
                       </button>
@@ -151,17 +147,16 @@ export function SharedCampaignsPage() {
             </table>
           </div>
 
-          {/* Mobile Card View */}
           <div className="lg:hidden space-y-4">
             {campaigns.map((campaign) => (
               <div
                 key={campaign.id}
                 onClick={() => navigate(`/hm/shared-campaigns/${campaign.id}`)}
-                className="surface-card p-5 hover:border-slate-300 transition cursor-pointer"
+                className="workspace-list-card cursor-pointer"
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-slate-900 text-sm leading-snug">{campaign.title}</h3>
+                  <div className="min-w-0">
+                    <h3 className="break-words text-sm font-semibold leading-snug text-slate-900">{campaign.title}</h3>
                     <p className="text-[11px] text-slate-400 mt-0.5">{campaign.department || "No Department"}</p>
                   </div>
                   <button
@@ -170,7 +165,7 @@ export function SharedCampaignsPage() {
                       e.stopPropagation();
                       navigate(`/hm/shared-campaigns/${campaign.id}`);
                     }}
-                    className="workspace-ghost-button !py-1 !px-2.5 text-xs border border-slate-200 rounded-lg focus:outline-none"
+                    className="workspace-ghost-button !px-2.5 !py-1 text-xs"
                   >
                     Open
                   </button>
@@ -188,21 +183,21 @@ export function SharedCampaignsPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-1.5">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                  <span className="status-badge rounded-md bg-slate-100 text-slate-700 border-slate-200">
                     {campaign.shared_candidate_count} Shared
                   </span>
                   {campaign.pending_candidate_count > 0 && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                    <span className="status-badge rounded-md bg-blue-50 text-blue-700 border-blue-100">
                       {campaign.pending_candidate_count} Pending
                     </span>
                   )}
                   {campaign.accepted_candidate_count > 0 && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                    <span className="status-badge rounded-md bg-emerald-50 text-emerald-700 border-emerald-100">
                       {campaign.accepted_candidate_count} Accepted
                     </span>
                   )}
                   {campaign.rejected_candidate_count > 0 && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-100">
+                    <span className="status-badge rounded-md bg-rose-50 text-rose-700 border-rose-100">
                       {campaign.rejected_candidate_count} Rejected
                     </span>
                   )}

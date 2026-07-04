@@ -234,7 +234,7 @@ export function DashboardPage() {
                 />
 
                 {pipelinePreview && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
                     <div className="surface-card w-full max-w-lg p-8 shadow-2xl relative text-left">
                       <div className="text-indigo-600 font-semibold mb-2 uppercase tracking-wider text-xs">
                         Token Saver Confirmation Gate
@@ -435,7 +435,7 @@ export function DashboardPage() {
                 />
 
                 {pipelinePreview && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
                     <div className="surface-card w-full max-w-lg p-8 shadow-2xl relative text-left">
                       <div className="text-indigo-600 font-semibold mb-2 uppercase tracking-wider text-xs">
                         Token Saver Confirmation Gate

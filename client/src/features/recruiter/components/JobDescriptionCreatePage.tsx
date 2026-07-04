@@ -140,7 +140,7 @@ export function JobDescriptionCreatePage({
 
       {/* Wizard Loading Overlay */}
       {isLoading && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 p-4">
           <div className="surface-card max-w-sm p-8 text-center shadow-2xl relative bg-white border border-slate-200 rounded-3xl">
             <div className="h-10 w-10 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mx-auto mb-4" />
             <h3 className="text-base font-semibold text-slate-900">

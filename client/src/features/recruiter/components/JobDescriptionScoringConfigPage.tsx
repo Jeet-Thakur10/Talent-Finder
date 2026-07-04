@@ -60,7 +60,7 @@ export function JobDescriptionScoringConfigPage() {
   return (
     <div className="workspace-shell">
       {/* Breadcrumb */}
-      <nav className="flex items-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 mb-6">
+      <nav className="workspace-breadcrumbs mb-6">
         <Link to="/recruiter/job-descriptions" className="hover:text-slate-900 transition">
           Job Descriptions
         </Link>
@@ -91,7 +91,7 @@ export function JobDescriptionScoringConfigPage() {
         <div className="max-w-2xl mx-auto space-y-6">
           
           {/* 1. Job Summary */}
-          <div className="surface-card p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+          <div className="surface-card">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Scoring Campaign Profile</h2>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
@@ -101,7 +101,7 @@ export function JobDescriptionScoringConfigPage() {
                 </p>
               </div>
               <div className="shrink-0">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${getStatusBadgeClass(jobDescription.status_id)}`}>
+                <span className={`status-badge !px-3 !py-1 text-xs uppercase tracking-[0.16em] ${getStatusBadgeClass(jobDescription.status_id)}`}>
                   {getStatusName(jobDescription.status_id)}
                 </span>
               </div>
@@ -123,8 +123,8 @@ export function JobDescriptionScoringConfigPage() {
           {/* Success Submission State vs. Form State */}
           {isSuccess ? (
             /* Successful Submission */
-            <div className="surface-card p-8 bg-white border border-slate-200/80 rounded-2xl shadow-sm text-center space-y-6">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 border border-blue-200 shadow-inner animate-pulse">
+            <div className="surface-card space-y-6 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-blue-200 bg-blue-50 shadow-inner">
                 <svg className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -132,7 +132,7 @@ export function JobDescriptionScoringConfigPage() {
 
               <div className="space-y-2">
                 <h2 className="text-lg font-bold text-slate-900">Task Queued Successfully</h2>
-                <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-150">
+                <div className="status-badge bg-blue-50 text-xs text-blue-700 border-blue-150 !px-3 !py-1">
                   Current Status: <span className="ml-1 font-bold">Queued</span>
                 </div>
                 <p className="text-sm text-slate-500 leading-relaxed max-w-md mx-auto pt-2">
@@ -144,22 +144,21 @@ export function JobDescriptionScoringConfigPage() {
                 <button
                   type="button"
                   onClick={() => navigate("/recruiter/tasks")}
-                  className="workspace-primary-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer focus:outline-none shadow-md shadow-slate-900/10"
+                  className="workspace-primary-button !px-5 !py-2.5 text-sm shadow-md shadow-slate-900/10"
                 >
                   View Tasks
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate(`/recruiter/job-descriptions/${jobDescriptionId}`)}
-                  className="workspace-ghost-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer hover:bg-slate-50 focus:outline-none"
+                  className="workspace-ghost-button !px-5 !py-2.5 text-sm hover:bg-slate-50"
                 >
                   Back to Job Description
                 </button>
               </div>
             </div>
           ) : (
-            /* 2. Scoring Configuration Form */
-            <form onSubmit={handleFormSubmit} className="surface-card p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-6">
+            <form onSubmit={handleFormSubmit} className="surface-card space-y-6">
               <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Scoring Constraints Configuration</h2>
               
               {/* Final Shortlist Size */}
@@ -175,7 +174,7 @@ export function JobDescriptionScoringConfigPage() {
                   max={25}
                   value={k}
                   onChange={(e) => setK(Number(e.target.value))}
-                  className="auth-input !py-2.5 !rounded-xl text-sm focus:outline-none"
+                  className="auth-input !py-2.5 text-sm"
                 />
                 <p className="text-[11px] text-slate-400">
                   The number of top-ranking candidates that should appear in the final campaign evaluation shortlist (1 - 25).
@@ -195,7 +194,7 @@ export function JobDescriptionScoringConfigPage() {
                   max={100}
                   value={minPrescoreThreshold}
                   onChange={(e) => setMinPrescoreThreshold(Number(e.target.value))}
-                  className="auth-input !py-2.5 !rounded-xl text-sm focus:outline-none"
+                  className="auth-input !py-2.5 text-sm"
                 />
                 <p className="text-[11px] text-slate-400">
                   Candidates scoring below this value in the initial fast-match phase will be excluded from the detailed LLM candidate evaluation (0 - 100).
@@ -207,7 +206,7 @@ export function JobDescriptionScoringConfigPage() {
                 <button
                   type="button"
                   onClick={() => navigate(`/recruiter/job-descriptions/${jobDescriptionId}`)}
-                  className="workspace-ghost-button !py-2.5 !px-5 !rounded-xl text-sm cursor-pointer hover:bg-slate-50 focus:outline-none"
+                  className="workspace-ghost-button !px-5 !py-2.5 text-sm hover:bg-slate-50"
                 >
                   Cancel
                 </button>
@@ -215,7 +214,7 @@ export function JobDescriptionScoringConfigPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting || k < 1 || k > 25 || minPrescoreThreshold < 0 || minPrescoreThreshold > 100}
-                  className="workspace-primary-button !py-2.5 !px-5 !rounded-xl text-sm font-semibold flex items-center gap-2 cursor-pointer focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="workspace-primary-button !px-5 !py-2.5 text-sm font-semibold disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>

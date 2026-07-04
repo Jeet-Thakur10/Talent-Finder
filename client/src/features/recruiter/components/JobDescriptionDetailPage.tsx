@@ -84,7 +84,7 @@ export function JobDescriptionDetailPage() {
     }
 
     return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${badgeClass}`}>
+      <span className={`status-badge !px-3 !py-1 text-xs ${badgeClass}`}>
         {name}
       </span>
     );
@@ -119,7 +119,7 @@ export function JobDescriptionDetailPage() {
   return (
     <div className="workspace-shell">
       {/* 1. Breadcrumb */}
-      <nav className="flex items-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 mb-6">
+      <nav className="workspace-breadcrumbs mb-6">
         <Link to="/recruiter/job-descriptions" className="hover:text-slate-900 transition">
           Job Descriptions
         </Link>
@@ -129,7 +129,7 @@ export function JobDescriptionDetailPage() {
 
       {/* Outdated shortlist / warning banner */}
       {isOutdated && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+        <div className="mb-6 flex flex-col justify-between gap-4 rounded-[1.2rem] border border-amber-200 bg-amber-50 p-5 shadow-sm sm:flex-row sm:items-center">
           <div className="space-y-1 text-left">
             <div className="text-sm font-bold text-amber-900 flex items-center gap-2">
               <svg className="w-5 h-5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -144,7 +144,7 @@ export function JobDescriptionDetailPage() {
           <button
             type="button"
             onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/score-config`)}
-            className="workspace-primary-button !bg-amber-600 hover:!bg-amber-700 !text-white !py-2.5 !px-4 !rounded-xl text-xs font-bold focus:outline-none shrink-0"
+            className="workspace-primary-button shrink-0 !bg-amber-600 !px-4 !py-2.5 text-xs font-bold hover:!bg-amber-700"
           >
             Re-score Candidates
           </button>
@@ -153,10 +153,10 @@ export function JobDescriptionDetailPage() {
 
       {/* Prominent Task Awareness Banner */}
       {latestTask && (latestTask.status.toUpperCase() === "PENDING" || latestTask.status.toUpperCase() === "RUNNING") && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-pulse">
+        <div className="mb-6 flex flex-col justify-between gap-4 rounded-[1.2rem] border border-blue-200 bg-blue-50 p-5 shadow-sm sm:flex-row sm:items-center">
           <div className="space-y-1 text-left">
             <div className="text-sm font-bold text-blue-900 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
+              <span className="h-2 w-2 rounded-full bg-blue-600" />
               Candidate evaluation is currently running in the background.
             </div>
             <p className="text-xs text-blue-700">
@@ -166,227 +166,190 @@ export function JobDescriptionDetailPage() {
           <button
             type="button"
             onClick={() => navigate("/recruiter/tasks")}
-            className="workspace-ghost-button !border-blue-300 !text-blue-700 hover:!bg-blue-100/50 !py-2 !px-4 !rounded-xl text-xs font-bold focus:outline-none shrink-0"
+            className="workspace-ghost-button shrink-0 !border-blue-300 !px-4 !py-2 text-xs font-bold !text-blue-700 hover:!bg-blue-100/50"
           >
             View Task
           </button>
         </div>
       )}
 
-      {/* Responsive Two-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left Column: Structured Job Description */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="surface-card p-8 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
-            <h1 className="text-2xl font-bold text-slate-900 mb-6">Structured Job Profile</h1>
-            
-            <div className="space-y-6">
-              {/* Job Purpose */}
-              <div className="border-b border-slate-100 pb-5">
-                <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 mb-2">
-                  Job Purpose
-                </h3>
-                <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">
-                  {jobDescription.job_purpose}
-                </p>
+      <div className="space-y-6">
+        <div className="surface-card space-y-6">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+            <div className="min-w-0 space-y-2">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400">Campaign Summary</span>
+              <h1 className="break-words text-2xl font-bold text-slate-900">{jobDescription.title}</h1>
+              <div className="flex flex-wrap gap-2">
+                {getStatusBadge(jobDescription.status_id)}
+                <span className="status-badge border-slate-200 bg-slate-50 text-slate-700">{getEmploymentTypeName(jobDescription.employment_type_id)}</span>
               </div>
-
-              {/* Responsibilities */}
-              <div className="border-b border-slate-100 pb-5">
-                <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 mb-2">
-                  Responsibilities
-                </h3>
-                <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">
-                  {jobDescription.responsibilities}
-                </p>
-              </div>
-
-              {/* Required Skills */}
-              <div className="border-b border-slate-100 pb-5">
-                <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 mb-3">
-                  Required Skills
-                </h3>
-                
-                {mandatorySkills.length > 0 && (
-                  <div className="mb-4">
-                    <span className="text-xs font-semibold text-slate-900 block mb-2">
-                      Mandatory Skills
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {mandatorySkills.map((skill, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-900 text-white shadow-sm"
-                        >
-                          {skill.skill_name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {preferredSkills.length > 0 && (
-                  <div>
-                    <span className="text-xs font-semibold text-slate-500 block mb-2">
-                      Preferred Skills
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {preferredSkills.map((skill, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-50 text-slate-650 border border-slate-200"
-                        >
-                          {skill.skill_name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {jobDescription.skills.length === 0 && (
-                  <p className="text-xs text-slate-400 italic">No skills extracted for this profile.</p>
-                )}
-              </div>
-
-              {/* Preferred Qualifications */}
-              {jobDescription.preferred_qualifications && (
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 mb-2">
-                    Preferred Qualifications
-                  </h3>
-                  <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">
-                    {jobDescription.preferred_qualifications}
-                  </p>
-                </div>
-              )}
             </div>
-          </div>
-        </div>
 
-        {/* Right Column: Summary & Workspace Actions */}
-        <div className="space-y-6">
-          {/* 2. Job Description Summary */}
-          <div className="surface-card p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-3 mb-4">
-              Campaign Summary
-            </h2>
-            <div className="space-y-4 text-sm">
-              <div>
-                <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">Position Title</span>
-                <span className="text-slate-800 font-semibold mt-0.5 block">{jobDescription.title}</span>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">Department</span>
-                <span className="text-slate-700 font-medium mt-0.5 block">{jobDescription.department || "-"}</span>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">Hiring Manager</span>
-                <span className="text-slate-700 font-medium mt-0.5 block">{getHiringManagerName(jobDescription.hiring_manager_id)}</span>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">Employment Type</span>
-                <span className="text-slate-700 font-medium mt-0.5 block">{getEmploymentTypeName(jobDescription.employment_type_id)}</span>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">Experience Range</span>
-                <span className="text-slate-700 font-medium mt-0.5 block">
-                  {jobDescription.min_experience} - {jobDescription.max_experience} Years
-                </span>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">Education Requirement</span>
-                <span className="text-slate-700 font-medium mt-0.5 block">{jobDescription.education_requirement}</span>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">Campaign Status</span>
-                <div className="mt-1">{getStatusBadge(jobDescription.status_id)}</div>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">Last Updated</span>
-                <span className="text-slate-500 font-medium mt-0.5 block">{formatDate(jobDescription.updated_at)}</span>
-              </div>
+            <div className="flex flex-wrap gap-3 xl:max-w-[22rem] xl:justify-end">
+              <button
+                type="button"
+                disabled={!latestTask || latestTask.status.toUpperCase() !== "SUCCESS"}
+                onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/candidates`)}
+                className="workspace-primary-button !py-2.5 text-sm font-semibold disabled:opacity-40"
+              >
+                View Candidates
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/score-config`)}
+                className="workspace-ghost-button !py-2.5 text-sm font-semibold"
+              >
+                {latestTask ? "Recalculate / Start Scoring" : "Start Scoring"}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/edit`)}
+                className="workspace-ghost-button !py-2.5 text-sm font-semibold"
+              >
+                Edit Job Description
+              </button>
             </div>
           </div>
 
-          {/* 4. Workspace Actions */}
-          <div className="surface-card p-6 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-3">
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider pb-1">
-              Workspace Actions
-            </h2>
-            
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="detail-block">
+              <div className="detail-label">Department</div>
+              <p className="detail-copy">{jobDescription.department || "-"}</p>
+            </div>
+            <div className="detail-block">
+              <div className="detail-label">Hiring Manager</div>
+              <p className="detail-copy">{getHiringManagerName(jobDescription.hiring_manager_id)}</p>
+            </div>
+            <div className="detail-block">
+              <div className="detail-label">Experience Range</div>
+              <p className="detail-copy">{jobDescription.min_experience} - {jobDescription.max_experience} Years</p>
+            </div>
+            <div className="detail-block">
+              <div className="detail-label">Last Updated</div>
+              <p className="detail-copy">{formatDate(jobDescription.updated_at)}</p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
+            <div className="detail-block">
+              <div className="detail-label">Education Requirement</div>
+              <p className="detail-copy">{jobDescription.education_requirement}</p>
+            </div>
+
             {latestTask && (latestTask.status.toUpperCase() === "PENDING" || latestTask.status.toUpperCase() === "RUNNING") ? (
-              <div className="space-y-2 bg-slate-50 border border-slate-200 p-4 rounded-xl text-center text-xs">
-                <span className="font-bold text-slate-700 block">Scoring Pipeline Active</span>
-                <p className="text-slate-450 mt-1">Please wait for evaluations to finish before viewing candidates.</p>
+              <div className="detail-block bg-slate-50 text-xs">
+                <span className="block font-bold text-slate-700">Scoring Pipeline Active</span>
+                <p className="mt-1 leading-relaxed text-slate-450">Please wait for evaluations to finish before viewing candidates.</p>
                 <button
                   type="button"
                   onClick={() => navigate("/recruiter/tasks")}
-                  className="workspace-primary-button w-full justify-center !rounded-xl !py-2.5 text-xs font-semibold mt-3 focus:outline-none cursor-pointer"
+                  className="workspace-primary-button mt-3 w-full justify-center !py-2.5 text-xs font-semibold"
                 >
                   View Tasks Console
                 </button>
               </div>
             ) : latestTask && latestTask.status.toUpperCase() === "FAILED" ? (
-              <div className="space-y-2.5 bg-rose-50 border border-rose-100 p-4 rounded-xl text-xs text-rose-900">
-                <span className="font-bold text-rose-950 block">⚠️ Candidate evaluation failed.</span>
-                <p className="text-[11px] leading-relaxed text-rose-750">
-                  An error occurred during matching pipeline.
-                </p>
-                <div className="grid grid-cols-2 gap-2 pt-2">
+              <div className="detail-block border-rose-100 bg-rose-50 text-xs text-rose-900">
+                <span className="block font-bold text-rose-950">Candidate evaluation failed.</span>
+                <p className="mt-1 text-[11px] leading-relaxed text-rose-750">An error occurred during matching pipeline.</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => navigate("/recruiter/tasks")}
-                    className="workspace-ghost-button !border-rose-300 !text-rose-800 hover:!bg-rose-100/50 !py-2 !rounded-xl text-xs font-semibold focus:outline-none cursor-pointer"
+                    className="workspace-ghost-button !border-rose-300 !py-2 text-xs font-semibold !text-rose-800 hover:!bg-rose-100/50"
                   >
                     View Task
                   </button>
                   <button
                     type="button"
                     disabled
-                    className="workspace-primary-button !py-2 !rounded-xl text-xs font-semibold opacity-40 cursor-not-allowed justify-center focus:outline-none"
+                    className="workspace-primary-button justify-center !py-2 text-xs font-semibold opacity-40"
                   >
                     Retry Scoring
                   </button>
                 </div>
               </div>
             ) : (
-              <>
-                {latestTask && latestTask.status.toUpperCase() === "SUCCESS" && (
-                  <div className="p-3.5 bg-emerald-50 border border-emerald-100 rounded-xl text-xs text-emerald-800 mb-3 font-semibold text-center">
-                    ✓ Candidate evaluation completed successfully.
-                  </div>
+              <div className="detail-block bg-slate-50/85 text-xs">
+                <span className="block font-bold text-slate-700">Pipeline Status</span>
+                {latestTask && latestTask.status.toUpperCase() === "SUCCESS" ? (
+                  <p className="mt-1 font-semibold text-emerald-700">Candidate evaluation completed successfully.</p>
+                ) : (
+                  <p className="mt-1 leading-relaxed text-slate-500">Run scoring to generate ranked candidates for this job description.</p>
                 )}
-                
-                <button
-                  type="button"
-                  disabled={!latestTask || latestTask.status.toUpperCase() !== "SUCCESS"}
-                  onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/candidates`)}
-                  className="workspace-primary-button w-full justify-center !rounded-xl !py-3 text-sm font-semibold cursor-pointer focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  View Candidates
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/score-config`)}
-                  className="workspace-ghost-button w-full justify-center !rounded-xl !py-3 text-sm font-semibold hover:bg-slate-50 cursor-pointer focus:outline-none"
-                >
-                  {latestTask ? "Recalculate / Start Scoring" : "Start Scoring"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/edit`)}
-                  className="workspace-ghost-button w-full justify-center !rounded-xl !py-3 text-sm font-semibold hover:bg-slate-50 cursor-pointer focus:outline-none"
-                >
-                  Edit Job Description
-                </button>
-              </>
+              </div>
             )}
           </div>
         </div>
 
+        <div className="surface-card p-8">
+          <h2 className="mb-6 text-xl font-semibold text-slate-900">Structured Job Profile</h2>
+
+          <div className="space-y-6">
+            <div className="border-b border-slate-100 pb-5">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Job Purpose</h3>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                {jobDescription.job_purpose}
+              </p>
+            </div>
+
+            <div className="border-b border-slate-100 pb-5">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Responsibilities</h3>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                {jobDescription.responsibilities}
+              </p>
+            </div>
+
+            <div className="border-b border-slate-100 pb-5">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Required Skills</h3>
+
+              {mandatorySkills.length > 0 && (
+                <div className="mb-4">
+                  <span className="mb-2 block text-xs font-semibold text-slate-900">Mandatory Skills</span>
+                  <div className="flex flex-wrap gap-2">
+                    {mandatorySkills.map((skill, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm"
+                      >
+                        {skill.skill_name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {preferredSkills.length > 0 && (
+                <div>
+                  <span className="mb-2 block text-xs font-semibold text-slate-500">Preferred Skills</span>
+                  <div className="flex flex-wrap gap-2">
+                    {preferredSkills.map((skill, index) => (
+                      <span
+                        key={index}
+                        className="status-badge border-slate-200 bg-slate-50 text-xs font-medium text-slate-650 !px-3 !py-1"
+                      >
+                        {skill.skill_name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {jobDescription.skills.length === 0 && (
+                <p className="text-xs italic text-slate-400">No skills extracted for this profile.</p>
+              )}
+            </div>
+
+            {jobDescription.preferred_qualifications && (
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Preferred Qualifications</h3>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                  {jobDescription.preferred_qualifications}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
