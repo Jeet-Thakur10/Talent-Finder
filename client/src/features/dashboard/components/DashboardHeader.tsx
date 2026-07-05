@@ -61,7 +61,7 @@ export function DashboardHeader({
           onClick={() => setShowNotifications(!showNotifications)}
           className="notification-indicator relative flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-600 hover:border-slate-350 transition cursor-pointer"
         >
-          <span className="notification-dot h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+          <span className="notification-dot h-2 w-2 rounded-full bg-indigo-600" />
           Notifications
         </button>
 

@@ -47,7 +47,7 @@ export function JobDescriptionsPage() {
     }
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${badgeClass}`}>
+      <span className={`status-badge ${badgeClass}`}>
         {name}
       </span>
     );
@@ -61,7 +61,7 @@ export function JobDescriptionsPage() {
     let label = "Queued";
     
     if (code === "RUNNING") {
-      chipClass = "bg-blue-50 text-blue-700 border-blue-200 animate-pulse";
+      chipClass = "bg-blue-50 text-blue-700 border-blue-200";
       label = "Scoring Running";
     } else if (code === "SUCCESS") {
       chipClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
@@ -72,7 +72,7 @@ export function JobDescriptionsPage() {
     }
 
     return (
-      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${chipClass} ml-2 shrink-0`}>
+      <span className={`status-badge shrink-0 !rounded-md !px-2 !py-0.5 text-[10px] uppercase tracking-[0.14em] ${chipClass}`}>
         {label}
       </span>
     );
@@ -109,8 +109,8 @@ export function JobDescriptionsPage() {
         </div>
       ) : jobDescriptions.length === 0 ? (
         /* 3. Empty State */
-        <div className="surface-card p-12 text-center max-w-xl mx-auto mt-8 border border-slate-200/60 rounded-[2rem] bg-white">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 border border-slate-200">
+        <div className="workspace-empty-state mt-2">
+          <div className="workspace-empty-icon">
             <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
@@ -130,51 +130,54 @@ export function JobDescriptionsPage() {
           </div>
         </div>
       ) : (
-        /* 2. Job Description List */
         <div className="workspace-grid grid-cols-1">
-          {/* Desktop View (Table Layout) */}
-          <div className="hidden lg:block overflow-hidden bg-white border border-slate-200/80 rounded-2xl shadow-sm">
-            <table className="min-w-full divide-y divide-slate-100 text-left">
-              <thead className="bg-slate-50/70">
+          <div className="workspace-table-wrap hidden lg:block">
+            <table className="workspace-table">
+              <thead>
                 <tr>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Job Title</th>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Department</th>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Employment Type</th>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Hiring Manager</th>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Status</th>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Created Date</th>
-                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Last Updated</th>
+                  <th scope="col">Job Title</th>
+                  <th scope="col">Department</th>
+                  <th scope="col">Employment Type</th>
+                  <th scope="col">Hiring Manager</th>
+                  <th scope="col">Job Status</th>
+                  <th scope="col">Scoring Status</th>
+                  <th scope="col">Created Date</th>
+                  <th scope="col">Last Updated</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody>
                 {jobDescriptions.map((job) => (
                   <tr
                     key={job.id}
                     onClick={() => navigate(`/recruiter/job-descriptions/${job.id}`)}
-                    className="hover:bg-slate-50/50 transition cursor-pointer"
+                    className="workspace-table-row cursor-pointer"
                   >
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm font-semibold text-slate-900 group">
-                      <span className="group-hover:text-slate-700 group-hover:underline decoration-slate-400 underline-offset-4">
+                    <td className="workspace-table-cell">
+                      <div className="workspace-table-title">
                         {job.title}
-                      </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm text-slate-500">
+                    <td className="workspace-table-cell">
                       {job.department || "-"}
                     </td>
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm text-slate-500">
+                    <td className="workspace-table-cell">
                       {getEmploymentTypeName(job.employment_type_id)}
                     </td>
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm text-slate-500">
+                    <td className="workspace-table-cell">
                       {getHiringManagerName(job.hiring_manager_id)}
                     </td>
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm flex items-center">
+                    <td className="workspace-table-cell">
                       {getStatusBadge(job.status_id)}
-                      {getTaskStatusChip(job.id)}
                     </td>
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm text-slate-500">
+                    <td className="workspace-table-cell">
+                      {getTaskStatusChip(job.id) || (
+                        <span className="text-slate-400 font-medium">—</span>
+                      )}
+                    </td>
+                    <td className="workspace-table-cell">
                       {formatDate(job.created_at)}
                     </td>
-                    <td className="px-6 py-4.5 whitespace-nowrap text-sm text-slate-500">
+                    <td className="workspace-table-cell">
                       {formatDate(job.updated_at)}
                     </td>
                   </tr>
@@ -183,44 +186,43 @@ export function JobDescriptionsPage() {
             </table>
           </div>
 
-          {/* Mobile & Tablet View (Stacked List & Cards Layout) */}
           <div className="lg:hidden space-y-4">
             {jobDescriptions.map((job) => (
               <div
                 key={job.id}
                 onClick={() => navigate(`/recruiter/job-descriptions/${job.id}`)}
-                className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:border-slate-350 transition cursor-pointer flex flex-col gap-3"
+                className="workspace-list-card cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-base font-semibold text-slate-900 leading-tight">
+                  <h3 className="min-w-0 break-words text-base font-semibold leading-tight text-slate-900">
                     {job.title}
                   </h3>
-                  <div className="shrink-0 flex items-center gap-1">
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
                     {getStatusBadge(job.status_id)}
                     {getTaskStatusChip(job.id)}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-1 text-xs">
+                <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
                   <div>
                     <span className="text-slate-400 block font-medium">Department</span>
-                    <span className="text-slate-700 font-semibold mt-0.5 block">{job.department || "-"}</span>
+                    <span className="mt-0.5 block break-words font-semibold text-slate-700">{job.department || "-"}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block font-medium">Employment Type</span>
-                    <span className="text-slate-700 font-semibold mt-0.5 block">{getEmploymentTypeName(job.employment_type_id)}</span>
+                    <span className="mt-0.5 block break-words font-semibold text-slate-700">{getEmploymentTypeName(job.employment_type_id)}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block font-medium">Hiring Manager</span>
-                    <span className="text-slate-700 font-semibold mt-0.5 block">{getHiringManagerName(job.hiring_manager_id)}</span>
+                    <span className="mt-0.5 block break-words font-semibold text-slate-700">{getHiringManagerName(job.hiring_manager_id)}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block font-medium">Last Updated</span>
-                    <span className="text-slate-700 font-semibold mt-0.5 block">{formatDate(job.updated_at)}</span>
+                    <span className="mt-0.5 block font-semibold text-slate-700">{formatDate(job.updated_at)}</span>
                   </div>
                 </div>
 
-                <div className="text-[10px] text-slate-400 pt-2 border-t border-slate-100 mt-1 flex justify-between">
+                <div className="mt-1 flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3 text-[10px] text-slate-400">
                   <span>ID: {job.id.substring(0, 8)}...</span>
                   <span>Created: {formatDate(job.created_at)}</span>
                 </div>

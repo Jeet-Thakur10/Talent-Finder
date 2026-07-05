@@ -110,7 +110,7 @@ export function JobDescriptionCandidatesPage() {
   return (
     <div className="workspace-shell">
       {/* 1. Breadcrumb */}
-      <nav className="flex items-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 mb-6">
+      <nav className="workspace-breadcrumbs mb-6">
         <Link to="/recruiter/job-descriptions" className="hover:text-slate-900 transition">
           Job Descriptions
         </Link>
@@ -142,7 +142,7 @@ export function JobDescriptionCandidatesPage() {
           
           {/* 2. Job Summary */}
           {jobDescription && (
-            <div className="surface-card p-5 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="surface-card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Scoring Campaign Summary</span>
                 <h1 className="text-xl font-bold text-slate-900 mt-1">{jobDescription.title}</h1>
@@ -151,7 +151,7 @@ export function JobDescriptionCandidatesPage() {
                 </p>
               </div>
               <div className="shrink-0">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${getStatusBadgeClass(jobDescription.status_id)}`}>
+                <span className={`status-badge !px-3 !py-1 text-xs uppercase tracking-[0.16em] ${getStatusBadgeClass(jobDescription.status_id)}`}>
                   {getStatusName(jobDescription.status_id)}
                 </span>
               </div>
@@ -161,8 +161,8 @@ export function JobDescriptionCandidatesPage() {
           {/* 3. Candidate Review Board */}
           {latestTask && (latestTask.status.toUpperCase() === "PENDING" || latestTask.status.toUpperCase() === "RUNNING") ? (
             /* Running/In-Progress State */
-            <div className="surface-card p-12 text-center max-w-xl mx-auto mt-8 bg-white border border-slate-200/60 rounded-3xl space-y-6">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 border border-blue-200 shadow-inner animate-pulse">
+            <div className="workspace-empty-state mt-2 space-y-6">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-blue-200 bg-blue-50 shadow-inner">
                 <svg className="h-8 w-8 text-blue-650 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" />
                 </svg>
@@ -193,8 +193,8 @@ export function JobDescriptionCandidatesPage() {
             </div>
           ) : candidates.length === 0 ? (
             /* Empty State */
-            <div className="surface-card p-12 text-center max-w-xl mx-auto mt-8 bg-white border border-slate-200/60 rounded-3xl">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 border border-slate-200">
+            <div className="workspace-empty-state mt-2">
+              <div className="workspace-empty-icon rounded-full">
                 <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
@@ -242,10 +242,10 @@ export function JobDescriptionCandidatesPage() {
                     <div
                       key={c.candidate_id}
                       onClick={() => toggleCandidate(c.candidate_id)}
-                      className={`bg-white border rounded-2xl p-5 shadow-sm transition flex flex-col md:flex-row md:items-center justify-between gap-5 cursor-pointer relative ${
+                      className={`relative flex cursor-pointer flex-col justify-between gap-5 rounded-[1.2rem] border p-5 shadow-[0_14px_36px_-34px_rgba(15,23,42,0.32)] transition md:flex-row md:items-center ${
                         isChecked
-                          ? "border-indigo-500 bg-indigo-50/10"
-                          : "border-slate-200 hover:border-slate-350"
+                          ? "border-blue-500 bg-blue-50/25"
+                          : "border-slate-200 bg-white hover:border-slate-350"
                       }`}
                     >
                       {/* Left Block: Checkbox and Info */}
@@ -263,7 +263,7 @@ export function JobDescriptionCandidatesPage() {
                             checked={isChecked}
                             readOnly
                             disabled={isLoading}
-                            className="h-4.5 w-4.5 rounded border-slate-300 text-indigo-650 focus:ring-indigo-500 transition cursor-pointer disabled:opacity-40"
+                            className="h-4 w-4 rounded border-slate-300 text-indigo-650 transition focus:ring-indigo-500 cursor-pointer disabled:opacity-40"
                           />
                         </div>
 
@@ -272,11 +272,11 @@ export function JobDescriptionCandidatesPage() {
                             <h3 className="text-base font-bold text-slate-900 leading-none">
                               {c.full_name}
                             </h3>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${match.badge}`}>
+                            <span className={`status-badge text-[10px] uppercase tracking-[0.14em] ${match.badge}`}>
                               {match.label}
                             </span>
                             {c.shared_with_hiring_manager && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-150 shrink-0">
+                              <span className="status-badge shrink-0 gap-1 bg-indigo-50 text-[9px] uppercase tracking-[0.14em] text-indigo-700 border-indigo-150">
                                 <svg className="w-2.5 h-2.5 text-indigo-650" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -284,12 +284,12 @@ export function JobDescriptionCandidatesPage() {
                               </span>
                             )}
                             {c.hm_decision === "INTERVIEW_SENT" && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-150 shrink-0">
+                              <span className="status-badge shrink-0 gap-1 bg-emerald-50 text-[9px] uppercase tracking-[0.14em] text-emerald-700 border-emerald-150">
                                 Interview Scheduled
                               </span>
                             )}
                             {c.hm_decision === "REJECTED" && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-150 shrink-0">
+                              <span className="status-badge shrink-0 gap-1 bg-rose-50 text-[9px] uppercase tracking-[0.14em] text-rose-700 border-rose-150">
                                 HM Rejected
                               </span>
                             )}
@@ -326,10 +326,10 @@ export function JobDescriptionCandidatesPage() {
                         <button
                           type="button"
                           onClick={() => navigate(`/recruiter/job-descriptions/${jobDescriptionId}/candidates/${c.candidate_id}`)}
-                          className="workspace-ghost-button !py-2.5 !px-4.5 !rounded-xl text-xs font-bold hover:bg-slate-50 focus:outline-none cursor-pointer"
-                        >
-                          View Details
-                        </button>
+                  className="workspace-ghost-button !px-4 !py-2.5 text-xs font-bold hover:bg-slate-50"
+                >
+                  View Details
+                </button>
                       </div>
 
                     </div>
@@ -341,7 +341,7 @@ export function JobDescriptionCandidatesPage() {
 
           {/* Floating Sticky Handoff Action Bar */}
           {selectedIds.size > 0 && (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-950 text-white rounded-2xl shadow-[0_20px_50px_-10px_rgba(15,23,42,0.6)] px-5 py-3.5 flex items-center justify-between gap-6 border border-slate-800 animate-slide-up w-11/12 max-w-xl transition-all">
+            <div className="animate-slide-up fixed bottom-5 left-1/2 z-40 flex w-11/12 max-w-xl -translate-x-1/2 items-center justify-between gap-6 rounded-[1.2rem] border border-slate-800 bg-slate-950 px-5 py-3.5 text-white shadow-[0_20px_50px_-10px_rgba(15,23,42,0.6)] transition-all">
               <span className="text-xs font-semibold text-slate-200">
                 {selectedIds.size} {selectedIds.size === 1 ? "candidate" : "candidates"} selected
               </span>
@@ -356,7 +356,7 @@ export function JobDescriptionCandidatesPage() {
                 <button
                   type="button"
                   onClick={handleOpenShareDialog}
-                  className="bg-indigo-650 hover:bg-indigo-500 active:scale-95 text-white px-4.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-indigo-900/30 focus:outline-none cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-blue-900/30 transition hover:bg-blue-500 focus:outline-none"
                 >
                   Share Shortlist
                 </button>

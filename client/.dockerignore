@@ -1,0 +1,16 @@
+# Dependencies — installed inside the image during build
+node_modules/
+
+# Production build output
+dist/
+
+# Secrets
+.env
+.env.*
+
+# Version control
+.git/
+.gitignore
+
+# Documentation
+*.md
