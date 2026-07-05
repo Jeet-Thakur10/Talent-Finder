@@ -84,17 +84,11 @@ export function DashboardPage() {
   } = useRecruiterDashboard();
 
   const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } catch {
-      // Ignore API errors and still clear local auth state.
-    } finally {
-      logout();
+    await logout();
 
-      navigate("/login", {
-        replace: true,
-      });
-    }
+    navigate("/login", {
+      replace: true,
+    });
   };
 
   return (

@@ -31,14 +31,8 @@ export function WorkspaceLayout({
   const { unreadCount } = useUnreadNotificationCount();
 
   const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } catch {
-      // Ignore API errors and still clear local auth state.
-    } finally {
-      logout();
-      navigate("/login", { replace: true });
-    }
+    await logout();
+    navigate("/login", { replace: true });
   };
 
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "U";

@@ -8,7 +8,7 @@ export interface AuthContextType {
   isLoading: boolean;
 
   login: (user: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export const AuthContext =

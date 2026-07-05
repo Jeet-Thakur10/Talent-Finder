@@ -1,10 +1,17 @@
-from datetime import datetime
 from typing import TypedDict
+
+import redis.asyncio as aioredis
+
+from src.config.settings import settings
 
 
 class OTPRecord(TypedDict):
     otp: str
-    expires_at: datetime
+    expires_at: str
 
 
-otp_store: dict[str, OTPRecord] = {}
+redis_client: aioredis.Redis = aioredis.from_url(
+    settings.REDIS_URL,
+    decode_responses=True,
+)
+

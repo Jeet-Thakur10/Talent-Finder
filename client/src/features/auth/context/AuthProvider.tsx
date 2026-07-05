@@ -48,14 +48,20 @@ const login = (user: User) => {
   setUser(user);
 };
 
-const logout = () => {
-  setUser(null);
+const logout = async () => {
+  try {
+    await authService.logout();
+  } catch {
+    // Ignore API errors and still clear local auth state.
+  } finally {
+    setUser(null);
+  }
 };
 
   useEffect(() => {
     const unsubscribe =
       subscribeToLogout(() => {
-        logout();
+        void logout();
 
         navigate("/login", {
           replace: true,
