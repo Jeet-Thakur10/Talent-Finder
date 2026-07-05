@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 
 import type { JobDescription } from "../services/dashboard.types";
 import { useAuth } from "../../auth/hooks/useAuth";
-import { authService } from "../../auth/services/auth.service";
 import { CampaignsTable } from "./CampaignsTable";
 import { CandidateDrawer } from "./CandidateDrawer";
 import { CandidateResultsTable } from "./CandidateResultsTable";

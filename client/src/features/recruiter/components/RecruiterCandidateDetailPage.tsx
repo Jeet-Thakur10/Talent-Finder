@@ -4,7 +4,6 @@ import { useRecruiterCandidateDetail } from "../hooks/useRecruiterCandidateDetai
 import { CandidateExperienceTimeline } from "../../../components/candidate/CandidateExperienceTimeline";
 import { CandidateSkillsProfile } from "../../../components/candidate/CandidateSkillsProfile";
 import { CandidateEducationProfile } from "../../../components/candidate/CandidateEducationProfile";
-import { CandidateResumeText } from "../../../components/candidate/CandidateResumeText";
 import { CandidateScoreBreakdown } from "../../../components/candidate/CandidateScoreBreakdown";
 
 export function RecruiterCandidateDetailPage() {
@@ -47,16 +46,7 @@ export function RecruiterCandidateDetailPage() {
     return { label: "Weak Match", badge: "bg-slate-150 text-slate-700 border-slate-300" };
   };
 
-  const handleDownloadResume = () => {
-    if (!evaluationBoard?.candidate?.resume_text) return;
-    const element = document.createElement("a");
-    const file = new Blob([evaluationBoard.candidate.resume_text], { type: "text/plain" });
-    element.href = URL.createObjectURL(file);
-    element.download = `${evaluationBoard.candidate.full_name}_Resume.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
+
 
   if (isLoading) {
     return (
@@ -139,7 +129,7 @@ export function RecruiterCandidateDetailPage() {
               </div>
             </div>
 
-            <div className="grid min-w-[15rem] gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            <div className="grid min-w-[15rem] gap-3 sm:grid-cols-2 xl:grid-cols-1">
               <div className="rounded-[1rem] border border-slate-200 bg-slate-50/80 px-4 py-3">
                 <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Overall Fit Score</span>
                 <span className="mt-1 block text-3xl font-black leading-tight text-slate-950">
@@ -165,17 +155,6 @@ export function RecruiterCandidateDetailPage() {
                   </div>
                 )}
               </div>
-              <button
-                type="button"
-                disabled={!candidate.resume_text}
-                onClick={handleDownloadResume}
-                className="workspace-primary-button !px-4 !py-2.5 text-xs font-semibold disabled:opacity-40"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                {candidate.resume_text ? "Download Resume" : "Resume Not Uploaded"}
-              </button>
             </div>
           </div>
         </div>
@@ -246,8 +225,6 @@ export function RecruiterCandidateDetailPage() {
             </div>
           </div>
         </div>
-
-        <CandidateResumeText resumeText={candidate.resume_text} />
       </div>
     </div>
   );

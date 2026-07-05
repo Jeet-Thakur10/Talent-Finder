@@ -39,13 +39,7 @@ export function SharedCampaignDetailsPage() {
     }
   };
 
-  // Collect recruiter remarks to show as a unified handoff note if any exist
-  const handoffNotes = candidates
-    .filter((c) => c.recruiter_notes && c.recruiter_notes.trim())
-    .map((c) => ({
-      name: c.full_name,
-      notes: c.recruiter_notes,
-    }));
+
 
   return (
     <div className="workspace-shell animate-fade-in">
@@ -155,24 +149,7 @@ export function SharedCampaignDetailsPage() {
               </div>
             </div>
 
-            {/* Recruiter Handoff Remarks Summary */}
-            {handoffNotes.length > 0 && (
-              <div className="mt-5 p-4 bg-indigo-50/40 border border-indigo-100/60 rounded-xl">
-                <span className="text-[10px] uppercase font-bold text-indigo-700 tracking-wider flex items-center gap-1.5 mb-2">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
-                  Recruiter Handoff Recommendation notes
-                </span>
-                <ul className="space-y-2 text-xs text-slate-650 pl-1.5 list-disc list-inside">
-                  {handoffNotes.map((hn, idx) => (
-                    <li key={idx} className="leading-normal">
-                      <strong className="text-slate-800">{hn.name}</strong>: "{hn.notes}"
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+
           </div>
 
           {/* Candidate List Title */}

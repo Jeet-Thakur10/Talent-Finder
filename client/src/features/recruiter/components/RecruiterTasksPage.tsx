@@ -125,7 +125,7 @@ export function RecruiterTasksPage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="workspace-alert mb-6 max-w-4xl mx-auto">
+        <div className="workspace-alert mb-6">
           {error}
         </div>
       )}
@@ -157,7 +157,7 @@ export function RecruiterTasksPage() {
           </div>
         </div>
       ) : (
-        <div className="max-w-4xl mx-auto space-y-4">
+        <div className="w-full space-y-4">
           {tasks.map((task) => {
             const currentStageIndex = getStageIndex(task.current_stage);
             const isCompleted = task.status.toUpperCase() === "SUCCESS";

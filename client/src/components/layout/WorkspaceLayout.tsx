@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../features/auth/hooks/useAuth";
-import { authService } from "../../features/auth/services/auth.service";
 import { useUnreadNotificationCount } from "../../features/notifications/hooks/useUnreadNotificationCount";
 
 export interface NavLinkConfig {

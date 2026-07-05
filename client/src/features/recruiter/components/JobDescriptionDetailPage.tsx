@@ -185,12 +185,12 @@ export function JobDescriptionDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 xl:max-w-[22rem] xl:justify-end">
+            <div className="flex flex-wrap gap-3 xl:justify-end">
               <button
                 type="button"
                 disabled={!latestTask || latestTask.status.toUpperCase() !== "SUCCESS"}
                 onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/candidates`)}
-                className="workspace-primary-button !py-2.5 text-sm font-semibold disabled:opacity-40"
+                className="workspace-ghost-button !py-2.5 text-sm font-semibold disabled:opacity-40"
               >
                 View Candidates
               </button>

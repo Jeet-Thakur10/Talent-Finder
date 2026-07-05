@@ -72,7 +72,7 @@ export function JobDescriptionsPage() {
     }
 
     return (
-      <span className={`status-badge ml-2 shrink-0 !rounded-md !px-2 !py-0.5 text-[10px] uppercase tracking-[0.14em] ${chipClass}`}>
+      <span className={`status-badge shrink-0 !rounded-md !px-2 !py-0.5 text-[10px] uppercase tracking-[0.14em] ${chipClass}`}>
         {label}
       </span>
     );
@@ -139,7 +139,8 @@ export function JobDescriptionsPage() {
                   <th scope="col">Department</th>
                   <th scope="col">Employment Type</th>
                   <th scope="col">Hiring Manager</th>
-                  <th scope="col">Status</th>
+                  <th scope="col">Job Status</th>
+                  <th scope="col">Scoring Status</th>
                   <th scope="col">Created Date</th>
                   <th scope="col">Last Updated</th>
                 </tr>
@@ -166,10 +167,12 @@ export function JobDescriptionsPage() {
                       {getHiringManagerName(job.hiring_manager_id)}
                     </td>
                     <td className="workspace-table-cell">
-                      <div className="flex flex-wrap items-center gap-2">
                       {getStatusBadge(job.status_id)}
-                      {getTaskStatusChip(job.id)}
-                      </div>
+                    </td>
+                    <td className="workspace-table-cell">
+                      {getTaskStatusChip(job.id) || (
+                        <span className="text-slate-400 font-medium">—</span>
+                      )}
                     </td>
                     <td className="workspace-table-cell">
                       {formatDate(job.created_at)}

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCandidateReview } from "../hooks/useCandidateReview";
 import { CandidateExperienceTimeline } from "../../../components/candidate/CandidateExperienceTimeline";
 import { CandidateSkillsProfile } from "../../../components/candidate/CandidateSkillsProfile";
 import { CandidateEducationProfile } from "../../../components/candidate/CandidateEducationProfile";
-import { CandidateResumeText } from "../../../components/candidate/CandidateResumeText";
 import { CandidateScoreBreakdown } from "../../../components/candidate/CandidateScoreBreakdown";
 
 export function HiringManagerCandidateReviewPage() {
@@ -139,16 +139,7 @@ export function HiringManagerCandidateReviewPage() {
     }
   };
 
-  const handleDownloadResume = () => {
-    if (!evaluationBoard?.candidate?.resume_text) return;
-    const element = document.createElement("a");
-    const file = new Blob([evaluationBoard.candidate.resume_text], { type: "text/plain" });
-    element.href = URL.createObjectURL(file);
-    element.download = `${evaluationBoard.candidate.full_name}_Resume.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
+
 
   if (isLoading) {
     return (
@@ -245,7 +236,7 @@ export function HiringManagerCandidateReviewPage() {
               </div>
             </div>
 
-            <div className="grid min-w-[15rem] gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            <div className="grid min-w-[15rem] gap-3 sm:grid-cols-2 xl:grid-cols-1">
               <div className="rounded-[1rem] border border-slate-200 bg-slate-50/80 px-4 py-3">
                 <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Match Score</span>
                 <span className="mt-1 block text-3xl font-black leading-tight text-slate-950">
@@ -260,17 +251,6 @@ export function HiringManagerCandidateReviewPage() {
                   {getDecisionPill(activeDecision)}
                 </div>
               </div>
-              <button
-                type="button"
-                disabled={!candidate.resume_text}
-                onClick={handleDownloadResume}
-                className="workspace-primary-button !px-4 !py-2.5 text-xs font-semibold disabled:opacity-40"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Download Resume
-              </button>
             </div>
           </div>
         </div>
@@ -383,12 +363,9 @@ export function HiringManagerCandidateReviewPage() {
         </div>
 
         <CandidateExperienceTimeline experiences={candidate.experiences} />
-
-        <CandidateResumeText resumeText={candidate.resume_text} />
       </div>
 
-      {/* 6. Schedule Interview Modal Overlay */}
-      {isModalOpen && (
+      {isModalOpen && createPortal(
         <div className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
           <div className="animate-scale-up max-w-lg overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] w-full">
             <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 p-6">
@@ -405,7 +382,7 @@ export function HiringManagerCandidateReviewPage() {
 
             <div className="p-6 space-y-4">
               {validationError && (
-                <div className="animate-shake rounded-xl border border-rose-200/50 bg-rose-50 p-3.5 text-xs font-semibold leading-normal text-rose-700">
+                <div className="animate-shake rounded-xl border border-rose-200/50 bg-rose-50/20 p-3.5 text-xs font-semibold leading-normal text-rose-700">
                   {validationError}
                 </div>
               )}
@@ -494,7 +471,8 @@ export function HiringManagerCandidateReviewPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
