@@ -1,7 +1,9 @@
 from datetime import datetime
-from uuid import UUID
 from typing import Any
-from pydantic import BaseModel
+from uuid import UUID
+
+from pydantic import AliasChoices, BaseModel, Field
+
 from src.data.models.postgres.notification import NotificationType
 
 
@@ -13,7 +15,10 @@ class NotificationResponse(BaseModel):
     message: str
     target_url: str | None = None
     is_read: bool
-    metadata: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = Field(
+        default=None,
+        validation_alias=AliasChoices("metadata_", "metadata"),
+    )
     created_at: datetime
 
     model_config = {

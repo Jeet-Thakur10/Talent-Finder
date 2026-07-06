@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-import enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.clients.postgres import Base
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     from src.data.models.postgres.job_description import JobDescription
 
 
-class HiringManagerDecision(str, enum.Enum):
+class HiringManagerDecision(StrEnum):
     PENDING = "PENDING"
     INTERVIEW_SENT = "INTERVIEW_SENT"
     REJECTED = "REJECTED"

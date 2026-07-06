@@ -1,5 +1,7 @@
 from typing import Any
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.data.models.postgres.notification import Notification, NotificationType
 from src.data.repositories.notification_repository import NotificationRepository
 from src.handlers.http_clients.brevo_client import BrevoClient

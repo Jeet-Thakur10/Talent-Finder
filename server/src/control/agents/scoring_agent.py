@@ -1,27 +1,29 @@
 from __future__ import annotations
 
 import json
-import math
-from datetime import date
 import traceback
 from dataclasses import dataclass
+from datetime import date
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
+from pydantic import SecretStr
 
 from src.config.settings import settings
+from src.control.agents.prompts import (
+    CANDIDATE_DEEP_SCORING_PROMPT,
+    CANDIDATE_PRESCORING_PROMPT,
+    RESUME_EXTRACTION_PROMPT,
+)
 from src.schemas.scoring_schema import (
-    CandidateEvaluationOutput, 
-    CandidatePrescoreBatchOutput, 
-    CompressedCandidate, 
-    CompressedJobDescription, 
-    ResumeCandidateOutput
-    )
-
-from src.schemas.scoring_schema import (
-    CandidateScoringInput,
+    CandidateEvaluationOutput,
+    CandidatePrescoreBatchOutput,
     CandidateScoreOutput,
+    CandidateScoringInput,
+    CompressedCandidate,
+    CompressedJobDescription,
     JobDescriptionScoringInput,
+    ResumeCandidateOutput,
 )
 
 
@@ -30,13 +32,14 @@ class ResumeExtractionResult:
     payload: dict[str, object]
     provider: str
 
+
 class ResumeExtractionClient:
     def __init__(self) -> None:
         self.provider = settings.SCORING_LLM_PROVIDER
         self.groq_model = settings.GROQ_MODEL
 
         self.llm = ChatGroq(
-            api_key=settings.GROQ_API_KEY,
+            api_key=SecretStr(settings.GROQ_API_KEY),
             model=self.groq_model,
             temperature=0,
         )
@@ -53,28 +56,23 @@ class ResumeExtractionClient:
     ) -> ResumeExtractionResult:
         try:
             print(f"Attempting Groq extraction with model: {self.groq_model}")
-            
+
             # 1. Grab the exact schema keys (full_name, experiences, etc.) dynamically
-            schema_json = json.dumps(ResumeCandidateOutput.model_json_schema(), indent=2)
-            
+            schema_json = json.dumps(
+                ResumeCandidateOutput.model_json_schema(), indent=2
+                )
+
+            system_content = RESUME_EXTRACTION_PROMPT.format(schema_json=schema_json)
+
             messages = [
-                SystemMessage(
-                    content=(
-                        "Extract candidate information from the resume.\n"
-                        "Return all available information.\n"
-                        "Do not invent information that is not present.\n"
-                        "Dates should be returned in ISO format (YYYY-MM-DD) whenever possible.\n\n"
-                        "CRITICAL: You must respond strictly with a valid JSON object matching this exact schema layout:\n"
-                        f"{schema_json}"
-                    )
-                ),
+                SystemMessage(content=system_content),
                 HumanMessage(
                     content=resume_text.strip(),
                 ),
             ]
 
             result: ResumeCandidateOutput = (
-                self.structured_llm.invoke(
+                self.structured_llm.invoke( # type: ignore[assignment]
                     messages,
                 )
             )
@@ -84,12 +82,12 @@ class ResumeExtractionClient:
                 provider="groq",
             )
 
-        except Exception as e:
+        except Exception:
             import traceback
             print("\n --- GROQ EXTRACTION CRASHED --- ")
             traceback.print_exc()
             print("------------------------------------\n")
-            
+
             return ResumeExtractionResult(
                 payload={},
                 provider="fallback",
@@ -101,13 +99,14 @@ class CandidateScoringResult:
     payload: CandidateEvaluationOutput | None
     provider: str
 
+
 class CandidateScoringClient:
     def __init__(self) -> None:
         self.provider = settings.SCORING_LLM_PROVIDER
         self.groq_model = settings.GROQ_MODEL
 
         self.llm = ChatGroq(
-            api_key=settings.GROQ_API_KEY,
+            api_key=SecretStr(settings.GROQ_API_KEY),
             model=self.groq_model,
             temperature=0,
         )
@@ -118,6 +117,7 @@ class CandidateScoringClient:
                 method="json_mode",
             )
         )
+
     async def score_candidate(
         self,
         job_description: JobDescriptionScoringInput,
@@ -142,44 +142,12 @@ class CandidateScoringClient:
                 ),
             }
 
+            system_content = CANDIDATE_DEEP_SCORING_PROMPT.format(
+                schema_json=schema_json
+            )
+
             messages = [
-                SystemMessage(
-                    content=(
-                        "You are an expert technical recruiter.\n\n"
-
-                        "Compare the candidate against the job description.\n\n"
-
-                        "Your responsibilities:\n"
-                        "- identify mandatory skill matches\n"
-                        "- identify optional skill matches\n"
-                        "- identify missing mandatory skills\n"
-                        "- evaluate role fit\n"
-                        "- evaluate education alignment\n\n"
-
-                        "IMPORTANT:\n"
-                        "- Be strict about mandatory skills.\n"
-                        "- Do not invent skills or experience.\n"
-                        "- Copy candidate_id exactly from the input.\n"
-                        "- Do not generate a new candidate_id.\n\n"
-
-                        "Role Fit Scoring (0-12):\n"
-                        "- 0 = no alignment\n"
-                        "- 6 = moderate alignment\n"
-                        "- 12 = excellent alignment\n\n"
-
-                        "Education Scoring (0-8):\n"
-                        "- 8 = exact match\n"
-                        "- 7 = higher qualification\n"
-                        "- 6 = related field\n"
-                        "- 4 = same level only\n"
-                        "- 0 = poor match\n\n"
-
-                        "Confidence must be between 0 and 100.\n\n"
-
-                        "Return JSON matching this schema:\n"
-                        f"{schema_json}"
-                    )
-                ),
+                SystemMessage(content=system_content),
                 HumanMessage(
                     content=json.dumps(
                         payload,
@@ -189,7 +157,7 @@ class CandidateScoringClient:
             ]
 
             result: CandidateEvaluationOutput = (
-                await self.structured_llm.ainvoke(
+                await self.structured_llm.ainvoke( # type: ignore[assignment]
                     messages,
                 )
             )
@@ -201,7 +169,7 @@ class CandidateScoringClient:
             )
 
             return CandidateScoringResult(
-                payload=score,
+                payload=score,  # type: ignore[arg-type]
                 provider="groq",
             )
 
@@ -214,7 +182,25 @@ class CandidateScoringClient:
                 payload=None,
                 provider="fallback",
             )
-        
+
+    def _parse_skill_weight(
+        self,
+        skill_entry: str,
+    ) -> tuple[str, float]:
+        """Extract skill name and match quality from a pipe-delimited entry.
+
+        Returns (skill_name, weight) where weight is clamped to [0.0, 1.0].
+        If no pipe delimiter is found, weight defaults to 1.0 (backward compatible).
+        """
+        if "|" in skill_entry:
+            parts = skill_entry.rsplit("|", 1)
+            try:
+                weight = float(parts[1])
+                return parts[0], max(0.0, min(1.0, weight))
+            except (ValueError, IndexError):
+                return skill_entry, 1.0
+        return skill_entry, 1.0
+
     def _calculate_candidate_score(
         self,
         evaluation: CandidateEvaluationOutput,
@@ -243,6 +229,18 @@ class CandidateScoringClient:
             + evaluation.education_score
         )
 
+        # Strip pipe-delimited weights from skill names before output.
+        # The weights are consumed only by _calculate_skills_score above;
+        # downstream consumers (persistence, API, frontend) receive clean names.
+        clean_mandatory = [
+            self._parse_skill_weight(s)[0]
+            for s in evaluation.matched_mandatory_skills
+        ]
+        clean_optional = [
+            self._parse_skill_weight(s)[0]
+            for s in evaluation.matched_optional_skills
+        ]
+
         return CandidateScoreOutput(
             candidate_id=evaluation.candidate_id,
             final_score=round(
@@ -270,18 +268,14 @@ class CandidateScoringClient:
                 evaluation.education_score,
                 2,
             ),
-            matched_mandatory_skills=(
-                evaluation.matched_mandatory_skills
-            ),
-            matched_optional_skills=(
-                evaluation.matched_optional_skills
-            ),
+            matched_mandatory_skills=clean_mandatory,
+            matched_optional_skills=clean_optional,
             missing_mandatory_skills=(
                 evaluation.missing_mandatory_skills
             ),
-            explanation=evaluation.explanation.model_dump(),
+            explanation=evaluation.explanation.model_dump(),  # type: ignore[arg-type]
         )
-    
+
     def _calculate_skills_score(
         self,
         evaluation: CandidateEvaluationOutput,
@@ -302,25 +296,27 @@ class CandidateScoringClient:
         mandatory_score = 0.0
 
         if mandatory_skills:
+            weighted_sum = sum(
+                self._parse_skill_weight(skill)[1]
+                for skill in evaluation.matched_mandatory_skills
+            )
             mandatory_score = (
-                len(
-                    evaluation.matched_mandatory_skills,
-                )
-                / len(mandatory_skills)
+                weighted_sum / len(mandatory_skills)
             ) * 28
 
         optional_score = 0.0
 
         if optional_skills:
+            weighted_sum = sum(
+                self._parse_skill_weight(skill)[1]
+                for skill in evaluation.matched_optional_skills
+            )
             optional_score = (
-                len(
-                    evaluation.matched_optional_skills,
-                )
-                / len(optional_skills)
+                weighted_sum / len(optional_skills)
             ) * 12
 
         return mandatory_score + optional_score
-    
+
     def _calculate_experience_score(
         self,
         candidate: CandidateScoringInput,
@@ -361,7 +357,7 @@ class CandidateScoringClient:
             15,
             25 - decay,
         )
-    
+
     def _calculate_recency_score(
         self,
         candidate: CandidateScoringInput,
@@ -407,15 +403,17 @@ class CandidateScoringClient:
 
         return 3.5
 
+
 @dataclass(slots=True)
 class CandidatePrescoringResult:
     payload: CandidatePrescoreBatchOutput | None
     provider: str
 
+
 class CandidatePrescoringClient:
     def __init__(self) -> None:
         self.llm = ChatGroq(
-            api_key=settings.GROQ_API_KEY,
+            api_key=SecretStr(settings.GROQ_API_KEY),
             model=settings.GROQ_MODEL,
             temperature=0,
         )
@@ -452,37 +450,10 @@ class CandidatePrescoringClient:
             ],
         }
 
+        system_content = CANDIDATE_PRESCORING_PROMPT.format(schema_json=schema_json)
+
         messages = [
-            SystemMessage(
-                content=(
-                    "You are a recruiting pre-screening engine.\n\n"
-
-                    "Evaluate each candidate using broad semantic matching.\n"
-                    "Assign a preliminary score from 0 to 100 indicating how promising "
-                    "the candidate is for further evaluation.\n\n"
-
-                    "Use the FULL scoring range, not just 0, 50, or 100.\n"
-                    "Choose the score that best reflects the overall strength of the match.\n\n"
-
-                    "Scoring guide:\n"
-                    "90-100 : Exceptional match, highly recommended.\n"
-                    "75-89  : Strong match with only minor gaps.\n"
-                    "60-74  : Good match but several noticeable gaps.\n"
-                    "40-59  : Partial match, worth reviewing if needed.\n"
-                    "20-39  : Weak match with significant gaps.\n"
-                    "0-19   : Clear mismatch.\n\n"
-
-                    "Do NOT round to multiples of 10 or 25 unless they are truly appropriate.\n"
-                    "Scores such as 67, 73, 81, 88, and 94 are perfectly acceptable.\n\n"
-
-                    "IMPORTANT:\n"
-                    "- Copy candidate_id exactly.\n"
-                    "- Return only valid JSON.\n\n"
-
-                    "Return JSON matching:\n"
-                    f"{schema_json}"
-                )
-            ),
+            SystemMessage(content=system_content),
             HumanMessage(
                 content=json.dumps(
                     payload,
@@ -491,6 +462,6 @@ class CandidatePrescoringClient:
             ),
         ]
 
-        return await self.structured_llm.ainvoke(
+        return await self.structured_llm.ainvoke( # type: ignore[return-value]
             messages,
         )

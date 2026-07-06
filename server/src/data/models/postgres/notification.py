@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-import enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, ForeignKey, String, JSON
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.clients.postgres import Base
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
     from src.data.models.postgres.user import User
 
 
-class NotificationType(str, enum.Enum):
+class NotificationType(StrEnum):
     SCORING_COMPLETED = "SCORING_COMPLETED"
     SHORTLIST_SHARED = "SHORTLIST_SHARED"
     CANDIDATE_ACCEPTED = "CANDIDATE_ACCEPTED"

@@ -19,33 +19,27 @@ export function SharedCampaignDetailsPage() {
     switch (decision) {
       case "INTERVIEW_SENT":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-250">
+          <span className="status-badge bg-emerald-50 text-emerald-700 border-emerald-250 text-xs">
             Interview Scheduled
           </span>
         );
       case "REJECTED":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-250">
+          <span className="status-badge bg-rose-50 text-rose-700 border-rose-250 text-xs">
             Rejected
           </span>
         );
       case "PENDING":
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-250 animate-pulse">
+          <span className="status-badge bg-amber-50 text-amber-700 border-amber-250 text-xs">
             Pending Review
           </span>
         );
     }
   };
 
-  // Collect recruiter remarks to show as a unified handoff note if any exist
-  const handoffNotes = candidates
-    .filter((c) => c.recruiter_notes && c.recruiter_notes.trim())
-    .map((c) => ({
-      name: c.full_name,
-      notes: c.recruiter_notes,
-    }));
+
 
   return (
     <div className="workspace-shell animate-fade-in">
@@ -113,7 +107,7 @@ export function SharedCampaignDetailsPage() {
         /* 4. Content Area */
         <div className="space-y-6">
           {/* Campaign Header Details */}
-          <div className="surface-card p-6 border border-slate-200/80 bg-white shadow-sm rounded-2xl">
+          <div className="surface-card">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h1 className="text-xl md:text-2xl font-bold text-slate-900">{campaign.title}</h1>
@@ -134,45 +128,28 @@ export function SharedCampaignDetailsPage() {
 
               {/* Status Summary Pills */}
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                <span className="status-badge rounded-md bg-slate-100 text-[11px] text-slate-700 border-slate-200">
                   {campaign.shared_candidate_count} Shortlisted
                 </span>
                 {campaign.pending_candidate_count > 0 && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                  <span className="status-badge rounded-md bg-blue-50 text-[11px] text-blue-700 border-blue-100">
                     {campaign.pending_candidate_count} Pending
                   </span>
                 )}
                 {campaign.accepted_candidate_count > 0 && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  <span className="status-badge rounded-md bg-emerald-50 text-[11px] text-emerald-700 border-emerald-100">
                     {campaign.accepted_candidate_count} Interview Scheduled
                   </span>
                 )}
                 {campaign.rejected_candidate_count > 0 && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-100">
+                  <span className="status-badge rounded-md bg-rose-50 text-[11px] text-rose-700 border-rose-100">
                     {campaign.rejected_candidate_count} Rejected
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Recruiter Handoff Remarks Summary */}
-            {handoffNotes.length > 0 && (
-              <div className="mt-5 p-4 bg-indigo-50/40 border border-indigo-100/60 rounded-xl">
-                <span className="text-[10px] uppercase font-bold text-indigo-700 tracking-wider flex items-center gap-1.5 mb-2">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
-                  Recruiter Handoff Recommendation notes
-                </span>
-                <ul className="space-y-2 text-xs text-slate-650 pl-1.5 list-disc list-inside">
-                  {handoffNotes.map((hn, idx) => (
-                    <li key={idx} className="leading-normal">
-                      <strong className="text-slate-800">{hn.name}</strong>: "{hn.notes}"
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+
           </div>
 
           {/* Candidate List Title */}
@@ -211,7 +188,7 @@ export function SharedCampaignDetailsPage() {
                   <div
                     key={c.candidate_id}
                     onClick={() => navigate(`/hm/shared-campaigns/${jobDescriptionId}/candidates/${c.candidate_id}`)}
-                    className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-slate-350 shadow-sm transition flex flex-col md:flex-row md:items-center justify-between gap-5 cursor-pointer group"
+                    className="workspace-list-card group flex cursor-pointer flex-col justify-between gap-5 md:flex-row md:items-center"
                   >
                     {/* Left Info Column */}
                     <div className="space-y-2 min-w-0 flex-1">
@@ -219,7 +196,7 @@ export function SharedCampaignDetailsPage() {
                         <h3 className="text-base font-bold text-slate-900 group-hover:text-slate-700 group-hover:underline decoration-slate-400 underline-offset-4 leading-none">
                           {c.full_name}
                         </h3>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${scoreColor}`}>
+                        <span className={`status-badge text-xs ${scoreColor}`}>
                           {matchPct}% Match
                         </span>
                         {getDecisionBadge(c.hm_decision)}
@@ -254,7 +231,7 @@ export function SharedCampaignDetailsPage() {
                           e.stopPropagation();
                           navigate(`/hm/shared-campaigns/${jobDescriptionId}/candidates/${c.candidate_id}`);
                         }}
-                        className="workspace-ghost-button !py-2 !px-4 text-xs font-semibold border border-slate-200 hover:border-indigo-200 hover:text-indigo-650 rounded-xl focus:outline-none cursor-pointer"
+                        className="workspace-ghost-button !px-4 !py-2 text-xs font-semibold hover:border-indigo-200 hover:text-indigo-650"
                       >
                         Review Candidate
                       </button>

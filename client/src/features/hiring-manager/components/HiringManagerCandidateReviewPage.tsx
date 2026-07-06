@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCandidateReview } from "../hooks/useCandidateReview";
 import { CandidateExperienceTimeline } from "../../../components/candidate/CandidateExperienceTimeline";
 import { CandidateSkillsProfile } from "../../../components/candidate/CandidateSkillsProfile";
 import { CandidateEducationProfile } from "../../../components/candidate/CandidateEducationProfile";
-import { CandidateResumeText } from "../../../components/candidate/CandidateResumeText";
 import { CandidateScoreBreakdown } from "../../../components/candidate/CandidateScoreBreakdown";
 
 export function HiringManagerCandidateReviewPage() {
@@ -119,36 +119,27 @@ export function HiringManagerCandidateReviewPage() {
     switch (decisionVal) {
       case "INTERVIEW_SENT":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-250">
+          <span className="status-badge border-emerald-250 bg-emerald-50 text-xs text-emerald-700">
             Interview Scheduled
           </span>
         );
       case "REJECTED":
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-250">
+          <span className="status-badge border-rose-250 bg-rose-50 text-xs text-rose-700">
             Rejected
           </span>
         );
       case "PENDING":
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-250">
+          <span className="status-badge border-slate-250 bg-slate-100 text-xs text-slate-600">
             Pending Review
           </span>
         );
     }
   };
 
-  const handleDownloadResume = () => {
-    if (!evaluationBoard?.candidate?.resume_text) return;
-    const element = document.createElement("a");
-    const file = new Blob([evaluationBoard.candidate.resume_text], { type: "text/plain" });
-    element.href = URL.createObjectURL(file);
-    element.download = `${evaluationBoard.candidate.full_name}_Resume.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
+
 
   if (isLoading) {
     return (
@@ -195,7 +186,7 @@ export function HiringManagerCandidateReviewPage() {
   return (
     <div className="workspace-shell animate-fade-in">
       {/* 1. Breadcrumbs */}
-      <nav className="flex items-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 mb-6">
+      <nav className="workspace-breadcrumbs mb-6">
         <span
           onClick={() => navigate("/hm/shared-campaigns")}
           className="hover:text-slate-900 transition cursor-pointer"
@@ -218,11 +209,11 @@ export function HiringManagerCandidateReviewPage() {
       </nav>
 
       {/* Header Actions */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <button
           type="button"
           onClick={() => navigate(`/hm/shared-campaigns/${jobDescriptionId}`)}
-          className="workspace-ghost-button !py-2.5 !px-5 !rounded-xl text-sm font-semibold flex items-center gap-1.5 focus:outline-none cursor-pointer"
+          className="workspace-ghost-button !px-5 !py-2.5 text-sm"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -231,126 +222,73 @@ export function HiringManagerCandidateReviewPage() {
         </button>
       </div>
 
-      {/* Main Responsive Grid layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Column (2/3 width) */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Candidate Hero Card Summary */}
-          <div className="surface-card bg-white border border-slate-200/80 rounded-2xl shadow-sm p-6 space-y-5">
-            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Shortlisted Candidate</span>
-                <h1 className="text-2xl font-black text-slate-900 leading-none">{candidate.full_name}</h1>
-                <p className="text-sm text-slate-655 font-medium">{candidate.current_title || "No Title Specified"}</p>
-                <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-                  <span>📍 {candidate.location || "Location N/A"}</span>
-                  <span>•</span>
-                  <span>💼 {experienceYrs} Years Experience</span>
-                </p>
+      <div className="space-y-6">
+        <div className="surface-card space-y-5">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+            <div className="min-w-0 space-y-2">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400">Shortlisted Candidate</span>
+              <h1 className="break-words text-2xl font-black leading-tight text-slate-900">{candidate.full_name}</h1>
+              <p className="text-sm font-medium text-slate-655">{candidate.current_title || "No Title Specified"}</p>
+              <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-500">
+                <span>Location: <span className="font-semibold text-slate-700">{candidate.location || "N/A"}</span></span>
+                <span>Experience: <span className="font-semibold text-slate-700">{experienceYrs} Years</span></span>
+                <span>Source: <span className="font-semibold capitalize text-slate-700">{candidate.source_type}</span></span>
               </div>
+            </div>
 
-              {/* Match Score Display */}
-              <div className="flex items-center gap-4 bg-slate-50/50 p-4 border border-slate-200/60 rounded-2xl shrink-0">
-                <div className="text-right">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Match Score</span>
-                  <span className="text-3xl font-black text-slate-950 block leading-tight">
-                    {score ? `${Math.round(score.final_score)}%` : "N/A"}
+            <div className="grid min-w-[15rem] gap-3 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="rounded-[1rem] border border-slate-200 bg-slate-50/80 px-4 py-3">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Match Score</span>
+                <span className="mt-1 block text-3xl font-black leading-tight text-slate-950">
+                  {score ? `${Math.round(score.final_score)}%` : "N/A"}
+                </span>
+              </div>
+              <div className="rounded-[1rem] border border-slate-200 bg-white px-4 py-3">
+                <div className="flex flex-wrap gap-2">
+                  <span className={`status-badge text-[9px] uppercase tracking-[0.14em] ${match.badge}`}>
+                    {match.label}
                   </span>
-                  <div className="flex items-center gap-1.5 mt-1 justify-end">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${match.badge}`}>
-                      {match.label}
-                    </span>
-                    {getDecisionPill(activeDecision)}
-                  </div>
+                  {getDecisionPill(activeDecision)}
                 </div>
               </div>
             </div>
-
-            {/* Resume Action Footer */}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs text-slate-400">
-                Source: <span className="font-semibold text-slate-600 capitalize">{candidate.source_type}</span>
-              </span>
-              <button
-                type="button"
-                disabled={!candidate.resume_text}
-                onClick={handleDownloadResume}
-                className="workspace-primary-button !py-2 !px-4 !rounded-xl text-xs font-semibold flex items-center gap-1.5 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Download Resume
-              </button>
-            </div>
           </div>
-
-          {/* Why this candidate was shortlisted (Recruiter Remarks) */}
-          {pipeline?.recruiter_notes && (
-            <div className="surface-card bg-indigo-50/30 border border-indigo-100 rounded-2xl p-6">
-              <h3 className="text-xs font-bold text-indigo-700 uppercase tracking-widest flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-                Why this candidate was shortlisted
-              </h3>
-              <p className="text-sm text-slate-700 leading-relaxed italic">
-                "{pipeline.recruiter_notes}"
-              </p>
-            </div>
-          )}
-
-          {/* Experience Timeline */}
-          <CandidateExperienceTimeline experiences={candidate.experiences} />
-
-          {/* Skills chips */}
-          <CandidateSkillsProfile skills={candidate.skills} />
-
-          {/* Education list */}
-          <CandidateEducationProfile educations={candidate.educations} />
-
-          {/* Raw Resume text */}
-          <CandidateResumeText resumeText={candidate.resume_text} />
         </div>
 
-        {/* Right Column (1/3 width) - Sticky panel & score breakdown */}
-        <div className="space-y-6 lg:sticky lg:top-6">
-          
-          {/* Decision Panel */}
-          <div className="surface-card bg-white border border-slate-200/80 rounded-2xl shadow-sm p-6 space-y-4">
+        <div className="grid gap-6 xl:grid-cols-[minmax(18rem,0.9fr)_minmax(0,1.1fr)]">
+          <div className="surface-card space-y-4">
             <div>
-              <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">Decision Panel</h2>
-              <p className="text-[10px] text-slate-400 mt-1">Submit your decision and remarks on this candidate.</p>
+              <h2 className="border-b border-slate-100 pb-2 text-sm font-bold text-slate-900">Decision Panel</h2>
+              <p className="mt-1 text-[10px] text-slate-400">Submit your decision and remarks on this candidate.</p>
             </div>
 
             <div className="space-y-4">
               {activeDecision === "INTERVIEW_SENT" ? (
                 <div className="space-y-3.5">
-                  <div className="p-4 bg-emerald-50 border border-emerald-200/60 rounded-xl space-y-2">
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest block">Status</span>
-                    <span className="text-sm font-bold text-slate-900 block">Interview Invitation Sent</span>
-                    <div className="text-xs text-slate-655 space-y-1.5 pt-2 border-t border-emerald-100">
-                      <p><strong>Link:</strong> <a href={pipeline?.interview_link || ""} target="_blank" rel="noreferrer" className="text-indigo-650 hover:underline break-all">{pipeline?.interview_link}</a></p>
-                      <p><strong>Date & Time:</strong> {pipeline?.interview_datetime ? new Date(pipeline.interview_datetime).toLocaleDateString() : "N/A"} at {pipeline?.interview_datetime ? new Date(pipeline.interview_datetime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "N/A"} ({pipeline?.interview_timezone})</p>
+                  <div className="space-y-2 rounded-xl border border-emerald-200/60 bg-emerald-50 p-4">
+                    <span className="block text-[10px] font-bold uppercase tracking-widest text-emerald-800">Status</span>
+                    <span className="block text-sm font-bold text-slate-900">Interview Invitation Sent</span>
+                    <div className="space-y-1.5 border-t border-emerald-100 pt-2 text-xs text-slate-655">
+                      <p><strong>Link:</strong> <a href={pipeline?.interview_link || ""} target="_blank" rel="noreferrer" className="break-all text-indigo-650 hover:underline">{pipeline?.interview_link}</a></p>
+                      <p><strong>Date & Time:</strong> {pipeline?.interview_datetime ? new Date(pipeline.interview_datetime).toLocaleDateString() : "N/A"} at {pipeline?.interview_datetime ? new Date(pipeline.interview_datetime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A"} ({pipeline?.interview_timezone})</p>
                       {pipeline?.interview_message && <p><strong>Message:</strong> "{pipeline.interview_message}"</p>}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
-                    className="w-full workspace-ghost-button !py-2.5 !rounded-xl text-xs font-semibold focus:outline-none cursor-pointer border border-slate-200 hover:border-indigo-250 hover:text-indigo-650"
+                    className="w-full workspace-ghost-button !py-2.5 text-xs font-semibold hover:border-indigo-250 hover:text-indigo-650"
                   >
                     Reschedule Interview
                   </button>
                 </div>
               ) : activeDecision === "REJECTED" ? (
                 <div className="space-y-3.5">
-                  <div className="p-4 bg-rose-50 border border-rose-200/60 rounded-xl space-y-2">
-                    <span className="text-[10px] font-bold text-rose-800 uppercase tracking-widest block">Status</span>
-                    <span className="text-sm font-bold text-slate-900 block">Rejected</span>
+                  <div className="space-y-2 rounded-xl border border-rose-200/60 bg-rose-50 p-4">
+                    <span className="block text-[10px] font-bold uppercase tracking-widest text-rose-800">Status</span>
+                    <span className="block text-sm font-bold text-slate-900">Rejected</span>
                     {pipeline?.hiring_manager_notes && (
-                      <p className="text-xs text-slate-655 pt-2 border-t border-rose-100">
+                      <p className="border-t border-rose-100 pt-2 text-xs text-slate-655">
                         <strong>Remarks:</strong> "{pipeline.hiring_manager_notes}"
                       </p>
                     )}
@@ -358,7 +296,7 @@ export function HiringManagerCandidateReviewPage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
-                    className="w-full workspace-primary-button !py-2.5 !rounded-xl text-xs font-semibold focus:outline-none cursor-pointer shadow-sm"
+                    className="w-full workspace-primary-button !py-2.5 text-xs font-semibold shadow-sm"
                   >
                     Schedule Interview
                   </button>
@@ -366,7 +304,7 @@ export function HiringManagerCandidateReviewPage() {
               ) : (
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Review Remarks (Optional)</label>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Review Remarks (Optional)</label>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
@@ -381,7 +319,7 @@ export function HiringManagerCandidateReviewPage() {
                       type="button"
                       disabled={isSaving}
                       onClick={handleSaveReview}
-                      className="workspace-ghost-button !py-2.5 !rounded-xl text-xs font-semibold focus:outline-none cursor-pointer border border-rose-200 text-rose-700 hover:bg-rose-50"
+                      className="workspace-ghost-button !py-2.5 text-xs font-semibold border-rose-200 text-rose-700 hover:bg-rose-50"
                     >
                       {isSaving ? "Saving..." : "Reject"}
                     </button>
@@ -389,38 +327,53 @@ export function HiringManagerCandidateReviewPage() {
                       type="button"
                       disabled={isSaving}
                       onClick={() => setIsModalOpen(true)}
-                      className="workspace-primary-button !py-2.5 !rounded-xl text-xs font-semibold focus:outline-none cursor-pointer shadow-sm"
+                      className="workspace-primary-button !py-2.5 text-xs font-semibold shadow-sm"
                     >
                       Schedule Interview
                     </button>
                   </div>
                   {isSavedSuccessfully && (
-                    <p className="text-[10px] text-emerald-600 font-bold text-center">✓ Rejection saved successfully</p>
+                    <p className="text-center text-[10px] font-bold text-emerald-600">✓ Rejection saved successfully</p>
                   )}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Scoring breakdown */}
           <CandidateScoreBreakdown score={score} />
         </div>
+
+        {pipeline?.recruiter_notes && (
+          <div className="surface-card border border-indigo-100 bg-indigo-50/30">
+            <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-700">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              Why this candidate was shortlisted
+            </h3>
+            <p className="text-sm italic leading-relaxed text-slate-700">
+              "{pipeline.recruiter_notes}"
+            </p>
+          </div>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <CandidateSkillsProfile skills={candidate.skills} />
+          <CandidateEducationProfile educations={candidate.educations} />
+        </div>
+
+        <CandidateExperienceTimeline experiences={candidate.experiences} />
       </div>
 
-      {/* 6. Schedule Interview Modal Overlay */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] max-w-lg w-full overflow-hidden animate-scale-up">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+      {isModalOpen && createPortal(
+        <div className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+          <div className="animate-scale-up max-w-lg overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] w-full">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 p-6">
               <div>
                 <h3 className="text-base font-bold text-slate-900">Schedule Interview</h3>
                 <p className="text-xs text-slate-500 mt-0.5">Send an interview invitation email directly to the candidate.</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 transition focus:outline-none cursor-pointer"
-              >
+              <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 transition hover:text-slate-600 focus:outline-none">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -429,8 +382,8 @@ export function HiringManagerCandidateReviewPage() {
 
             <div className="p-6 space-y-4">
               {validationError && (
-                <div className="p-3.5 bg-rose-50 border border-rose-200/50 rounded-xl text-xs font-semibold text-rose-700 leading-normal animate-shake">
-                  ⚠ {validationError}
+                <div className="animate-shake rounded-xl border border-rose-200/50 bg-rose-50/20 p-3.5 text-xs font-semibold leading-normal text-rose-700">
+                  {validationError}
                 </div>
               )}
 
@@ -504,7 +457,7 @@ export function HiringManagerCandidateReviewPage() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="workspace-ghost-button !py-2.5 !px-5 !rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-100 focus:outline-none cursor-pointer"
+                className="workspace-ghost-button !px-5 !py-2.5 text-xs font-bold hover:bg-slate-100"
               >
                 Cancel
               </button>
@@ -512,13 +465,14 @@ export function HiringManagerCandidateReviewPage() {
                 type="button"
                 disabled={isSaving}
                 onClick={validateAndSendInvitation}
-                className="workspace-primary-button !py-2.5 !px-5 !rounded-xl text-xs font-black shadow-md focus:outline-none cursor-pointer"
+                className="workspace-primary-button !px-5 !py-2.5 text-xs font-black shadow-md"
               >
                 {isSaving ? "Sending Invitation..." : "Send Invitation"}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

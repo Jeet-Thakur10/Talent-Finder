@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from typing import Any
 from uuid import UUID
 
 from fastapi import Cookie, Depends
@@ -9,17 +10,17 @@ from src.core.exceptions.auth_exceptions import InvalidToken
 from src.core.security.JwtProvider import JWTProvider
 from src.core.services.auth_service import AuthService
 from src.core.services.job_description_service import JobDescriptionService
+from src.core.services.notification_service import NotificationService
 from src.core.services.otp_service import OTPService
 from src.core.services.scoring_service import ScoringService
 from src.core.services.scoring_task_service import ScoringTaskService
-from src.core.services.notification_service import NotificationService
-from src.data.clients.postgres import async_session_local
+from src.data.clients.postgres import request_scoped_sessionmaker
 from src.schemas.auth_schema import AuthenticatedUserContext
 
 jwt_provider = JWTProvider()
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session_local() as session:
+    async with request_scoped_sessionmaker() as session:
         # this block is a context manager , it automatically closes the session
         try:
             yield session
@@ -42,9 +43,14 @@ async def get_job_description_service(
     return JobDescriptionService(db)
 
 async def get_scoring_service(
-        db: AsyncSession = Depends(get_db)
-        ) -> ScoringService:
-    return ScoringService(db)
+    db: AsyncSession = Depends(get_db)
+) -> AsyncGenerator[ScoringService, None]:
+    service = ScoringService(db)
+    try:
+        yield service
+    finally:
+        await service.close()
+
 
 async def get_scoring_task_service(
         db: AsyncSession = Depends(get_db)
@@ -69,7 +75,7 @@ def _parse_uuid_claim(value: str | None, claim_name: str) -> UUID | None:
 
 async def get_authenticated_user_context(
         access_token: str | None = Cookie(
-            mdefault=None, alias=settings.ACCESS_TOKEN_COOKIE_NAME
+            default=None, alias=settings.ACCESS_TOKEN_COOKIE_NAME
             )) -> AuthenticatedUserContext:
 
     if not access_token:
@@ -96,7 +102,7 @@ async def get_refresh_token_payload(
         default=None,
         alias=settings.REFRESH_TOKEN_COOKIE_NAME,
     ),
-) -> dict:
+) -> dict[str, Any]:
 
     if not refresh_token:
         raise InvalidToken(

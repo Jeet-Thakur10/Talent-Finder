@@ -5,13 +5,12 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from sqlalchemy import text
 from src.api.rest.routes.auth_route import router as auth_router
 from src.api.rest.routes.job_description_route import router as job_description_router
 from src.api.rest.routes.lookup_route import router as lookup_router
+from src.api.rest.routes.notification_route import router as notification_router
 from src.api.rest.routes.otp_router import router as otp_router
 from src.api.rest.routes.scoring_route import router as scoring_router
-from src.api.rest.routes.notification_route import router as notification_router
 from src.config.settings import settings
 from src.core.exceptions.auth_exceptions import (
     GeneralException,

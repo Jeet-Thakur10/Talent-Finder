@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 
 import type { JobDescription } from "../services/dashboard.types";
 import { useAuth } from "../../auth/hooks/useAuth";
-import { authService } from "../../auth/services/auth.service";
 import { CampaignsTable } from "./CampaignsTable";
 import { CandidateDrawer } from "./CandidateDrawer";
 import { CandidateResultsTable } from "./CandidateResultsTable";
@@ -84,17 +83,11 @@ export function DashboardPage() {
   } = useRecruiterDashboard();
 
   const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } catch {
-      // Ignore API errors and still clear local auth state.
-    } finally {
-      logout();
+    await logout();
 
-      navigate("/login", {
-        replace: true,
-      });
-    }
+    navigate("/login", {
+      replace: true,
+    });
   };
 
   return (
@@ -234,7 +227,7 @@ export function DashboardPage() {
                 />
 
                 {pipelinePreview && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
                     <div className="surface-card w-full max-w-lg p-8 shadow-2xl relative text-left">
                       <div className="text-indigo-600 font-semibold mb-2 uppercase tracking-wider text-xs">
                         Token Saver Confirmation Gate
@@ -435,7 +428,7 @@ export function DashboardPage() {
                 />
 
                 {pipelinePreview && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
                     <div className="surface-card w-full max-w-lg p-8 shadow-2xl relative text-left">
                       <div className="text-indigo-600 font-semibold mb-2 uppercase tracking-wider text-xs">
                         Token Saver Confirmation Gate

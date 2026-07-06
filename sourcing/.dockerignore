@@ -1,0 +1,21 @@
+# Secrets — injected at runtime via docker-compose bind-mount
+.env
+.env.*
+
+# Python runtime artefacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+
+# Type checker / linter caches
+.mypy_cache/
+.ruff_cache/
+
+# Version control
+.git/
+.gitignore
+
+# Documentation (not needed in image)
+*.md

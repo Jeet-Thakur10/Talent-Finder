@@ -1,4 +1,5 @@
 import hashlib
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,16 +7,17 @@ from src.data.models.postgres.candidate import Candidate
 from src.data.repositories.candidate_repository import (
     CandidateRepository,
 )
-from src.schemas.resume_candidate_output import (
-    ResumeCandidateOutput,
-)
 from src.schemas.candidate_details_response import (
     CandidateDetailsResponse,
 )
-from src.schemas.compressed_candidate import CompressedCandidate
 from src.schemas.candidate_search_request import (
     CandidateSearchRequest,
 )
+from src.schemas.compressed_candidate import CompressedCandidate
+from src.schemas.resume_candidate_output import (
+    ResumeCandidateOutput,
+)
+
 
 class CandidateService:
     def __init__(
@@ -59,20 +61,20 @@ class CandidateService:
 
     async def commit(self) -> None:
         await self._db.commit()
-    
+
     async def get_compressed_candidates(
         self,
     ) -> list[CompressedCandidate]:
         return await self._repository.get_compressed_candidates()
-    
+
     async def get_candidates_by_ids(
         self,
-        candidate_ids: list,
+        candidate_ids: list[UUID],
     ) -> list[CandidateDetailsResponse]:
         return await self._repository.get_candidates_by_ids(
             candidate_ids,
         )
-    
+
     async def search_candidates(
         self,
         request: CandidateSearchRequest,

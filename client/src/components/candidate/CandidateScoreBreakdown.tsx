@@ -15,25 +15,31 @@ export function CandidateScoreBreakdown({ score }: CandidateScoreBreakdownProps)
       {score ? (
         <div className="space-y-4">
           {[
-            { label: "Skills Match Score", value: score.skill_score, desc: "Matches mandatory & optional skills against job requirements." },
-            { label: "Experience Match Score", value: score.experience_score, desc: "Measures depth and duration of relevant professional experience." },
-            { label: "Industry & Role Fit", value: score.role_fit_score, desc: "Checks compatibility with industry background and overall role fit." },
-            { label: "Education Match Score", value: score.education_score, desc: "Compares academic credentials against the educational bar." },
-          ].map((item, idx) => (
-            <div key={idx} className="space-y-1">
-              <div className="flex justify-between items-baseline">
-                <span className="text-xs font-semibold text-slate-800">{item.label}</span>
-                <span className="text-xs font-bold text-slate-950 font-sans">{Math.round(item.value)}%</span>
+            { label: "Skills Match", value: score.skill_score, max: 40, desc: "Matches mandatory & optional skills against job requirements." },
+            { label: "Experience Level", value: score.experience_score, max: 25, desc: "Measures depth and duration of relevant professional experience." },
+            { label: "Recency", value: score.recency_score, max: 15, desc: "Measures recency of professional experience and career gaps." },
+            { label: "Industry / Role Fit", value: score.role_fit_score, max: 12, desc: "Checks compatibility with industry background and overall role fit." },
+            { label: "Education Alignment", value: score.education_score, max: 8, desc: "Compares academic credentials against the educational bar." },
+          ].map((item, idx) => {
+            const percentage = (item.value / item.max) * 100;
+            return (
+              <div key={idx} className="space-y-1">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs font-semibold text-slate-800">{item.label}</span>
+                  <span className="text-xs font-bold text-slate-950 font-sans">
+                    {Math.round(item.value)} / {item.max}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-slate-900 rounded-full transition-all duration-500"
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 leading-tight">{item.desc}</p>
               </div>
-              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-slate-900 rounded-full transition-all duration-500"
-                  style={{ width: `${item.value}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-slate-400 leading-tight">{item.desc}</p>
-            </div>
-          ))}
+            );
+          })}
 
           {score.explanation && (
             <div className="pt-4 border-t border-slate-100 space-y-3.5">

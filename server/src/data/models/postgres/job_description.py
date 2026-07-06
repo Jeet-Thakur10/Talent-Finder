@@ -26,7 +26,7 @@ class JobDescription(Base):
 
     id: Mapped[UUID] = mapped_column(
         primary_key=True,
-        default=uuid4,  
+        default=uuid4,
     )
 
     recruiter_id: Mapped[UUID] = mapped_column(

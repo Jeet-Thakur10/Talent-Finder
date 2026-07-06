@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+from typing import cast
+
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_groq import ChatGroq
 
 from src.config.settings import settings
+from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
 from src.schemas.candidate_search_request import CandidateSearchRequest
-from src.schemas.search_attempt import SearchAttempt, SearchOptimizationPlan
+from src.schemas.search_attempt import SearchOptimizationPlan
 
 
 class CandidateSearchStrategyAgent:
@@ -24,38 +26,23 @@ class CandidateSearchStrategyAgent:
     async def optimize(
         self,
         original_request: CandidateSearchRequest,
-        history: list[SearchAttempt],
-        remaining: int,
     ) -> SearchOptimizationPlan:
         schema_json = json.dumps(
             SearchOptimizationPlan.model_json_schema(),
             indent=2,
         )
 
-        history_summary = []
-        for attempt in history:
-            history_summary.append(
-                f"Attempt {attempt.attempt_number}:\n"
-                f"  Title: {attempt.title}\n"
-                f"  Skills: {attempt.skills}\n"
-                f"  Resumes Found: {attempt.resumes_found}\n"
-                f"  New Unique Candidates Persisted: {attempt.new_candidates_persisted}\n"
-                f"  Reasoning: {attempt.reason}\n"
-                f"  URL: {attempt.query_url}"
-            )
-        history_text = "\n\n".join(history_summary) if history_summary else "None"
-
         system_prompt = (
-            "You are an expert search strategy advisor for candidate sourcing.\n\n"
-            "Your task is to analyze the original search criteria and the history of previous search attempts, "
-            "and suggest how to relax the search parameters to find more resumes on PostJobFree.\n\n"
-            "STRICT CONSTRAINTS:\n"
-            "1. You must ONLY generalize the Job Title (e.g., 'Lead Backend Python Engineer' -> 'Python Developer').\n"
-            "2. You must ONLY suggest skills to remove from the search criteria (skills_to_remove).\n"
-            "3. You must NEVER invent technologies, tools, or skills that are not present in the original CandidateSearchRequest.\n"
-            "4. You must NEVER reduce the minimum experience requirement or alter core recruiter intent (e.g. don't look for Java developers if they want Python).\n\n"
-            "OBJECTIVE:\n"
-            "Suggest adjustments to maximize the candidate pool size while remaining faithful to the original recruiter request.\n\n"
+            "You are an experienced technical recruiter specializing in candidate sourcing.\n\n"
+            "Your task is to analyze the original job description query and generate a recruiter-oriented search optimization plan for resume databases.\n\n"
+            "INSTRUCTIONS:\n"
+            "1. First, determine the SINGLE most likely hiring archetype represented by the Job Description (e.g., Frontend Engineer, Backend Engineer, Full Stack Engineer, Machine Learning Engineer, Data Engineer, DevOps Engineer, Mobile Engineer).\n"
+            "2. If the JD contains technologies from multiple unrelated domains, you must NOT hedge or mix them. Choose the ONE archetype that best represents the primary recruiter hiring intent, and select title/skills for that single archetype only. Do not mix frontend frameworks and machine learning libraries in the same plan.\n"
+            "3. Ignore technologies, libraries, and tools that are merely supportive or common utilities. Select only the 2-3 defining technologies already present in the original request that best define that single chosen archetype.\n"
+            "4. Order the list of 'representative_skills' by technical importance / recruiter priority for the chosen archetype (e.g., core language first, primary framework/library second).\n"
+            "5. Never invent new technologies, tools, frameworks, certifications, or cloud providers that are not in the original request.\n"
+            "6. Generalize the job title into a common industry title that technical candidates are likely to use on their resumes for this archetype (e.g., 'Software Development Engineer II' -> 'Software Engineer', 'Backend Engineer' -> 'Software Engineer', 'ML Engineer' -> 'Machine Learning Engineer').\n"
+            "7. The generalized title must remain semantically equivalent and match the chosen archetype. Never invent unrelated roles.\n\n"
             "Return a JSON object matching exactly this schema:\n"
             f"{schema_json}"
         )
@@ -65,9 +52,6 @@ class CandidateSearchStrategyAgent:
             f"Title: {original_request.title}\n"
             f"Skills: {original_request.skills}\n"
             f"Min Experience: {original_request.min_experience}\n"
-            f"Candidates Still Required: {remaining}\n\n"
-            f"ATTEMPT HISTORY:\n"
-            f"{history_text}\n"
         )
 
         messages = [
@@ -76,17 +60,23 @@ class CandidateSearchStrategyAgent:
         ]
 
         try:
-            result: SearchOptimizationPlan = await self._structured_llm.ainvoke(messages)
+            result = cast(
+                SearchOptimizationPlan,
+                await self._structured_llm.ainvoke(messages),
+            )
             return result
         except Exception as exc:
             # Fallback optimization plan on error: drop some skills
             print(f"[CandidateSearchStrategyAgent] Error invoking Groq LLM: {exc}")
-            # Try to return a safe fallback: keep original title, suggest removing the last skill
-            fallback_skills = []
-            if original_request.skills:
-                fallback_skills = [original_request.skills[-1]]
+            # Try to return a safe fallback: keep original title, suggest first 3 skills
+            fallback_skills = (
+                original_request.skills[:3]
+                if original_request.skills
+                else []
+            )
             return SearchOptimizationPlan(
-                generalize_title=original_request.title,
-                skills_to_remove=fallback_skills,
-                reason="Groq agent invocation failed; falling back to dropping the last skill.",
+                inferred_role="Backend Engineer",
+                representative_title=original_request.title,
+                representative_skills=fallback_skills,
+                reasoning="Fallback optimization plan",
             )

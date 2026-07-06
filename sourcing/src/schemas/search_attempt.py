@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class SearchAttempt(BaseModel):
     attempt_number: int
     title: str
@@ -12,6 +13,7 @@ class SearchAttempt(BaseModel):
     query_url: str
 
 class SearchOptimizationPlan(BaseModel):
-    generalize_title: str | None = None
-    skills_to_remove: list[str] = []
-    reason: str
+    inferred_role: str
+    representative_title: str
+    representative_skills: list[str]
+    reasoning: str

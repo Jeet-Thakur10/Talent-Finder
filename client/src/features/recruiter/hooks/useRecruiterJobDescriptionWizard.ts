@@ -10,8 +10,8 @@ import type {
 
 export type WizardStep = 1 | 2 | 3 | 4;
 
-export function useRecruiterJobDescriptionWizard() {
-  const [step, setStep] = useState<WizardStep>(1);
+export function useRecruiterJobDescriptionWizard(isEdit?: boolean, jobDescriptionId?: string) {
+  const [step, setStep] = useState<WizardStep>(isEdit ? 3 : 1);
   const [rawJobDescription, setRawJobDescription] = useState("");
   const [hiringManagerId, setHiringManagerId] = useState("");
   const [extractedJob, setExtractedJob] = useState<JobDescription | null>(null);
@@ -29,21 +29,30 @@ export function useRecruiterJobDescriptionWizard() {
     const bootstrapLookups = async () => {
       try {
         setError(null);
+        setIsLoading(true);
         const [types, managers] = await Promise.all([
           dashboardService.listEmploymentTypes(),
           dashboardService.listHiringManagers(),
         ]);
         setEmploymentTypes(types);
         setHiringManagers(managers);
-        if (managers.length > 0) {
+        
+        if (isEdit && jobDescriptionId) {
+          const jd = await dashboardService.getJobDescription(jobDescriptionId);
+          setExtractedJob(jd);
+          setRawJobDescription(jd.raw_job_description || "");
+          setHiringManagerId(jd.hiring_manager_id || "");
+        } else if (managers.length > 0) {
           setHiringManagerId(managers[0].id);
         }
       } catch {
-        setError("Unable to load lookup references. Please refresh the page.");
+        setError("Unable to load references or Job Description. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
     };
     void bootstrapLookups();
-  }, []);
+  }, [isEdit, jobDescriptionId]);
 
   // Step 2 -> Step 3: Trigger backend AI extraction
   const handleExtract = useCallback(async () => {
@@ -117,17 +126,23 @@ export function useRecruiterJobDescriptionWizard() {
           skill_name: s.skill_name.trim(),
           is_mandatory: s.is_mandatory,
         })),
+        raw_job_description: extractedJob.raw_job_description || undefined,
       };
 
-      const savedJob = await dashboardService.createJobDescription(payload);
-      return savedJob.id;
+      if (isEdit && jobDescriptionId) {
+        const savedJob = await dashboardService.updateJobDescription(jobDescriptionId, payload);
+        return savedJob.id;
+      } else {
+        const savedJob = await dashboardService.createJobDescription(payload);
+        return savedJob.id;
+      }
     } catch {
       setError("Failed to save the job description. Please check the values and try again.");
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [extractedJob, employmentTypes]);
+  }, [extractedJob, employmentTypes, isEdit, jobDescriptionId]);
 
   // Modifying structured job fields in Step 3
   const updateStructuredField = useCallback((field: keyof JobDescription, value: any) => {

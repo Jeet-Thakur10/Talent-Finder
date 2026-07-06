@@ -4,15 +4,6 @@ from src.data.clients.postgres import (
 )
 
 # Import all models so SQLAlchemy registers them
-from src.data.models.postgres.candidate import Candidate
-from src.data.models.postgres.candidate_skill import CandidateSkill
-from src.data.models.postgres.candidate_experience import CandidateExperience
-from src.data.models.postgres.candidate_experience_skill import (
-    CandidateExperienceSkill,
-)
-from src.data.models.postgres.candidate_education import (
-    CandidateEducation,
-)
 
 
 async def init_db() -> None:

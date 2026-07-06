@@ -1,20 +1,28 @@
 from __future__ import annotations
 
 import json
+import logging
 
+import httpx
+from groq import APIError, RateLimitError
+from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import (
     HumanMessage,
     SystemMessage,
 )
-from langchain_groq import ChatGroq
+from pydantic import ValidationError
+from typing import cast
 
 from src.config.settings import settings
+from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
 from src.schemas.resume_candidate_output import (
     ResumeCandidateOutput,
 )
 from src.schemas.resume_extraction_result import (
     ResumeExtractionResult,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ResumeExtractionAgent:
@@ -32,9 +40,23 @@ class ResumeExtractionAgent:
             )
         )
 
+    def _format_pydantic_error(self, exc: ValidationError) -> str:
+        try:
+            errors = []
+            for err in exc.errors():
+                field = ".".join(str(loc) for loc in err["loc"])
+                if err.get("type") == "missing":
+                    errors.append(f"{field} is missing")
+                else:
+                    errors.append(f"{field}: {err.get('msg')}")
+            return f"Structured output validation failed: {', '.join(errors)}."
+        except Exception:
+            return f"Structured output validation failed: {str(exc)}"
+
     def extract(
         self,
         resume_text: str,
+        resume_url: str | None = None,
     ) -> ResumeExtractionResult:
 
         schema_json = json.dumps(
@@ -86,20 +108,182 @@ class ResumeExtractionAgent:
             ),
         ]
 
-        try:
+        print("Invoking Groq extraction...\n")
 
-            result: ResumeCandidateOutput = (
+        try:
+            result = cast(
+                ResumeCandidateOutput,
                 self._structured_llm.invoke(
                     messages,
-                )
+                ),
             )
 
-        except Exception:
+            print("Groq extraction completed.\n")
+            print("Validating structured output...\n")
+            print("Validation passed.\n")
+
+        except (ValidationError, OutputParserException) as exc:
+            print("Groq extraction completed.\n")
+            print("Validating structured output...\n")
+
+            if isinstance(exc, ValidationError):
+                stage = "Pydantic validation"
+                error_code = "EXTRACTION_VALIDATION"
+                error_msg = self._format_pydantic_error(exc)
+            else:
+                stage = "Structured output validation"
+                error_code = "EXTRACTION_OUTPUT_PARSER"
+                error_msg = f"Structured output validation failed: {str(exc)}"
+
+            logger.error(
+                "Resume extraction failed during stage: '%s'\n"
+                "Provider: groq\n"
+                "Resume URL: %s\n"
+                "Error Code: %s\n"
+                "Error Message: %s",
+                stage,
+                resume_url or "N/A",
+                error_code,
+                error_msg,
+                exc_info=True
+            )
 
             return ResumeExtractionResult(
                 success=False,
                 provider="groq",
-                error="Failed to extract resume.",
+                error=error_msg,
+                error_code=error_code,
+                failure_stage=stage,
+            )
+
+        except RateLimitError:
+            stage = "Provider rate limiting"
+            error_code = "EXTRACTION_RATE_LIMIT"
+            error_msg = "Groq Rate Limit (429)."
+
+            logger.error(
+                "Resume extraction failed during stage: '%s'\n"
+                "Provider: groq\n"
+                "Resume URL: %s\n"
+                "Error Code: %s\n"
+                "Error Message: %s",
+                stage,
+                resume_url or "N/A",
+                error_code,
+                error_msg,
+                exc_info=True
+            )
+
+            return ResumeExtractionResult(
+                success=False,
+                provider="groq",
+                error=error_msg,
+                error_code=error_code,
+                failure_stage=stage,
+            )
+
+        except (httpx.TimeoutException, TimeoutError):
+            stage = "Groq API"
+            error_code = "EXTRACTION_TIMEOUT"
+            error_msg = "Groq request timed out."
+
+            logger.error(
+                "Resume extraction failed during stage: '%s'\n"
+                "Provider: groq\n"
+                "Resume URL: %s\n"
+                "Error Code: %s\n"
+                "Error Message: %s",
+                stage,
+                resume_url or "N/A",
+                error_code,
+                error_msg,
+                exc_info=True
+            )
+
+            return ResumeExtractionResult(
+                success=False,
+                provider="groq",
+                error=error_msg,
+                error_code=error_code,
+                failure_stage=stage,
+            )
+
+        except httpx.RequestError:
+            stage = "Network errors"
+            error_code = "EXTRACTION_NETWORK"
+            error_msg = "Groq request failed due to connection issue."
+
+            logger.error(
+                "Resume extraction failed during stage: '%s'\n"
+                "Provider: groq\n"
+                "Resume URL: %s\n"
+                "Error Code: %s\n"
+                "Error Message: %s",
+                stage,
+                resume_url or "N/A",
+                error_code,
+                error_msg,
+                exc_info=True
+            )
+
+            return ResumeExtractionResult(
+                success=False,
+                provider="groq",
+                error=error_msg,
+                error_code=error_code,
+                failure_stage=stage,
+            )
+
+        except APIError as exc:
+            stage = "Groq API"
+            error_code = "EXTRACTION_UNKNOWN"
+            error_msg = f"Groq API error: {str(exc)}"
+
+            logger.error(
+                "Resume extraction failed during stage: '%s'\n"
+                "Provider: groq\n"
+                "Resume URL: %s\n"
+                "Error Code: %s\n"
+                "Error Message: %s",
+                stage,
+                resume_url or "N/A",
+                error_code,
+                error_msg,
+                exc_info=True
+            )
+
+            return ResumeExtractionResult(
+                success=False,
+                provider="groq",
+                error=error_msg,
+                error_code=error_code,
+                failure_stage=stage,
+            )
+
+        except Exception as exc:
+            stage = "Any unexpected exception"
+            error_code = "EXTRACTION_UNKNOWN"
+            error_msg = f"Unexpected exception: {str(exc)}"
+
+            logger.error(
+                "Resume extraction failed during stage: '%s'\n"
+                "Provider: groq\n"
+                "Resume URL: %s\n"
+                "Error Code: %s\n"
+                "Error Message: %s",
+                stage,
+                resume_url or "N/A",
+                error_code,
+                error_msg,
+                exc_info=True
+            )
+
+            return ResumeExtractionResult(
+                success=False,
+                provider="groq",
+                error=error_msg,
+                error_code=error_code,
+                failure_stage=stage,
             )
 
         #
@@ -112,7 +296,6 @@ class ResumeExtractionAgent:
             and not result.experiences
             and not result.educations
         ):
-
             return ResumeExtractionResult(
                 success=False,
                 provider="groq",
@@ -120,6 +303,8 @@ class ResumeExtractionAgent:
                     "Resume is either non-English or "
                     "contains insufficient information."
                 ),
+                error_code="EXTRACTION_VALIDATION",
+                failure_stage="Structured output validation",
             )
 
         return ResumeExtractionResult(

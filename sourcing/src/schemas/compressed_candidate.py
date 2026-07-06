@@ -12,6 +12,3 @@ class CompressedCandidateRequest(BaseModel):
 
 class CandidateIdsRequest(BaseModel):
     candidate_ids: list[UUID]
-
-class CandidateIdsRequest(BaseModel):
-    candidate_ids: list[UUID]

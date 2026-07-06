@@ -1,29 +1,11 @@
 from datetime import UTC, datetime
+from uuid import UUID
 
-from sqlalchemy import or_, select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from sqlalchemy import func
-from sqlalchemy import desc
-
-from src.data.models.postgres.candidate_skill import (
-    CandidateSkill,
-)
-from src.schemas.candidate_search_request import (
-    CandidateSearchRequest,
-)
-
-from src.schemas.candidate_search_request import (
-    CandidateSearchRequest,
-)
-from src.schemas.compressed_candidate import CompressedCandidate
-import src.data.models.postgres
+from sqlalchemy.orm import selectinload
 
 from src.data.models.postgres.candidate import Candidate
-from src.schemas.resume_candidate_output import (
-    ResumeCandidateOutput,
-)
 from src.data.models.postgres.candidate_education import (
     CandidateEducation,
 )
@@ -36,7 +18,6 @@ from src.data.models.postgres.candidate_experience_skill import (
 from src.data.models.postgres.candidate_skill import (
     CandidateSkill,
 )
-
 from src.schemas.candidate_details_response import (
     CandidateDetailsResponse,
     CandidateEducationResponse,
@@ -44,6 +25,14 @@ from src.schemas.candidate_details_response import (
     CandidateExperienceSkillResponse,
     CandidateSkillResponse,
 )
+from src.schemas.candidate_search_request import (
+    CandidateSearchRequest,
+)
+from src.schemas.compressed_candidate import CompressedCandidate
+from src.schemas.resume_candidate_output import (
+    ResumeCandidateOutput,
+)
+
 
 class CandidateRepository:
     def __init__(
@@ -160,7 +149,7 @@ class CandidateRepository:
         await self._db.flush()
 
         return candidate_model
-    
+
 
     async def get_candidate_by_resume_hash(
         self,
@@ -197,10 +186,10 @@ class CandidateRepository:
             )
             for row in rows
         ]
-    
+
     async def get_candidates_by_ids(
         self,
-        candidate_ids: list,
+        candidate_ids: list[UUID],
     ) -> list[CandidateDetailsResponse]:
         result = await self._db.execute(
             select(
@@ -281,13 +270,13 @@ class CandidateRepository:
             )
             for candidate in candidates
         ]
-    
+
     async def search_candidates_by_skills(
         self,
         request: CandidateSearchRequest,
     ) -> list[CompressedCandidate]:
 
-        candidate_ids: set = set()
+        candidate_ids: set[UUID] = set()
 
         #
         # skill matches
@@ -352,7 +341,7 @@ class CandidateRepository:
         if not candidate_ids:
             return []
 
-        query = select(
+        final_query = select(
             Candidate.id,
             Candidate.compressed_profile_text,
         ).where(
@@ -361,9 +350,9 @@ class CandidateRepository:
             )
         )
         if request.exclude_candidate_ids:
-            query = query.where(Candidate.id.notin_(request.exclude_candidate_ids))
+            final_query = final_query.where(Candidate.id.notin_(request.exclude_candidate_ids))
 
-        result = await self._db.execute(query)
+        result = await self._db.execute(final_query)
 
         rows = result.all()
 

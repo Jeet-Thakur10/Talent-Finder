@@ -1,0 +1,176 @@
+# docker-compose.yml — Talent Finder local development stack
+#
+# Usage:
+#   docker compose up --build
+#
+# Prerequisites:
+#   - server/.env  must exist (copy from server/.env.example and fill secrets)
+#   - sourcing/.env must exist (copy from sourcing/.env if present)
+#
+# The existing .env files are bind-mounted read-only into each container so that
+# pydantic-settings can find them at the expected filesystem path (/app/.env).
+# Docker-specific connection values (service hostnames, ports) are then injected
+# as environment variables at the compose level, which pydantic-settings resolves
+# with higher priority than the .env file.
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — single instance, two logical databases (usecase + sourcing)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: jeetu
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - talent-finder
+
+  # ---------------------------------------------------------------------------
+  # Redis — Celery broker and result backend
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - talent-finder
+
+  # ---------------------------------------------------------------------------
+  # Sourcing Service — FastAPI candidate sourcing microservice
+  # Internal only: not exposed to the host. server communicates via Docker DNS.
+  # ---------------------------------------------------------------------------
+  sourcing:
+    build:
+      context: ./sourcing
+      dockerfile: Dockerfile
+    volumes:
+      # Mount the existing local .env so pydantic-settings finds it at /app/.env
+      - ./sourcing/.env:/app/.env:ro
+    environment:
+      # Override localhost references with Docker service hostnames
+      DATABASE_URL: postgresql+asyncpg://postgres:jeetu@postgres:5432/sourcing
+      HOST: "0.0.0.0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # /health endpoint exists in sourcing/src/api/rest/routes/health.py
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - talent-finder
+
+  # ---------------------------------------------------------------------------
+  # Server — FastAPI main API
+  # ---------------------------------------------------------------------------
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    volumes:
+      # Mount the existing local .env so pydantic-settings finds it at /app/.env
+      - ./server/.env:/app/.env:ro
+    environment:
+      # Override localhost references with Docker service hostnames
+      DATABASE_URL: postgresql+asyncpg://postgres:jeetu@postgres:5432/usecase
+      REDIS_URL: redis://redis:6379/0
+      SOURCING_SERVICE_BASE_URL: http://sourcing:8001
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      sourcing:
+        condition: service_healthy
+    healthcheck:
+      # /docs is served by FastAPI's built-in Swagger UI — no extra route needed
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/docs || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - talent-finder
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker — shares the server image, different entrypoint only
+  # Runs the background scoring pipeline tasks.
+  # ---------------------------------------------------------------------------
+  celery-worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command:
+      - celery
+      - -A
+      - src.core.celery_app
+      - worker
+      - --loglevel=info
+      - --concurrency=2
+    volumes:
+      # Same .env mount as server — worker imports from the same settings module
+      - ./server/.env:/app/.env:ro
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:jeetu@postgres:5432/usecase
+      REDIS_URL: redis://redis:6379/0
+      SOURCING_SERVICE_BASE_URL: http://sourcing:8001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - talent-finder
+
+  # ---------------------------------------------------------------------------
+  # Client — Vite development server (React SPA)
+  # The browser connects directly to the host-published ports; all API calls go
+  # to http://localhost:8000 which resolves to the server container via the
+  # published port — no proxy configuration needed.
+  # ---------------------------------------------------------------------------
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - talent-finder
+
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    # Persists PostgreSQL data across container restarts
+
+# -----------------------------------------------------------------------------
+# Networks
+# -----------------------------------------------------------------------------
+networks:
+  talent-finder:
+    driver: bridge

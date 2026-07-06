@@ -13,19 +13,32 @@ export function ProfilePage() {
           </p>
         </div>
       </div>
-      <div className="surface-card">
-        <div className="space-y-4">
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Name</span>
-            <p className="text-sm font-medium text-slate-900 mt-1">{user?.name ?? "N/A"}</p>
+      <div className="workspace-grid grid-cols-1">
+        <div className="surface-card space-y-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400">Account</span>
+              <h2 className="text-xl font-semibold text-slate-900">{user?.name ?? "N/A"}</h2>
+              <p className="text-sm text-slate-500">Your recruiter account details and access information.</p>
+            </div>
+            <span className="status-badge border-slate-200 bg-slate-50 text-slate-700 capitalize">
+              {user?.role ?? "N/A"}
+            </span>
           </div>
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Email</span>
-            <p className="text-sm font-medium text-slate-900 mt-1">{user?.email ?? "N/A"}</p>
-          </div>
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Role</span>
-            <p className="text-sm font-medium text-slate-900 mt-1 capitalize">{user?.role ?? "N/A"}</p>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="detail-block">
+              <div className="detail-label">Name</div>
+              <p className="detail-copy">{user?.name ?? "N/A"}</p>
+            </div>
+            <div className="detail-block">
+              <div className="detail-label">Email</div>
+              <p className="detail-copy break-all">{user?.email ?? "N/A"}</p>
+            </div>
+            <div className="detail-block">
+              <div className="detail-label">Role</div>
+              <p className="detail-copy capitalize">{user?.role ?? "N/A"}</p>
+            </div>
           </div>
         </div>
       </div>

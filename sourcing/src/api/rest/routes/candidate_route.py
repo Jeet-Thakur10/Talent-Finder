@@ -4,32 +4,24 @@ from src.api.rest.dependencies import (
     get_candidate_search_service,
     get_candidate_service,
 )
-
+from src.core.services.candidate_search_service import (
+    CandidateSearchService,
+)
 from src.core.services.candidate_service import (
     CandidateService,
 )
-
 from src.schemas.candidate_details_response import (
     CandidateDetailsResponse,
 )
-
-from src.schemas.compressed_candidate import (
-    CandidateIdsRequest,
-)
-
 from src.schemas.candidate_search_request import (
     CandidateSearchRequest,
 )
-
 from src.schemas.candidate_search_response import (
     CandidateSearchResponse,
 )
-
 from src.schemas.compressed_candidate import (
+    CandidateIdsRequest,
     CompressedCandidate,
-)
-from src.core.services.candidate_search_service import (
-    CandidateSearchService,
 )
 
 router = APIRouter(
@@ -77,4 +69,4 @@ async def search_candidates(
 
     return await service.search_or_source_candidates(
         request,
-    )   
+    )

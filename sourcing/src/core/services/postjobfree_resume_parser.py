@@ -12,21 +12,17 @@ class PostJobFreeResumeParser:
 
         soup = BeautifulSoup(html, "html.parser")
 
-        title = soup.find("h1").get_text(strip=True)
+        h1_tag = soup.find("h1")
+        title = h1_tag.get_text(strip=True) if h1_tag is not None else ""
 
-        location = (
-            soup.select_one(".colorLocation")
-            .get_text(strip=True)
-        )
+        loc_tag = soup.select_one(".colorLocation")
+        location = loc_tag.get_text(strip=True) if loc_tag is not None else ""
 
-        posted_date = (
-            soup.select_one(".colorDate")
-            .get_text(strip=True)
-        )
+        date_tag = soup.select_one(".colorDate")
+        posted_date = date_tag.get_text(strip=True) if date_tag is not None else ""
 
         resume_div = soup.select_one(".normalText")
-
-        paragraphs = resume_div.find_all("p")
+        paragraphs = resume_div.find_all("p") if resume_div is not None else []
 
         candidate_name = (
             paragraphs[0].get_text(strip=True)
