@@ -11,17 +11,6 @@ current_dir = Path(__file__).resolve().parent
 server_dir = current_dir.parent.parent
 env_file_path = server_dir / ".env"
 
-if not env_file_path.exists():
-    raise RuntimeError(
-
-            "Critical Configuration Error: The required "
-            "environment file '.env' was not found at the "
-            f"expected absolute path: {env_file_path.as_posix()}. "
-            "Please check your deployment and working "
-            "directory structure."
-
-    )
-
 class Settings(BaseSettings):
     DATABASE_URL: str = "" # Required field - removing fallback value to prevent
                            # silent failure
@@ -84,7 +73,7 @@ class Settings(BaseSettings):
         return v
 
     model_config = SettingsConfigDict(
-        env_file=str(env_file_path),
+        env_file=str(env_file_path) if env_file_path.exists() else None,
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -102,10 +91,14 @@ except Exception:
     masked_db_url = "Invalid URL structure"
     db_name = "Unknown"
 
-print(f"[CONFIG] Loaded .env from: {env_file_path.as_posix()}")
+if env_file_path.exists():
+    print(f"[CONFIG] Loaded .env from: {env_file_path.as_posix()}")
+    logger.info(f"Loaded .env from: {env_file_path.as_posix()}")
+else:
+    print("[CONFIG] Loaded settings from environment variables")
+    logger.info("Loaded settings from environment variables")
 print(f"[CONFIG] DATABASE_URL: {masked_db_url}")
 print(f"[CONFIG] Database Name: {db_name}")
-logger.info(f"Loaded .env from: {env_file_path.as_posix()}")
 logger.info(f"DATABASE_URL: {masked_db_url}")
 logger.info(f"Database Name: {db_name}")
 
