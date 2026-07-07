@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Response
 from src.api.rest.dependencies import (
     get_auth_service,
     get_authenticated_user_context,
+    get_notification_service,
     get_refresh_token_payload,
 )
 from src.config.settings import settings
@@ -17,7 +18,11 @@ from src.schemas.auth_schema import (
     LogoutResponse,
     RefreshResponse,
     UserResponse,
+    AddUserRequest,
+    UserRole,
 )
+from src.core.exceptions.job_description_exception import RecruiterAccessRequired
+from src.core.services.notification_service import NotificationService
 from src.schemas.otp_schema import ResetPasswordRequest, ResetPasswordResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -129,3 +134,23 @@ async def reset_password(
     return ResetPasswordResponse(
         message="Password reset successfully",
     )
+
+
+@router.post("/users", response_model=UserResponse)
+async def create_user(
+    data: AddUserRequest,
+    current_user: AuthenticatedUserContext = Depends(
+        get_authenticated_user_context,
+    ),
+    auth_service: AuthService = Depends(get_auth_service),
+    notification_service: NotificationService = Depends(get_notification_service),
+) -> UserResponse:
+
+    if current_user.role != UserRole.recruiter:
+        raise RecruiterAccessRequired(
+            details="Only recruiters can create user accounts.",
+            error_code="RECRUITER_ACCESS_REQUIRED",
+        )
+
+    return await auth_service.create_user(data, notification_service)
+

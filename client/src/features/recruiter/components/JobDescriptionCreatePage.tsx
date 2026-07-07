@@ -35,6 +35,39 @@ export function JobDescriptionCreatePage({
   // Local skills inputs
   const [newMandatorySkill, setNewMandatorySkill] = useState("");
   const [newPreferredSkill, setNewPreferredSkill] = useState("");
+  const [showValidation, setShowValidation] = useState(false);
+
+  const isTitleInvalid = !extractedJob?.title || !extractedJob.title.trim();
+  const isDepartmentInvalid = !extractedJob?.department || !extractedJob.department.trim();
+  const isJobPurposeInvalid = !extractedJob?.job_purpose || !extractedJob.job_purpose.trim();
+  const isExperienceInvalid =
+    extractedJob?.min_experience === null ||
+    extractedJob?.min_experience === undefined ||
+    isNaN(Number(extractedJob?.min_experience)) ||
+    String(extractedJob?.min_experience).trim() === "";
+
+  const handleNextFromStep3 = () => {
+    setShowValidation(true);
+    
+    const invalidFields: string[] = [];
+    if (isTitleInvalid) invalidFields.push("title-field");
+    if (isDepartmentInvalid) invalidFields.push("department-field");
+    if (isExperienceInvalid) invalidFields.push("min-experience-field");
+    if (isJobPurposeInvalid) invalidFields.push("job-purpose-field");
+
+    if (invalidFields.length > 0) {
+      setError("Please fill in all required fields before proceeding.");
+      const firstInvalidId = invalidFields[0];
+      const element = document.getElementById(firstInvalidId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
+    setError(null);
+    setStep(4);
+  };
 
   const stepsList = [
     { num: 1, label: "Paste JD" },
@@ -269,22 +302,38 @@ export function JobDescriptionCreatePage({
               <div className="space-y-1">
                 <label className="auth-label text-xs">Position Title</label>
                 <input
+                  id="title-field"
                   type="text"
                   value={extractedJob.title}
                   onChange={(e) => updateStructuredField("title", e.target.value)}
-                  className="auth-input !py-2.5 !rounded-xl text-sm focus:outline-none"
+                  className={`auth-input !py-2.5 !rounded-xl text-sm focus:outline-none ${
+                    showValidation && isTitleInvalid ? "!border-rose-300 ring-2 ring-rose-50" : ""
+                  }`}
                 />
+                {showValidation && isTitleInvalid && (
+                  <p className="text-xs text-rose-600 mt-1 font-medium animate-fade-in">
+                    This field is required.
+                  </p>
+                )}
               </div>
 
               {/* Department */}
               <div className="space-y-1">
                 <label className="auth-label text-xs">Department</label>
                 <input
+                  id="department-field"
                   type="text"
                   value={extractedJob.department || ""}
                   onChange={(e) => updateStructuredField("department", e.target.value)}
-                  className="auth-input !py-2.5 !rounded-xl text-sm focus:outline-none"
+                  className={`auth-input !py-2.5 !rounded-xl text-sm focus:outline-none ${
+                    showValidation && isDepartmentInvalid ? "!border-rose-300 ring-2 ring-rose-50" : ""
+                  }`}
                 />
+                {showValidation && isDepartmentInvalid && (
+                  <p className="text-xs text-rose-600 mt-1 font-medium animate-fade-in">
+                    This field is required.
+                  </p>
+                )}
               </div>
 
               {/* Employment Type */}
@@ -324,12 +373,20 @@ export function JobDescriptionCreatePage({
               <div className="space-y-1">
                 <label className="auth-label text-xs">Minimum Experience (Years)</label>
                 <input
+                  id="min-experience-field"
                   type="number"
                   min={0}
                   value={extractedJob.min_experience}
-                  onChange={(e) => updateStructuredField("min_experience", Number(e.target.value))}
-                  className="auth-input !py-2.5 !rounded-xl text-sm focus:outline-none"
+                  onChange={(e) => updateStructuredField("min_experience", e.target.value === "" ? "" : Number(e.target.value))}
+                  className={`auth-input !py-2.5 !rounded-xl text-sm focus:outline-none ${
+                    showValidation && isExperienceInvalid ? "!border-rose-300 ring-2 ring-rose-50" : ""
+                  }`}
                 />
+                {showValidation && isExperienceInvalid && (
+                  <p className="text-xs text-rose-600 mt-1 font-medium animate-fade-in">
+                    This field is required.
+                  </p>
+                )}
               </div>
 
               {/* Experience Max */}
@@ -359,11 +416,19 @@ export function JobDescriptionCreatePage({
               <div className="space-y-1 md:col-span-2">
                 <label className="auth-label text-xs">Job Purpose</label>
                 <textarea
+                  id="job-purpose-field"
                   value={extractedJob.job_purpose}
                   onChange={(e) => updateStructuredField("job_purpose", e.target.value)}
                   rows={3}
-                  className="form-textarea focus:outline-none"
+                  className={`form-textarea focus:outline-none ${
+                    showValidation && isJobPurposeInvalid ? "!border-rose-300 ring-2 ring-rose-50" : ""
+                  }`}
                 />
+                {showValidation && isJobPurposeInvalid && (
+                  <p className="text-xs text-rose-600 mt-1 font-medium animate-fade-in">
+                    This field is required.
+                  </p>
+                )}
               </div>
 
               {/* Responsibilities */}
@@ -521,12 +586,8 @@ export function JobDescriptionCreatePage({
               </button>
               <button
                 type="button"
-                disabled={!extractedJob.title.trim() || extractedJob.skills.length === 0}
-                onClick={() => {
-                  setError(null);
-                  setStep(4);
-                }}
-                className="workspace-primary-button !py-2.5 !px-5 !rounded-xl text-sm focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleNextFromStep3}
+                className="workspace-primary-button !py-2.5 !px-5 !rounded-xl text-sm focus:outline-none cursor-pointer"
               >
                 Next
               </button>

@@ -36,7 +36,7 @@ export function CandidateScoreBreakdown({ score }: CandidateScoreBreakdownProps)
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 leading-tight">{item.desc}</p>
+                <p className="text-xs text-slate-400 leading-normal">{item.desc}</p>
               </div>
             );
           })}
@@ -46,7 +46,7 @@ export function CandidateScoreBreakdown({ score }: CandidateScoreBreakdownProps)
               {(score.explanation as any).summary && (
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">AI Match Rationale</span>
-                  <p className="text-xs text-slate-650 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-sm text-slate-650 leading-relaxed whitespace-pre-wrap">
                     {(score.explanation as any).summary}
                   </p>
                 </div>
@@ -55,7 +55,7 @@ export function CandidateScoreBreakdown({ score }: CandidateScoreBreakdownProps)
               {Array.isArray((score.explanation as any).strengths) && (score.explanation as any).strengths.length > 0 && (
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Key Highlights</span>
-                  <ul className="text-xs text-slate-700 space-y-1 pl-4 list-disc">
+                  <ul className="text-sm text-slate-700 space-y-1.5 pl-4 list-disc">
                     {(score.explanation as any).strengths.map((str: string, index: number) => (
                       <li key={index}>{str}</li>
                     ))}
@@ -66,7 +66,7 @@ export function CandidateScoreBreakdown({ score }: CandidateScoreBreakdownProps)
               {Array.isArray((score.explanation as any).weaknesses) && (score.explanation as any).weaknesses.length > 0 && (
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Identified Gaps</span>
-                  <ul className="text-xs text-slate-700 space-y-1 pl-4 list-disc">
+                  <ul className="text-sm text-slate-700 space-y-1.5 pl-4 list-disc">
                     {(score.explanation as any).weaknesses.map((weak: string, index: number) => (
                       <li key={index}>{weak}</li>
                     ))}

@@ -170,6 +170,9 @@ export interface CandidateScoreBreakdown {
   education_score: number;
   confidence: number;
   explanation: Record<string, unknown>;
+  matched_mandatory_skills?: string[];
+  matched_optional_skills?: string[];
+  missing_mandatory_skills?: string[];
 }
 
 export interface CandidateEvaluationBoard {

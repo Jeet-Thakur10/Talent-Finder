@@ -173,18 +173,22 @@ export function RecruiterCandidateDetailPage() {
           </div>
         )}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)]">
-          <div className="surface-card space-y-4">
-            <h2 className="border-b border-slate-100 pb-2 text-sm font-bold text-slate-900">Professional Summary</h2>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-650">
-              {candidate.summary || "No professional summary details extracted from the candidate resume."}
-            </p>
-          </div>
-          <CandidateScoreBreakdown score={score} />
+        <div className="surface-card space-y-4">
+          <h2 className="border-b border-slate-100 pb-2 text-sm font-bold text-slate-900">Professional Summary</h2>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-650">
+            {candidate.summary || "No professional summary details extracted from the candidate resume."}
+          </p>
         </div>
 
+        <CandidateScoreBreakdown score={score} />
+
         <div className="grid gap-6 lg:grid-cols-2">
-          <CandidateSkillsProfile skills={candidate.skills} />
+          <CandidateSkillsProfile
+            skills={candidate.skills}
+            matchedMandatorySkills={score?.matched_mandatory_skills}
+            matchedOptionalSkills={score?.matched_optional_skills}
+            missingMandatorySkills={score?.missing_mandatory_skills}
+          />
           <CandidateEducationProfile educations={candidate.educations} />
         </div>
 

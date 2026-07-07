@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import cast
 
 import httpx
 from groq import APIError, RateLimitError
@@ -11,7 +12,6 @@ from langchain_core.messages import (
     SystemMessage,
 )
 from pydantic import ValidationError
-from typing import cast
 
 from src.config.settings import settings
 from src.control.agents.groq_client import RotationalChatGroq as ChatGroq

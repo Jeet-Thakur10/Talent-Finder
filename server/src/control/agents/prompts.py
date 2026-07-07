@@ -9,7 +9,11 @@ GENERAL RULES
 - If a value is not available, return null.
 - For list fields, return an empty list instead of null.
 - Return ONLY valid JSON matching the provided schema.
-- Do not include explanations or markdown.
+JOB PURPOSE EXTRACTION
+-----------------------
+- If the raw job description explicitly contains a Job Purpose (or equivalent section like overview, role summary, or role objective), extract it faithfully.
+- If the raw job description does NOT explicitly contain one, intelligently infer a concise 1-3 sentence Job Purpose describing why the role exists and its primary business objective based on the responsibilities, required skills, and overall raw job description context. Do not simply restate or list the responsibilities.
+- The inferred purpose must remain faithful to the raw job description without introducing external details, company names, or technologies not mentioned.
 
 EXPERIENCE EXTRACTION
 ---------------------

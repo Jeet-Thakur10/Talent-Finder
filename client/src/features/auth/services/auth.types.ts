@@ -49,3 +49,10 @@ export interface LogoutResponse {
 export interface RefreshResponse {
   message: string;
 }
+
+export interface AddUserRequest {
+  name: string;
+  email: string;
+  role: UserRole;
+  password: string;
+}

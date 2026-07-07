@@ -61,6 +61,7 @@ from src.schemas.scoring_schema import (
     CandidatePrescoreBatchOutput,
     CandidateScoreBreakdownResponse,
     CandidateScoreDetailBreakdown,
+    CandidateScoreOutput,
     CandidateScoreResponse,
     CandidateScoringInput,
     CandidateSkillInput,
@@ -78,7 +79,6 @@ from src.schemas.scoring_schema import (
     PipelineSnapshotResponse,
     PipelineStageUpdateRequest,
     SharedCampaignCandidateResponse,
-    CandidateScoreOutput,
 )
 from src.utils.email_templates import get_generic_email_html
 
@@ -234,7 +234,7 @@ class ScoringService:
                         error_message=str(result),
                         duration_ms=per_task_duration,
                     )
-            elif result is not None and isinstance(result.payload, CandidateScoreOutput):
+            elif result is not None and isinstance(result.payload,CandidateScoreOutput):
                 candidate_scores.append(result.payload)
                 if cand_state:
                     cand_state.mark_scoring_success(
@@ -264,6 +264,12 @@ class ScoringService:
                 [score.candidate_id for score in candidate_scores],
                 stage="SHORTLISTED",
             )
+            if context is not None:
+                active_candidate_ids = [score.candidate_id for score in candidate_scores]
+                await self.repository.delete_stale_candidate_scores_and_pipelines(
+                    job_description_id=job_description_id,
+                    active_candidate_ids=active_candidate_ids,
+                )
             await self._transition_to_active_if_needed(job_description_id)
         except Exception as e:
             persistence_failed_flag = True
@@ -481,6 +487,10 @@ class ScoringService:
         )
 
         if selected_candidate_count == 0:
+            await self.repository.delete_stale_candidate_scores_and_pipelines(
+                job_description_id=job_description_id,
+                active_candidate_ids=[],
+            )
             await self._transition_to_active_if_needed(job_description_id)
             final_report = self._generate_pipeline_report(context, api_returned_count=0)
             logger.info(final_report)
@@ -549,7 +559,10 @@ class ScoringService:
             )
             print(f"{idx + 1}. Name: {c_name} (ID: {deep_score.candidate_id})")
             print(
-                f"   Final Score: {deep_score.final_score} | Confidence: {deep_score.confidence}%"
+
+                    f"   Final Score: {deep_score.final_score} | "
+                    f"Confidence: {deep_score.confidence}%"
+
             )
             print(
                 f"   Breakdown -> Skills: {deep_score.skills_score} | "
@@ -952,6 +965,9 @@ Reason:
                 education_score=score.education_score,
                 confidence=score.confidence,
                 explanation=score.explanation,
+                matched_mandatory_skills=score.matched_mandatory_skills,
+                matched_optional_skills=score.matched_optional_skills,
+                missing_mandatory_skills=score.missing_mandatory_skills,
             )
             if score
             else None,
