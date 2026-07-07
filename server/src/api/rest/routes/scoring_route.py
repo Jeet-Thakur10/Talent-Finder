@@ -2,7 +2,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from src.data.models.postgres.pipeline import HiringManagerDecision
 
 from src.api.rest.dependencies import (
     get_authenticated_user_context,
@@ -12,6 +11,8 @@ from src.api.rest.dependencies import (
 from src.config.settings import settings
 from src.core.services.scoring_service import ScoringService
 from src.core.services.scoring_task_service import ScoringTaskService
+from src.core.tasks import run_scoring_pipeline_task
+from src.data.models.postgres.pipeline import HiringManagerDecision
 from src.schemas.auth_schema import AuthenticatedUserContext
 from src.schemas.scoring_schema import (
     CandidateDetailsResponse,
@@ -36,8 +37,6 @@ from src.schemas.scoring_schema import (
     ShortlistShareRequest,
     ShortlistShareResponse,
 )
-
-from src.core.tasks import run_scoring_pipeline_task
 
 router = APIRouter(prefix="/scoring", tags=["Scoring"])
 
@@ -226,7 +225,9 @@ async def get_task_result(
             detail=f"Task failed: {task.error_message}",
         )
 
-    payload = task.final_response_payload if task.final_response_payload is not None else {}
+    payload = (
+        task.final_response_payload
+        if task.final_response_payload is not None else {})
     return PipelineExecutionResponse.model_validate(payload)
 
 

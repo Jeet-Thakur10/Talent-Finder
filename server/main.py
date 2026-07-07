@@ -18,6 +18,7 @@ from src.core.exceptions.auth_exceptions import (
     InvalidCredentials,
     InvalidPasswordException,
     InvalidToken,
+    UserAlreadyExistsException,
 )
 from src.core.exceptions.handlers import (
     general_exception_handler,
@@ -26,6 +27,7 @@ from src.core.exceptions.handlers import (
     invalid_token_handler,
     job_description_exception_handler,
     scoring_exception_handler,
+    user_already_exists_exception_handler,
 )
 from src.core.exceptions.job_description_exception import JobDescriptionBaseException
 from src.core.exceptions.scoring_exceptions import ScoringBaseException
@@ -64,6 +66,10 @@ app.add_exception_handler(
 app.add_exception_handler(
     GeneralException,
     cast(Any, general_exception_handler),
+)
+app.add_exception_handler(
+    UserAlreadyExistsException,
+    cast(Any, user_already_exists_exception_handler),
 )
 app.add_exception_handler(
     InvalidCredentials,

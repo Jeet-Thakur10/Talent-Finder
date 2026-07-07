@@ -12,6 +12,7 @@ import type {
   User,
   VerifyOTPRequest,
   VerifyOTPResponse,
+  AddUserRequest,
 } from "./auth.types";
 
 export const authService = {
@@ -80,6 +81,15 @@ export const authService = {
         "/auth/reset-password",
         data,
       );
+
+    return response.data;
+  },
+
+  async addUser(data: AddUserRequest): Promise<User> {
+    const response = await api.post<User>(
+      "/auth/users",
+      data,
+    );
 
     return response.data;
   },

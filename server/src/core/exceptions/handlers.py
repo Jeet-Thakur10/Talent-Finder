@@ -6,6 +6,7 @@ from src.core.exceptions.auth_exceptions import (
     InvalidAuthorizationFormat,
     InvalidPasswordException,
     InvalidToken,
+    UserAlreadyExistsException,
 )
 from src.core.exceptions.job_description_exception import JobDescriptionBaseException
 from src.core.exceptions.scoring_exceptions import ScoringBaseException
@@ -98,3 +99,17 @@ async def scoring_exception_handler(
             ),
         },
     )
+
+
+async def user_already_exists_exception_handler(
+    request: Request,
+    exc: UserAlreadyExistsException,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=400,
+        content={
+            "detail": exc.message,
+            **({"info": exc.details} if exc.details else {})
+        }
+    )
+

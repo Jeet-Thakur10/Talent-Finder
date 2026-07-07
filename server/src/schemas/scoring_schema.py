@@ -287,6 +287,9 @@ class CandidateScoreBreakdownResponse(BaseModel):
     education_score: float
     confidence: float
     explanation: CandidateScoreExplanation | dict[str, object]
+    matched_mandatory_skills: list[str] = Field(default_factory=list)
+    matched_optional_skills: list[str] = Field(default_factory=list)
+    missing_mandatory_skills: list[str] = Field(default_factory=list)
 
 
 class CandidateEvaluationBoardResponse(BaseModel):
