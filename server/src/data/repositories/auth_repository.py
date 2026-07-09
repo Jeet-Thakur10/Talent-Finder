@@ -45,3 +45,12 @@ class AuthRepository:
         await self.db.commit()
 
         await self.db.refresh(user)
+
+    async def create_user(
+        self,
+        user: User,
+    ) -> User:
+        self.db.add(user)
+        await self.save(user)
+        return user
+

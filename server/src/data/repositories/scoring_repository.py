@@ -524,11 +524,14 @@ class ScoringRepository:
             # ))
             matched_edus = set()
             for inc_edu in candidate_details.educations:
-                edu_key = (inc_edu.institution_name, inc_edu.degree, inc_edu.field_of_study)
+                edu_key = (inc_edu.institution_name,
+                           inc_edu.degree, inc_edu.field_of_study)
 
                 matched_edu = None
                 for ext_edu in existing_candidate.educations:
-                    ext_edu_key = (ext_edu.institution_name, ext_edu.degree, ext_edu.field_of_study)
+                    ext_edu_key = (ext_edu.institution_name,
+                                   ext_edu.degree,
+                                   ext_edu.field_of_study)
                     if ext_edu_key == edu_key:
                         matched_edu = ext_edu
                         break
@@ -757,3 +760,41 @@ class ScoringRepository:
         )
         await self.db.execute(stmt)
         await self.db.flush()
+
+    async def delete_stale_candidate_scores_and_pipelines(
+        self,
+        job_description_id: UUID,
+        active_candidate_ids: list[UUID],
+    ) -> None:
+        """Remove stale Pipeline and CandidateJobScore records for the job description.
+
+        A record is considered stale if its candidate ID is not in `active_candidate_ids`.
+        Pipeline deletion is executed before CandidateJobScore deletion, and a single flush is performed.
+        """
+        from sqlalchemy import delete
+
+        if active_candidate_ids:
+            # Delete pipeline records not in active shortlist
+            stmt_pipeline = delete(Pipeline).where(
+                Pipeline.jd_id == job_description_id,
+                ~Pipeline.candidate_id.in_(active_candidate_ids),
+            )
+            # Delete candidate job scores not in active shortlist
+            stmt_scores = delete(CandidateJobScore).where(
+                CandidateJobScore.job_description_id == job_description_id,
+                ~CandidateJobScore.candidate_id.in_(active_candidate_ids),
+            )
+        else:
+            # Remove all pipeline records for this JD
+            stmt_pipeline = delete(Pipeline).where(
+                Pipeline.jd_id == job_description_id
+            )
+            # Remove all candidate job scores for this JD
+            stmt_scores = delete(CandidateJobScore).where(
+                CandidateJobScore.job_description_id == job_description_id
+            )
+
+        await self.db.execute(stmt_pipeline)
+        await self.db.execute(stmt_scores)
+        await self.db.flush()
+

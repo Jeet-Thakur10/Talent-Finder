@@ -350,7 +350,9 @@ class CandidateRepository:
             )
         )
         if request.exclude_candidate_ids:
-            final_query = final_query.where(Candidate.id.notin_(request.exclude_candidate_ids))
+            final_query = final_query.where(
+                Candidate.id.notin_(request.exclude_candidate_ids)
+                )
 
         result = await self._db.execute(final_query)
 

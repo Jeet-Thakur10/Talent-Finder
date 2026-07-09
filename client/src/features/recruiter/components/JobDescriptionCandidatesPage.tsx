@@ -134,11 +134,11 @@ export function JobDescriptionCandidatesPage() {
           <p className="text-sm text-slate-500 animate-pulse font-medium">Loading candidate board...</p>
         </div>
       ) : error ? (
-        <div className="workspace-alert max-w-4xl mx-auto">
+        <div className="workspace-alert w-full">
           {error}
         </div>
       ) : (
-        <div className="max-w-4xl mx-auto space-y-6 pb-24">
+        <div className="w-full space-y-6 pb-24">
           
           {/* 2. Job Summary */}
           {jobDescription && (
@@ -341,7 +341,7 @@ export function JobDescriptionCandidatesPage() {
 
           {/* Floating Sticky Handoff Action Bar */}
           {selectedIds.size > 0 && (
-            <div className="animate-slide-up fixed bottom-5 left-1/2 z-40 flex w-11/12 max-w-xl -translate-x-1/2 items-center justify-between gap-6 rounded-[1.2rem] border border-slate-800 bg-slate-950 px-5 py-3.5 text-white shadow-[0_20px_50px_-10px_rgba(15,23,42,0.6)] transition-all">
+            <div className="animate-slide-up fixed bottom-5 left-1/2 z-40 flex w-11/12 max-w-xl items-center justify-between gap-6 rounded-[1.2rem] border border-slate-800 bg-slate-950 px-5 py-3.5 text-white shadow-[0_20px_50px_-10px_rgba(15,23,42,0.6)] transition-all">
               <span className="text-xs font-semibold text-slate-200">
                 {selectedIds.size} {selectedIds.size === 1 ? "candidate" : "candidates"} selected
               </span>

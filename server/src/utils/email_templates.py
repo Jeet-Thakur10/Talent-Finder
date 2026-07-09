@@ -72,3 +72,30 @@ def get_generic_email_html(
 </body>
 </html>
 """
+
+
+def get_welcome_email_html(
+    name: str,
+    email: str,
+    password: str,
+    login_url: str,
+) -> str:
+    body = (
+        f"Hello {name},<br/><br/>"
+        "Your recruiter account has been created.<br/><br/>"
+        "You can now log in to Talent Finder using:<br/><br/>"
+        "Email:<br/>"
+        f"{email}<br/><br/>"
+        "Password:<br/>"
+        f"{password}<br/><br/>"
+        "Login URL:<br/>"
+        f"{login_url}<br/><br/>"
+        "Please change your password after your first login if required.<br/><br/>"
+        "Regards,<br/>"
+        "Talent Finder"
+    )
+    return get_generic_email_html(
+        title="Welcome to Talent Finder",
+        body=body,
+    )
+

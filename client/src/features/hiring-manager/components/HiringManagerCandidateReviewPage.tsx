@@ -358,7 +358,12 @@ export function HiringManagerCandidateReviewPage() {
         )}
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <CandidateSkillsProfile skills={candidate.skills} />
+          <CandidateSkillsProfile
+            skills={candidate.skills}
+            matchedMandatorySkills={score?.matched_mandatory_skills}
+            matchedOptionalSkills={score?.matched_optional_skills}
+            missingMandatorySkills={score?.missing_mandatory_skills}
+          />
           <CandidateEducationProfile educations={candidate.educations} />
         </div>
 

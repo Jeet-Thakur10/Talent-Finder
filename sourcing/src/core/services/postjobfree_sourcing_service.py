@@ -333,7 +333,8 @@ class PostJobFreeSourcingService:
                             resume_url=result.resume_url,
                         )
 
-                        if not extraction_result.success or extraction_result.payload is None:
+                        if not (extraction_result.success or
+                                extraction_result.payload is None):
                             print(f"{extraction_result.error or 'Payload is None'}\n")
                             print("Candidate rejected.\n")
                             continue
@@ -343,7 +344,7 @@ class PostJobFreeSourcingService:
                         try:
                             stored_candidate = (
                                 await self._candidate_service.create_candidate(
-                                    candidate=extraction_result.payload,
+                                    candidate=extraction_result.payload, # type: ignore[arg-type]
                                     resume_text=resume.raw_resume_text,
                                     source_type="postjobfree",
                                 )

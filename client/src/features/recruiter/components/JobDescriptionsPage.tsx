@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRecruiterJobDescriptions } from "../hooks/useRecruiterJobDescriptions";
 import { useRecruiterTasks } from "../hooks/useRecruiterTasks";
+import { AddRecruiterModal } from "./AddRecruiterModal";
 
 export function JobDescriptionsPage() {
   const navigate = useNavigate();
+  const [isAddRecruiterOpen, setIsAddRecruiterOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const {
     jobDescriptions,
     employmentTypes,
@@ -89,13 +93,27 @@ export function JobDescriptionsPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate("/recruiter/job-descriptions/create")}
-          className="workspace-primary-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer focus:outline-none"
-        >
-          Create Job Description
-        </button>
+        <div className="flex items-center gap-3">
+          {successMessage && (
+            <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-250 animate-fade-in">
+              {successMessage}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsAddRecruiterOpen(true)}
+            className="workspace-ghost-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer focus:outline-none"
+          >
+            Add Recruiter
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/recruiter/job-descriptions/create")}
+            className="workspace-primary-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer focus:outline-none"
+          >
+            Create Job Description
+          </button>
+        </div>
       </div>
 
       {/* States: Loading, Error, Content/Empty */}
@@ -231,6 +249,15 @@ export function JobDescriptionsPage() {
           </div>
         </div>
       )}
+
+      <AddRecruiterModal
+        isOpen={isAddRecruiterOpen}
+        onClose={() => setIsAddRecruiterOpen(false)}
+        onSuccess={(msg) => {
+          setSuccessMessage(msg);
+          setTimeout(() => setSuccessMessage(null), 5000);
+        }}
+      />
     </div>
   );
 }

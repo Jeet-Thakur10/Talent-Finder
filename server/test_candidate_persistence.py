@@ -11,6 +11,9 @@ from src.data.models.postgres.candidate_education import CandidateEducation
 from src.data.models.postgres.candidate_experience import CandidateExperience
 from src.data.models.postgres.candidate_experience_skill import CandidateExperienceSkill
 from src.data.models.postgres.candidate_skill import CandidateSkill
+from src.data.models.postgres.candidate_job_score import CandidateJobScore
+from src.data.models.postgres.job_description import JobDescription
+from src.data.models.postgres.pipeline import Pipeline
 from src.schemas.candidate_search_schema import (
     CandidateDetailsResponse,
     CandidateEducationResponse,
@@ -232,6 +235,136 @@ async def run_verification():
         print(
             "Step 3 PASSED: Candidate modifications, additions, and deletions synchronized cleanly."
         )
+
+        # ====================================================
+        # Step 4: Verify stale candidate cleanup
+        # ====================================================
+        print("\n--- Step 4: Testing stale candidate score and pipeline cleanup ---")
+        from sqlalchemy import delete
+        
+        # Fetch an existing job description
+        res_jd = await db.execute(select(JobDescription).limit(1))
+        existing_jd = res_jd.scalar_one_or_none()
+        if existing_jd:
+            test_jd_id = existing_jd.id
+            
+            # Create a second candidate for stale test
+            stale_candidate_id = uuid4()
+            stale_candidate = Candidate(
+                id=stale_candidate_id,
+                full_name="Stale Candidate",
+                email="stale@example.com",
+                phone="+111",
+                current_title="Junior Engineer",
+                location="Remote",
+                summary="Summary",
+                total_experience_months=12,
+                source_type="SOURCED",
+                created_at=now,
+                updated_at=now,
+            )
+            db.add(stale_candidate)
+            await db.flush()
+
+            # Insert scores and pipeline records for both candidates
+            score_active = CandidateJobScore(
+                candidate_id=candidate_id,
+                job_description_id=test_jd_id,
+                final_score=90.0,
+                confidence=85.0,
+                skills_score=10.0,
+                experience_score=10.0,
+                recency_score=10.0,
+                role_fit_score=10.0,
+                education_score=10.0,
+                matched_mandatory_skills=[],
+                matched_optional_skills=[],
+                missing_mandatory_skills=[],
+                explanation={},
+                created_at=now,
+                updated_at=now,
+            )
+            score_stale = CandidateJobScore(
+                candidate_id=stale_candidate_id,
+                job_description_id=test_jd_id,
+                final_score=80.0,
+                confidence=80.0,
+                skills_score=8.0,
+                experience_score=8.0,
+                recency_score=8.0,
+                role_fit_score=8.0,
+                education_score=8.0,
+                matched_mandatory_skills=[],
+                matched_optional_skills=[],
+                missing_mandatory_skills=[],
+                explanation={},
+                created_at=now,
+                updated_at=now,
+            )
+            db.add(score_active)
+            db.add(score_stale)
+            
+            pipe_active = Pipeline(
+                candidate_id=candidate_id,
+                jd_id=test_jd_id,
+                stage="SHORTLISTED",
+                created_at=now,
+            )
+            pipe_stale = Pipeline(
+                candidate_id=stale_candidate_id,
+                jd_id=test_jd_id,
+                stage="SHORTLISTED",
+                created_at=now,
+            )
+            db.add(pipe_active)
+            db.add(pipe_stale)
+            await db.flush()
+
+            # Verify both scores exist
+            res_s = await db.execute(select(CandidateJobScore).where(CandidateJobScore.job_description_id == test_jd_id))
+            assert len(res_s.scalars().all()) >= 2
+            
+            # Execute cleanup (active is candidate_id, stale is stale_candidate_id)
+            await service.repository.delete_stale_candidate_scores_and_pipelines(
+                job_description_id=test_jd_id,
+                active_candidate_ids=[candidate_id],
+            )
+            await db.flush()
+
+            # Verify stale records are deleted
+            res_s_after = await db.execute(
+                select(CandidateJobScore).where(
+                    CandidateJobScore.job_description_id == test_jd_id,
+                    CandidateJobScore.candidate_id == stale_candidate_id,
+                )
+            )
+            assert res_s_after.scalar_one_or_none() is None, "Stale CandidateJobScore record was not deleted!"
+
+            res_p_after = await db.execute(
+                select(Pipeline).where(
+                    Pipeline.jd_id == test_jd_id,
+                    Pipeline.candidate_id == stale_candidate_id,
+                )
+            )
+            assert res_p_after.scalar_one_or_none() is None, "Stale Pipeline record was not deleted!"
+
+            # Verify active records remain
+            res_s_act = await db.execute(
+                select(CandidateJobScore).where(
+                    CandidateJobScore.job_description_id == test_jd_id,
+                    CandidateJobScore.candidate_id == candidate_id,
+                )
+            )
+            assert res_s_act.scalar_one_or_none() is not None, "Active CandidateJobScore record was deleted!"
+
+            # Clean up active score & pipeline, and delete stale candidate master
+            await db.execute(delete(CandidateJobScore).where(CandidateJobScore.job_description_id == test_jd_id))
+            await db.execute(delete(Pipeline).where(Pipeline.jd_id == test_jd_id))
+            await db.delete(stale_candidate)
+            await db.flush()
+            print("Step 4 PASSED: Database cleanup of stale candidates verified successfully.")
+        else:
+            print("Skipped Step 4: No existing job description found to verify cleanup.")
 
         # ====================================================
         # Clean up database
