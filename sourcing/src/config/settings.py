@@ -8,15 +8,6 @@ current_dir = Path(__file__).resolve().parent
 sourcing_dir = current_dir.parent.parent
 env_file_path = sourcing_dir / ".env"
 
-if not env_file_path.exists():
-    raise RuntimeError(
-
-            "Critical Configuration Error: Sourcing environment file '.env' "
-            f"was not found at expected path: {env_file_path.as_posix()}. "
-            "Please check your deployment and working directory structure."
-
-    )
-
 class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
     GROQ_SECOND_API_KEY: str = ""
@@ -47,7 +38,7 @@ class Settings(BaseSettings):
         return keys
 
     model_config = SettingsConfigDict(
-        env_file=str(env_file_path),
+        env_file=str(env_file_path) if env_file_path.exists() else None,
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -65,10 +56,14 @@ except Exception:
     masked_db_url = "Invalid URL structure"
     db_name = "Unknown"
 
-print(f"[CONFIG SOURCING] Loaded .env from: {env_file_path.as_posix()}")
+if env_file_path.exists():
+    print(f"[CONFIG SOURCING] Loaded .env from: {env_file_path.as_posix()}")
+    logger.info(f"Loaded .env from: {env_file_path.as_posix()}")
+else:
+    print("[CONFIG SOURCING] Loaded settings from environment variables")
+    logger.info("Loaded settings from environment variables")
 print(f"[CONFIG SOURCING] DATABASE_URL: {masked_db_url}")
 print(f"[CONFIG SOURCING] Database Name: {db_name}")
-logger.info(f"Loaded .env from: {env_file_path.as_posix()}")
 logger.info(f"DATABASE_URL: {masked_db_url}")
 logger.info(f"Database Name: {db_name}")
 

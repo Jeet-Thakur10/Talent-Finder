@@ -15,6 +15,7 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     task_track_started=True,
+    task_default_queue="jt_talent_finder_queue",
 )
 
 # We autodiscover tasks from tasks.py inside src.core
