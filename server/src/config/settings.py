@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_COOKIE_NAME: str = "refresh_token"
 
     COOKIE_HTTP_ONLY : bool = True
-    COOKIE_SECURE: bool = False
-    COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
+    COOKIE_SECURE: bool = True
+    COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "none"
 
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587

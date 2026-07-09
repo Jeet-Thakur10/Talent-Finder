@@ -20,6 +20,9 @@ RUN npm run build
 # Stage 2: Serve the compiled static assets with Nginx
 FROM nginx:alpine
 
+# Copy the custom Nginx configuration to support SPA routing fallbacks
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 # Copy the build output to Nginx's html folder
 COPY --from=build /app/dist /usr/share/nginx/html
 
