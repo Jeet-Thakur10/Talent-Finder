@@ -231,19 +231,19 @@ export function RecruiterTasksPage() {
                 {((isCompleted || currentStageIndex >= 3) && !isFailed) && (
                   <div className="grid grid-cols-3 gap-4 rounded-xl border border-slate-150 bg-slate-50/80 p-4 text-center text-xs">
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Matched</span>
+                      <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Candidates Fetched</span>
                       <span className="text-base font-extrabold text-slate-800 mt-0.5 block">
                         {task.matched_candidate_count !== null ? task.matched_candidate_count : "--"}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Eligible</span>
+                      <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Qualified</span>
                       <span className="text-base font-extrabold text-slate-800 mt-0.5 block">
                         {task.eligible_candidate_count !== null ? task.eligible_candidate_count : "--"}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Selected</span>
+                      <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Shortlisted</span>
                       <span className="text-base font-extrabold text-slate-800 mt-0.5 block">
                         {task.selected_candidate_count !== null ? task.selected_candidate_count : "--"}
                       </span>
