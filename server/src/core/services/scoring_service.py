@@ -382,6 +382,12 @@ class ScoringService:
 
         if not acquisition_result.candidates:
             await self._transition_to_active_if_needed(job_description_id)
+            is_incomplete = data.k > 0
+            warning_reason = "INSUFFICIENT_QUALIFIED" if is_incomplete else None
+            warning_message = (
+                f"Only 0 candidates satisfied the required criteria. "
+                "The remaining candidates did not meet the qualification threshold."
+            ) if is_incomplete else None
             return PipelineExecutionResponse(
                 stage="completed",
                 matched_candidate_count=0,
@@ -389,6 +395,9 @@ class ScoringService:
                 selected_candidate_count=0,
                 top_k=data.k,
                 candidates=[],
+                is_shortlist_incomplete=is_incomplete,
+                warning_reason=warning_reason,
+                warning_message=warning_message,
             )
 
         # 3. Convert CandidateSummary objects to CompressedCandidate objects
@@ -494,13 +503,22 @@ class ScoringService:
             await self._transition_to_active_if_needed(job_description_id)
             final_report = self._generate_pipeline_report(context, api_returned_count=0)
             logger.info(final_report)
+            is_incomplete = data.k > 0
+            warning_reason = "INSUFFICIENT_QUALIFIED" if is_incomplete else None
+            warning_message = (
+                f"Only {eligible_candidate_count} candidates satisfied the required criteria. "
+                "The remaining candidates did not meet the qualification threshold."
+            ) if is_incomplete else None
             return PipelineExecutionResponse(
                 stage="completed",
                 matched_candidate_count=matched_candidate_count,
                 eligible_candidate_count=eligible_candidate_count,
-                selected_candidate_count=selected_candidate_count,
+                selected_candidate_count=0,
                 top_k=data.k,
                 candidates=[],
+                is_shortlist_incomplete=is_incomplete,
+                warning_reason=warning_reason,
+                warning_message=warning_message,
             )
 
         await progress_reporter.update_stage("SYNCHRONIZING")
@@ -602,12 +620,10 @@ class ScoringService:
                 candidate=candidate_lookup[candidate_id],
                 prescore_rank=prescore_lookup[candidate_id][0],
                 prescore_score=prescore_lookup[candidate_id][1],
-                score=deep_score_lookup.get(
-                    candidate_id,
-                ),
+                score=deep_score_lookup[candidate_id],
             )
             for candidate_id in top_candidate_ids
-            if candidate_id in candidate_lookup
+            if candidate_id in candidate_lookup and candidate_id in deep_score_lookup
         ]
 
         candidates.sort(
@@ -659,13 +675,33 @@ class ScoringService:
             )
             logger.error(discrepancy_msg)
 
+        is_shortlist_incomplete = len(candidates) < data.k
+        warning_reason = None
+        warning_message = None
+        if is_shortlist_incomplete:
+            if eligible_candidate_count < data.k:
+                warning_reason = "INSUFFICIENT_QUALIFIED"
+                warning_message = (
+                    f"Only {eligible_candidate_count} candidates satisfied the required criteria. "
+                    "The remaining candidates did not meet the qualification threshold."
+                )
+            else:
+                warning_reason = "EVALUATION_FAILURE"
+                warning_message = (
+                    f"Only {len(candidates)} candidates successfully completed the evaluation. "
+                    "Some selected candidates could not be processed due to temporary evaluation failures. Try rescoring again later."
+                )
+
         return PipelineExecutionResponse(
             stage="completed",
             matched_candidate_count=matched_candidate_count,
             eligible_candidate_count=eligible_candidate_count,
-            selected_candidate_count=selected_candidate_count,
+            selected_candidate_count=api_returned_count,
             top_k=data.k,
             candidates=candidates,
+            is_shortlist_incomplete=is_shortlist_incomplete,
+            warning_reason=warning_reason,
+            warning_message=warning_message,
         )
 
     def _generate_pipeline_report(
