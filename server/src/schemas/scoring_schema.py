@@ -381,6 +381,9 @@ class PipelineExecutionResponse(BaseModel):
     candidates: list[PipelineCandidateResult] = Field(
         default_factory=list,
     )
+    is_shortlist_incomplete: bool = False
+    warning_reason: str | None = None
+    warning_message: str | None = None
 
 
 class PipelineEnqueueResponse(BaseModel):
@@ -401,6 +404,10 @@ class PipelineTaskStatusResponse(BaseModel):
     eligible_candidate_count: int | None = None
     selected_candidate_count: int | None = None
     job_description_title: str | None = None
+    top_k: int | None = None
+    is_shortlist_incomplete: bool | None = None
+    warning_reason: str | None = None
+    warning_message: str | None = None
 
 
 class ShortlistShareRequest(BaseModel):

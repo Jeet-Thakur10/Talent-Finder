@@ -208,4 +208,8 @@ export interface PipelineTaskStatus {
   eligible_candidate_count: number | null;
   selected_candidate_count: number | null;
   job_description_title?: string;
+  top_k?: number | null;
+  is_shortlist_incomplete?: boolean | null;
+  warning_reason?: string | null;
+  warning_message?: string | null;
 }
