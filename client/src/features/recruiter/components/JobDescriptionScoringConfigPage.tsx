@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useRecruiterJobDescriptionDetail } from "../hooks/useRecruiterJobDescriptionDetail";
 import { useRecruiterScoringConfig } from "../hooks/useRecruiterScoringConfig";
@@ -26,6 +27,12 @@ export function JobDescriptionScoringConfigPage() {
     error,
     submitScoring,
   } = useRecruiterScoringConfig(jobDescriptionId);
+
+  useEffect(() => {
+    if (isSuccess && jobDescriptionId) {
+      navigate(`/recruiter/job-descriptions/${jobDescriptionId}`);
+    }
+  }, [isSuccess, jobDescriptionId, navigate]);
 
   const getHiringManagerName = (managerId: string | null) => {
     if (!managerId) return "Unassigned";
@@ -76,7 +83,7 @@ export function JobDescriptionScoringConfigPage() {
           <span>Job Details</span>
         )}
         <span className="mx-2">/</span>
-        <span className="text-slate-800 font-bold">Scoring Configuration</span>
+        <span className="text-slate-800 font-bold">Evaluation Configuration</span>
       </nav>
 
       {isPageLoading ? (
@@ -92,7 +99,7 @@ export function JobDescriptionScoringConfigPage() {
           
           {/* 1. Job Summary */}
           <div className="surface-card">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Scoring Campaign Profile</h2>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Evaluation Campaign Profile</h2>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h1 className="text-xl font-bold text-slate-900">{jobDescription.title}</h1>
@@ -159,7 +166,7 @@ export function JobDescriptionScoringConfigPage() {
             </div>
           ) : (
             <form onSubmit={handleFormSubmit} className="surface-card space-y-6">
-              <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Scoring Constraints Configuration</h2>
+              <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Candidate Match Constraints</h2>
               
               {/* Final Shortlist Size */}
               <div className="space-y-1.5">
@@ -219,10 +226,10 @@ export function JobDescriptionScoringConfigPage() {
                   {isSubmitting ? (
                     <>
                       <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Enqueuing Scoring Task...</span>
+                      <span>Starting candidate evaluation...</span>
                     </>
                   ) : (
-                    <span>Start Background Scoring</span>
+                    <span>Find Candidates</span>
                   )}
                 </button>
               </div>

@@ -18,7 +18,7 @@ import { JobDescriptionEditPage } from "../../features/recruiter/components/JobD
 import { JobDescriptionScoringConfigPage } from "../../features/recruiter/components/JobDescriptionScoringConfigPage";
 import { JobDescriptionCandidatesPage } from "../../features/recruiter/components/JobDescriptionCandidatesPage";
 import { RecruiterCandidateDetailPage } from "../../features/recruiter/components/RecruiterCandidateDetailPage";
-import { RecruiterTasksPage } from "../../features/recruiter/components/RecruiterTasksPage";
+
 import { ProfilePage as RecruiterProfilePage } from "../../features/recruiter/components/ProfilePage";
 
 // Hiring Manager Layout & Components
@@ -115,7 +115,7 @@ export function AppRoutes() {
         <Route path="job-descriptions/:jobDescriptionId/score-config" element={<JobDescriptionScoringConfigPage />} />
         <Route path="job-descriptions/:jobDescriptionId/candidates" element={<JobDescriptionCandidatesPage />} />
         <Route path="job-descriptions/:jobDescriptionId/candidates/:candidateId" element={<RecruiterCandidateDetailPage />} />
-        <Route path="tasks" element={<RecruiterTasksPage />} />
+
         <Route path="profile" element={<RecruiterProfilePage />} />
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>
