@@ -5,28 +5,6 @@ import { useLatestJobTask } from "../hooks/useLatestJobTask";
 import { useShortlistSharing } from "../hooks/useShortlistSharing";
 import { ShortlistShareDialog } from "./ShortlistShareDialog";
 
-function getStageFriendlyName(stage: string): string {
-  switch (stage.toUpperCase()) {
-    case "QUEUED":
-      return "Queued";
-    case "ACQUIRING":
-      return "Acquiring Candidates";
-    case "SOURCING":
-      return "External Sourcing";
-    case "PRE_SCORING":
-      return "Pre-screening Candidates";
-    case "SYNCHRONIZING":
-      return "Preparing Candidate Profiles";
-    case "DEEP_SCORING":
-      return "Evaluating Candidates";
-    case "COMPLETED":
-      return "Completed";
-    case "FAILED":
-      return "Failed";
-    default:
-      return stage;
-  }
-}
 
 export function JobDescriptionCandidatesPage() {
   const { jobDescriptionId } = useParams<{ jobDescriptionId: string }>();
@@ -144,7 +122,7 @@ export function JobDescriptionCandidatesPage() {
           {jobDescription && (
             <div className="surface-card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Scoring Campaign Summary</span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Evaluation Campaign Summary</span>
                 <h1 className="text-xl font-bold text-slate-900 mt-1">{jobDescription.title}</h1>
                 <p className="text-xs text-slate-500 mt-1">
                   Department: <span className="text-slate-700 font-semibold">{jobDescription.department || "-"}</span>
@@ -184,19 +162,18 @@ export function JobDescriptionCandidatesPage() {
                 </svg>
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-bold text-slate-900">Candidate Evaluation In Progress</h3>
+                <h3 className="text-lg font-bold text-slate-900">Candidate Search In Progress</h3>
                 <p className="text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
-                  Evaluation is still running in the background. Current pipeline stage:{" "}
-                  <span className="font-bold text-slate-700">{getStageFriendlyName(latestTask.current_stage)}</span>.
+                  We are currently finding and evaluating candidates for this job description.
                 </p>
               </div>
               <div className="pt-4 border-t border-slate-100 flex gap-3 justify-center">
                 <button
                   type="button"
-                  onClick={() => navigate("/recruiter/tasks")}
+                  onClick={() => navigate(`/recruiter/job-descriptions/${jobDescriptionId}`)}
                   className="workspace-primary-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer focus:outline-none shadow-md shadow-slate-900/10"
                 >
-                  View Tasks
+                  Return to Job Description
                 </button>
                 <button
                   type="button"
@@ -215,9 +192,9 @@ export function JobDescriptionCandidatesPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900">No Scored Candidates</h3>
+              <h3 className="mt-4 text-base font-semibold text-slate-900">No Evaluated Candidates</h3>
               <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-                No candidates have been scored for this Job Description yet. You must configure matching constraints and run evaluations first.
+                No candidates have been evaluated for this Job Description yet. Please configure match constraints and find candidates first.
               </p>
               <div className="mt-6">
                 <button
@@ -225,7 +202,7 @@ export function JobDescriptionCandidatesPage() {
                   onClick={() => navigate(`/recruiter/job-descriptions/${jobDescriptionId}/score-config`)}
                   className="workspace-primary-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer focus:outline-none"
                 >
-                  Start Scoring
+                  Find Candidates
                 </button>
               </div>
             </div>
