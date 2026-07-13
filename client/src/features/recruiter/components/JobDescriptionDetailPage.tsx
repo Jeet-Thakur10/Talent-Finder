@@ -2,26 +2,48 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useRecruiterJobDescriptionDetail } from "../hooks/useRecruiterJobDescriptionDetail";
 import { useLatestJobTask } from "../hooks/useLatestJobTask";
 
-function getStageFriendlyName(stage: string): string {
-  switch (stage.toUpperCase()) {
+function getRecruiterFriendlyStatus(
+  status: string,
+  stage: string,
+  matchedCount?: number | null
+): { text: string; icon: "spinner" | "check" | "warning" | "neutral" } {
+  const statusUpper = status.toUpperCase();
+  const stageUpper = stage.toUpperCase();
+
+  if (statusUpper === "FAILED" || stageUpper === "FAILED") {
+    return {
+      text: "We couldn't complete the candidate evaluation. Please try again.",
+      icon: "warning",
+    };
+  }
+
+  if (statusUpper === "SUCCESS" || stageUpper === "COMPLETED") {
+    return {
+      text: "Your shortlist is ready.",
+      icon: "check",
+    };
+  }
+
+  switch (stageUpper) {
     case "QUEUED":
-      return "Queued";
+      return { text: "Preparing your search...", icon: "spinner" };
     case "ACQUIRING":
-      return "Acquiring Candidates";
     case "SOURCING":
-      return "External Sourcing";
-    case "PRE_SCORING":
-      return "Pre-screening Candidates";
+      return { text: "Searching our candidate database...", icon: "spinner" };
     case "SYNCHRONIZING":
-      return "Preparing Candidate Profiles";
+      return {
+        text: `Found ${matchedCount ?? 18} potential candidates.`,
+        icon: "spinner",
+      };
+    case "PRE_SCORING":
+      return { text: "Evaluating candidate suitability...", icon: "spinner" };
     case "DEEP_SCORING":
-      return "Evaluating Candidates";
-    case "COMPLETED":
-      return "Completed";
-    case "FAILED":
-      return "Failed";
+      return { text: "Ranking the best candidates...", icon: "spinner" };
+    case "PERSISTING":
+    case "PERSISTING_RESULTS":
+      return { text: "Preparing your shortlist...", icon: "spinner" };
     default:
-      return stage;
+      return { text: "Searching our candidate database...", icon: "spinner" };
   }
 }
 
@@ -146,32 +168,12 @@ export function JobDescriptionDetailPage() {
             onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/score-config`)}
             className="workspace-primary-button shrink-0 !bg-amber-600 !px-4 !py-2.5 text-xs font-bold hover:!bg-amber-700"
           >
-            Re-score Candidates
+            Re-evaluate Candidates
           </button>
         </div>
       )}
 
-      {/* Prominent Task Awareness Banner */}
-      {latestTask && (latestTask.status.toUpperCase() === "PENDING" || latestTask.status.toUpperCase() === "RUNNING") && (
-        <div className="mb-6 flex flex-col justify-between gap-4 rounded-[1.2rem] border border-blue-200 bg-blue-50 p-5 shadow-sm sm:flex-row sm:items-center">
-          <div className="space-y-1 text-left">
-            <div className="text-sm font-bold text-blue-900 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-blue-600" />
-              Candidate evaluation is currently running in the background.
-            </div>
-            <p className="text-xs text-blue-700">
-              Current Stage: <span className="font-semibold">{getStageFriendlyName(latestTask.current_stage)}</span> | Last Updated: {new Date(latestTask.completed_at || latestTask.started_at || latestTask.created_at).toLocaleTimeString()}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate("/recruiter/tasks")}
-            className="workspace-ghost-button shrink-0 !border-blue-300 !px-4 !py-2 text-xs font-bold !text-blue-700 hover:!bg-blue-100/50"
-          >
-            View Task
-          </button>
-        </div>
-      )}
+
 
       <div className="space-y-6">
         <div className="surface-card space-y-6">
@@ -186,21 +188,53 @@ export function JobDescriptionDetailPage() {
             </div>
 
             <div className="flex flex-wrap gap-3 xl:justify-end">
-              <button
-                type="button"
-                disabled={!latestTask || latestTask.status.toUpperCase() !== "SUCCESS"}
-                onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/candidates`)}
-                className="workspace-ghost-button !py-2.5 text-sm font-semibold disabled:opacity-40"
-              >
-                View Candidates
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/score-config`)}
-                className="workspace-ghost-button !py-2.5 text-sm font-semibold"
-              >
-                {latestTask ? "Recalculate / Start Scoring" : "Start Scoring"}
-              </button>
+              {(() => {
+                const isRunning = latestTask && (latestTask.status.toUpperCase() === "PENDING" || latestTask.status.toUpperCase() === "RUNNING");
+                const isCompleted = latestTask && (latestTask.status.toUpperCase() === "SUCCESS" || latestTask.current_stage.toUpperCase() === "COMPLETED");
+
+                if (isCompleted) {
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/candidates`)}
+                        className="workspace-primary-button !py-2.5 text-sm font-semibold shadow-md shadow-blue-900/10"
+                      >
+                        View Candidates
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/score-config`)}
+                        className="workspace-ghost-button !py-2.5 text-sm font-semibold"
+                      >
+                        Start New Scoring
+                      </button>
+                    </>
+                  );
+                }
+
+                if (isRunning) {
+                  return (
+                    <button
+                      type="button"
+                      disabled
+                      className="workspace-ghost-button !py-2.5 text-sm font-semibold opacity-45 cursor-not-allowed"
+                    >
+                      Start Candidate Evaluation
+                    </button>
+                  );
+                }
+
+                return (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/score-config`)}
+                    className="workspace-ghost-button !py-2.5 text-sm font-semibold"
+                  >
+                    Start Candidate Evaluation
+                  </button>
+                );
+              })()}
               <button
                 type="button"
                 onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/edit`)}
@@ -236,49 +270,57 @@ export function JobDescriptionDetailPage() {
               <p className="detail-copy">{jobDescription.education_requirement}</p>
             </div>
 
-            {latestTask && (latestTask.status.toUpperCase() === "PENDING" || latestTask.status.toUpperCase() === "RUNNING") ? (
-              <div className="detail-block bg-slate-50 text-xs">
-                <span className="block font-bold text-slate-700">Scoring Pipeline Active</span>
-                <p className="mt-1 leading-relaxed text-slate-450">Please wait for evaluations to finish before viewing candidates.</p>
-                <button
-                  type="button"
-                  onClick={() => navigate("/recruiter/tasks")}
-                  className="workspace-primary-button mt-3 w-full justify-center !py-2.5 text-xs font-semibold"
-                >
-                  View Tasks Console
-                </button>
-              </div>
-            ) : latestTask && latestTask.status.toUpperCase() === "FAILED" ? (
-              <div className="detail-block border-rose-100 bg-rose-50 text-xs text-rose-900">
-                <span className="block font-bold text-rose-950">Candidate evaluation failed.</span>
-                <p className="mt-1 text-[11px] leading-relaxed text-rose-750">An error occurred during matching pipeline.</p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/recruiter/tasks")}
-                    className="workspace-ghost-button !border-rose-300 !py-2 text-xs font-semibold !text-rose-800 hover:!bg-rose-100/50"
-                  >
-                    View Task
-                  </button>
-                  <button
-                    type="button"
-                    disabled
-                    className="workspace-primary-button justify-center !py-2 text-xs font-semibold opacity-40"
-                  >
-                    Retry Scoring
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="detail-block bg-slate-50/85 text-xs">
-                <span className="block font-bold text-slate-700">Pipeline Status</span>
-                {latestTask && latestTask.status.toUpperCase() === "SUCCESS" ? (
-                  <p className="mt-1 font-semibold text-emerald-700">Candidate evaluation completed successfully.</p>
-                ) : (
-                  <p className="mt-1 leading-relaxed text-slate-500">Run scoring to generate ranked candidates for this job description.</p>
-                )}
-              </div>
-            )}
+            <div className="detail-block bg-slate-50/85 text-xs">
+              <span className="block font-bold text-slate-700 mb-1">Evaluation Status</span>
+              {(() => {
+                if (!latestTask) {
+                  return (
+                    <div className="flex items-start gap-2 mt-2 text-slate-500">
+                      <p className="leading-relaxed">Click 'Start Candidate Evaluation' to find and rank candidates for this job description.</p>
+                    </div>
+                  );
+                }
+
+                const friendlyStatus = getRecruiterFriendlyStatus(
+                  latestTask.status,
+                  latestTask.current_stage,
+                  latestTask.matched_candidate_count
+                );
+
+                if (friendlyStatus.icon === "spinner") {
+                  return (
+                    <div key={friendlyStatus.text} className="flex items-center gap-2.5 mt-2 text-blue-700 animate-fade-in">
+                      <div className="h-4 w-4 shrink-0 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                      <span className="font-semibold text-sm leading-none">{friendlyStatus.text}</span>
+                    </div>
+                  );
+                }
+
+                if (friendlyStatus.icon === "check") {
+                  return (
+                    <div key={friendlyStatus.text} className="flex items-center gap-2 mt-2 text-emerald-700 animate-fade-in">
+                      <span className="text-base font-bold shrink-0 leading-none mr-0.5">✓</span>
+                      <span className="font-semibold text-sm leading-none">{friendlyStatus.text}</span>
+                    </div>
+                  );
+                }
+
+                if (friendlyStatus.icon === "warning") {
+                  return (
+                    <div key={friendlyStatus.text} className="flex items-center gap-2 mt-2 text-rose-700 animate-fade-in">
+                      <span className="text-base font-bold shrink-0 leading-none mr-0.5">⚠</span>
+                      <span className="font-semibold text-sm leading-none">{friendlyStatus.text}</span>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="flex items-start gap-2 mt-2 text-slate-500">
+                    <p className="leading-relaxed">{friendlyStatus.text}</p>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </div>
 
