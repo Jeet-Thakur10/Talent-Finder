@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_groq import ChatGroq
+from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
 from pydantic import SecretStr
 
 from src.config.settings import settings
