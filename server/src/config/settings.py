@@ -43,9 +43,22 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]
 
     GROQ_API_KEY: str = ""
+    GROQ_SECOND_API_KEY: str = ""
+    GROQ_API_KEYS: str = ""
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
     SCORING_LLM_PROVIDER: str = "groq"
+
+    @property
+    def groq_keys(self) -> list[str]:
+        if self.GROQ_API_KEYS:
+            return [k.strip() for k in self.GROQ_API_KEYS.split(",") if k.strip()]
+        keys = []
+        if self.GROQ_API_KEY:
+            keys.append(self.GROQ_API_KEY)
+        if self.GROQ_SECOND_API_KEY:
+            keys.append(self.GROQ_SECOND_API_KEY)
+        return keys
 
     HF_TOKEN: str = ""
     HF_MODEL: str = "meta-llama/Llama-3.3-70B-Instruct"
