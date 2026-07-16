@@ -138,6 +138,12 @@ export function JobDescriptionDetailPage() {
   const mandatorySkills = jobDescription.skills.filter((s) => s.is_mandatory);
   const preferredSkills = jobDescription.skills.filter((s) => !s.is_mandatory);
 
+  const isRunning = Boolean(
+    latestTask &&
+      (latestTask.status.toUpperCase() === "PENDING" ||
+        latestTask.status.toUpperCase() === "RUNNING")
+  );
+
   return (
     <div className="workspace-shell">
       {/* 1. Breadcrumb */}
@@ -189,7 +195,6 @@ export function JobDescriptionDetailPage() {
 
             <div className="flex flex-wrap gap-3 xl:justify-end">
               {(() => {
-                const isRunning = latestTask && (latestTask.status.toUpperCase() === "PENDING" || latestTask.status.toUpperCase() === "RUNNING");
                 const isCompleted = latestTask && (latestTask.status.toUpperCase() === "SUCCESS" || latestTask.current_stage.toUpperCase() === "COMPLETED");
 
                 if (isCompleted) {
@@ -237,8 +242,19 @@ export function JobDescriptionDetailPage() {
               })()}
               <button
                 type="button"
-                onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/edit`)}
-                className="workspace-ghost-button !py-2.5 text-sm font-semibold"
+                disabled={isRunning}
+                onClick={() => {
+                  if (isRunning) return;
+                  navigate(`/recruiter/job-descriptions/${jobDescription.id}/edit`);
+                }}
+                className={`workspace-ghost-button !py-2.5 text-sm font-semibold ${
+                  isRunning ? "opacity-45 cursor-not-allowed" : ""
+                }`}
+                title={
+                  isRunning
+                    ? "Editing is disabled while candidate scoring is in progress."
+                    : undefined
+                }
               >
                 Edit Job Description
               </button>

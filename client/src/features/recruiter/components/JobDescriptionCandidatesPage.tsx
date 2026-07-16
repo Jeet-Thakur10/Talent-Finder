@@ -334,22 +334,22 @@ export function JobDescriptionCandidatesPage() {
 
           {/* Floating Sticky Handoff Action Bar */}
           {selectedIds.size > 0 && (
-            <div className="animate-slide-up fixed bottom-5 left-1/2 z-40 flex w-11/12 max-w-xl items-center justify-between gap-6 rounded-[1.2rem] border border-slate-800 bg-slate-950 px-5 py-3.5 text-white shadow-[0_20px_50px_-10px_rgba(15,23,42,0.6)] transition-all">
-              <span className="text-xs font-semibold text-slate-200">
+            <div className="workspace-selection-bar animate-slide-up fixed bottom-5 left-1/2 z-40 flex w-11/12 max-w-xl items-center justify-between gap-6 rounded-[1.2rem] border border-[#6A89A7]/40 bg-[#384959] px-5 py-3.5 text-white shadow-[0_20px_50px_-10px_rgba(15,23,42,0.6)] transition-all">
+              <span className="text-xs font-semibold text-[#BDDDFC]">
                 {selectedIds.size} {selectedIds.size === 1 ? "candidate" : "candidates"} selected
               </span>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={clearSelection}
-                  className="px-3.5 py-2 text-xs font-bold text-slate-350 hover:text-white transition focus:outline-none cursor-pointer"
+                  className="px-3.5 py-2 text-xs font-bold text-[#BDDDFC] hover:text-white transition focus:outline-none cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleOpenShareDialog}
-                  className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-blue-900/30 transition hover:bg-blue-500 focus:outline-none"
+                  className="workspace-primary-button !py-2 !px-4 text-xs"
                 >
                   Share Shortlist
                 </button>

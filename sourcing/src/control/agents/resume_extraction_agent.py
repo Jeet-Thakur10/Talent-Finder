@@ -27,18 +27,7 @@ logger = logging.getLogger(__name__)
 
 class ResumeExtractionAgent:
     def __init__(self) -> None:
-        self._llm = ChatGroq(
-            api_key=settings.GROQ_API_KEY,
-            model=settings.GROQ_MODEL,
-            temperature=0,
-        )
-
-        self._structured_llm = (
-            self._llm.with_structured_output(
-                ResumeCandidateOutput,
-                method="json_mode",
-            )
-        )
+        pass
 
     def _format_pydantic_error(self, exc: ValidationError) -> str:
         try:
@@ -111,9 +100,17 @@ class ResumeExtractionAgent:
         print("Invoking Groq extraction...\n")
 
         try:
+            llm = ChatGroq(
+                model=settings.GROQ_MODEL,
+                temperature=0,
+            )
+            structured_llm = llm.with_structured_output(
+                ResumeCandidateOutput,
+                method="json_mode",
+            )
             result = cast(
                 ResumeCandidateOutput,
-                self._structured_llm.invoke(
+                structured_llm.invoke(
                     messages,
                 ),
             )

@@ -91,6 +91,13 @@ class ScoringService:
         self.scoring_client = CandidateScoringClient()
         self.prescoring_client = CandidatePrescoringClient()
 
+        # Concurrency Semaphore configuration
+        num_keys = len(settings.groq_keys)
+        if num_keys == 0:
+            num_keys = 1
+        effective_concurrency = num_keys * settings.GROQ_CONCURRENCY_PER_KEY
+        self.concurrency_semaphore = asyncio.Semaphore(effective_concurrency)
+
         # Instantiate clients and agents
         self.search_client: CandidateSearchClient | None = CandidateSearchClient()
         self.search_query_agent = CandidateSearchQueryAgent()
@@ -180,6 +187,26 @@ class ScoringService:
 
         scoring_tasks = []
         task_candidate_ids = []
+        active_requests_count = 0
+        max_active_requests = 0
+
+        async def throttled_scoring_task(candidate):
+            nonlocal active_requests_count, max_active_requests
+            async with self.concurrency_semaphore:
+                active_requests_count += 1
+                if active_requests_count > max_active_requests:
+                    max_active_requests = active_requests_count
+                try:
+                    res = await self.scoring_client.score_candidate(
+                        scoring_job,
+                        self._build_candidate_scoring_input(
+                            candidate,
+                        ),
+                    )
+                    return res
+                finally:
+                    active_requests_count -= 1
+
         for candidate in candidates:
             cid = candidate.id
             if context and cid in context.candidates:
@@ -193,12 +220,7 @@ class ScoringService:
                 state.scoring = StageStatus.PENDING
 
             scoring_tasks.append(
-                self.scoring_client.score_candidate(
-                    scoring_job,
-                    self._build_candidate_scoring_input(
-                        candidate,
-                    ),
-                )
+                throttled_scoring_task(candidate)
             )
             task_candidate_ids.append(cid)
 
@@ -214,6 +236,14 @@ class ScoringService:
         )
         scoring_duration = (time.perf_counter() - start_time) * 1000.0
         per_task_duration = scoring_duration / len(scoring_tasks)
+
+        logger.info(
+            f"Candidate scoring batch execution complete. "
+            f"Max simultaneous requests: {max_active_requests}. "
+            f"Total tasks: {len(scoring_tasks)}. "
+            f"Duration: {scoring_duration:.2f}ms. "
+            f"Average task duration: {per_task_duration:.2f}ms."
+        )
 
         candidate_scores: list[CandidateScoreOutput] = []
         for cid, result in zip(task_candidate_ids, results):

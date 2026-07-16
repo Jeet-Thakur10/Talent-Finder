@@ -38,7 +38,7 @@ export function WorkspaceLayout({
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col bg-transparent">
-      <div className="dashboard-brand border-b border-slate-100 px-6 py-5">
+      <div className="dashboard-brand border-b border-[#6A89A7]/20 px-6 py-5">
         <div className="dashboard-brand-mark">
           {brandMark}
         </div>
@@ -68,16 +68,16 @@ export function WorkspaceLayout({
         ))}
       </nav>
 
-      <div className="border-t border-slate-100 p-4">
+      <div className="border-t border-[#6A89A7]/20 p-4">
         <div className="flex items-center gap-3">
           <div className="workspace-avatar rounded-full">
             {userInitial}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-semibold text-slate-900 truncate">
+            <div className="text-xs font-semibold text-white truncate">
               {user?.name}
             </div>
-            <div className="text-[10px] text-slate-500 truncate">
+            <div className="text-[10px] text-[#BDDDFC] truncate">
               {user?.email}
             </div>
           </div>
@@ -134,10 +134,10 @@ export function WorkspaceLayout({
               <div className="workspace-avatar h-8 w-8 rounded-lg text-sm">
                 {brandMark}
               </div>
-              <span className="text-base font-semibold text-slate-950">{brandName}</span>
+              <span className="text-base font-semibold text-white">{brandName}</span>
             </div>
             <div className="hidden md:block">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BDDDFC]">
                 {portalName}
               </span>
             </div>
@@ -153,21 +153,21 @@ export function WorkspaceLayout({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white shadow-sm">
+                <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-[#384959] shadow-sm">
                   {unreadCount}
                 </span>
               )}
             </NavLink>
 
-            <div className="flex items-center gap-3 border-r border-slate-200 pr-4">
+            <div className="flex items-center gap-3 border-r border-[#6A89A7]/30 pr-4">
               <div className="workspace-avatar h-8 w-8 rounded-full text-xs">
                 {userInitial}
               </div>
               <div className="hidden sm:block text-right">
-                <div className="text-xs font-semibold text-slate-900">
+                <div className="text-xs font-semibold text-white">
                   {user?.name}
                 </div>
-                <div className="text-[10px] text-slate-400 capitalize">
+                <div className="text-[10px] text-[#BDDDFC] capitalize">
                   {user?.role ? user.role.replace("_", " ") : "User"}
                 </div>
               </div>

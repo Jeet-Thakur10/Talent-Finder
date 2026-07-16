@@ -1,9 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import { LoginPage } from "../../features/auth/components/LoginPage";
-import { ForgotPasswordPage } from "../../features/auth/components/ForgotPasswordPage";
-import { VerifyOtpPage } from "../../features/auth/components/VerifyOtpPage";
-import { ResetPasswordPage } from "../../features/auth/components/ResetPasswordPage";
 import { ProtectedRoute } from "../../features/auth/components/ProtectedRoute";
 
 import { PublicRoute } from "../../features/auth/components/PublicRoute";
@@ -75,7 +72,7 @@ export function AppRoutes() {
         path="/forgot-password"
         element={
           <PublicRoute>
-            <ForgotPasswordPage />
+            <LoginPage />
           </PublicRoute>
         }
       />
@@ -84,7 +81,7 @@ export function AppRoutes() {
         path="/verify-otp"
         element={
           <PublicRoute>
-            <VerifyOtpPage />
+            <LoginPage />
           </PublicRoute>
         }
       />
@@ -93,7 +90,7 @@ export function AppRoutes() {
         path="/reset-password"
         element={
           <PublicRoute>
-            <ResetPasswordPage />
+            <LoginPage />
           </PublicRoute>
         }
       />

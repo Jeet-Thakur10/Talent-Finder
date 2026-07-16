@@ -13,6 +13,7 @@ from src.core.exceptions.job_description_exception import (
     InvalidJobDescriptionStatus,
     JobDescriptionNotFound,
     RecruiterAccessRequired,
+    JobDescriptionScoringInProgress,
 )
 from src.data.models.postgres.jd_skill import JDSkill
 from src.data.models.postgres.job_description import JobDescription
@@ -157,6 +158,21 @@ class JobDescriptionService:
         if job_description.recruiter_id != current_user.user_id:
             raise JobDescriptionNotFound(
                 error_code="JOB_DESCRIPTION_NOT_FOUND",
+            )
+
+        # Check if candidate scoring is currently in progress
+        from src.data.models.postgres.scoring_task import ScoringTask
+        from sqlalchemy import select
+        scoring_task_res = await self.job_description_repository.db.execute(
+            select(ScoringTask).where(
+                ScoringTask.job_description_id == job_description_id,
+                ScoringTask.status.in_(["PENDING", "RUNNING"])
+            )
+        )
+        active_task = scoring_task_res.scalar_one_or_none()
+        if active_task:
+            raise JobDescriptionScoringInProgress(
+                details="Candidate scoring is in progress for this Job Description."
             )
 
         employment_type = (
