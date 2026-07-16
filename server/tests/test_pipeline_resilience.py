@@ -159,6 +159,8 @@ async def test_deep_scoring_isolation():
 
     # Initialize a mock DB session
     db_mock = MagicMock()
+    db_mock.execute = AsyncMock()
+    db_mock.flush = AsyncMock()
     service = ScoringService(db_mock)
 
     c1 = make_fake_candidate(1)
@@ -168,6 +170,7 @@ async def test_deep_scoring_isolation():
     )
     service.repository.upsert_candidate_scores = AsyncMock()
     service.repository.upsert_pipeline_entries = AsyncMock()
+    service.repository.get_status_by_code = AsyncMock(return_value=uuid4())
 
     # Mock authorized JD using schema
     jd_resp = JobDescriptionResponse(

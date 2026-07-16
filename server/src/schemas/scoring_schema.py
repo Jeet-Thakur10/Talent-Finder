@@ -140,7 +140,7 @@ class JobDescriptionScoringInput(BaseModel):
     responsibilities: str
 
     min_experience: int
-    max_experience: int
+    max_experience: int | None = None
 
     location: str
 

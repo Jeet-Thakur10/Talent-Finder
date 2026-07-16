@@ -13,15 +13,7 @@ from src.schemas.search_attempt import SearchOptimizationPlan
 
 class CandidateSearchStrategyAgent:
     def __init__(self) -> None:
-        self._llm = ChatGroq(
-            api_key=settings.GROQ_API_KEY,
-            model=settings.GROQ_MODEL,
-            temperature=0,
-        )
-        self._structured_llm = self._llm.with_structured_output(
-            SearchOptimizationPlan,
-            method="json_mode",
-        )
+        pass
 
     async def optimize(
         self,
@@ -60,9 +52,17 @@ class CandidateSearchStrategyAgent:
         ]
 
         try:
+            llm = ChatGroq(
+                model=settings.GROQ_MODEL,
+                temperature=0,
+            )
+            structured_llm = llm.with_structured_output(
+                SearchOptimizationPlan,
+                method="json_mode",
+            )
             result = cast(
                 SearchOptimizationPlan,
-                await self._structured_llm.ainvoke(messages),
+                await structured_llm.ainvoke(messages),
             )
             return result
         except Exception as exc:

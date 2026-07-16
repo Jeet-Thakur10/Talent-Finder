@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 class RotationalChatGroq(ChatGroq):
     _current_key_idx: ClassVar[int] = 0
     _keys: ClassVar[list[str]] = []
+    _key_cooldowns: ClassVar[list[float]] = []
+    _rate_limit_count: ClassVar[int] = 0
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         from src.config.settings import settings
@@ -24,6 +26,7 @@ class RotationalChatGroq(ChatGroq):
         # Load keys from settings if they haven't been loaded yet
         if not RotationalChatGroq._keys:
             RotationalChatGroq._keys = settings.groq_keys
+            RotationalChatGroq._key_cooldowns = [0.0] * len(RotationalChatGroq._keys)
 
         # Fallback to the provided api_key if no keys are found in settings
         if not RotationalChatGroq._keys:
@@ -33,14 +36,67 @@ class RotationalChatGroq(ChatGroq):
                     RotationalChatGroq._keys = [api_key.get_secret_value()]
                 else:
                     RotationalChatGroq._keys = [str(api_key)]
+                RotationalChatGroq._key_cooldowns = [0.0]* len(RotationalChatGroq._keys)
 
         # Apply the active key
         active_idx = RotationalChatGroq._current_key_idx
         if RotationalChatGroq._keys:
-            active_idx = active_idx % len(RotationalChatGroq._keys)
-            kwargs["api_key"] = RotationalChatGroq._keys[active_idx]
+            if len(RotationalChatGroq._key_cooldowns) != len(RotationalChatGroq._keys):
+                RotationalChatGroq._key_cooldowns = [0.0]* len(RotationalChatGroq._keys)
+
+            import time
+            selected_idx = -1
+            num_keys = len(RotationalChatGroq._keys)
+            for step in range(num_keys):
+                candidate_idx = (active_idx + step) % num_keys
+                if time.time() >= RotationalChatGroq._key_cooldowns[candidate_idx]:
+                    selected_idx = candidate_idx
+                    break
+
+            if selected_idx == -1:
+                # Fallback: choose the key with the smallest cooldown timestamp
+                selected_idx = min(
+                    range(num_keys),
+                    key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
+
+            RotationalChatGroq._current_key_idx = selected_idx
+            kwargs["api_key"] = RotationalChatGroq._keys[selected_idx]
 
         super().__init__(*args, **kwargs)
+
+    def _get_cooldown_from_error(self, exc: RateLimitError) -> float:
+        from src.config.settings import settings
+        default_cooldown = getattr(
+            settings, "GROQ_DEFAULT_RATE_LIMIT_COOLDOWN_SECONDS",
+            10.0)
+        if not exc.response or not hasattr(exc.response, "headers"):
+            return default_cooldown
+
+        headers = exc.response.headers
+
+        # 1. Try "retry-after"
+        retry_after = headers.get("retry-after")
+        if retry_after:
+            try:
+                return float(retry_after)
+            except ValueError:
+                pass
+
+        # 2. Try "x-ratelimit-reset-tokens"
+        reset_tokens = headers.get("x-ratelimit-reset-tokens")
+        if reset_tokens:
+            reset_tokens = reset_tokens.strip().lower()
+            try:
+                if reset_tokens.endswith("ms"):
+                    return float(reset_tokens[:-2]) / 1000.0
+                elif reset_tokens.endswith("s"):
+                    return float(reset_tokens[:-1])
+                else:
+                    return float(reset_tokens)
+            except ValueError:
+                pass
+
+        return default_cooldown
 
     def _sync_client_to_active_key(self) -> None:
         if not RotationalChatGroq._keys:
@@ -87,12 +143,32 @@ class RotationalChatGroq(ChatGroq):
                     f"{active_idx + 1}/{num_keys}."
                 )
                 return res
-            except RateLimitError:
+            except RateLimitError as exc:
                 print(f"Groq key {active_idx + 1}/{num_keys} exhausted.\n")
                 logger.warning(f"Groq key {active_idx + 1}/{num_keys} exhausted.")
 
-                # Switch to the next key index
-                RotationalChatGroq._current_key_idx = (active_idx + 1) % num_keys
+                # Increment the rate limit count
+                RotationalChatGroq._rate_limit_count += 1
+
+                # Set cooldown for the current key
+                import time
+                cooldown = self._get_cooldown_from_error(exc)
+                RotationalChatGroq._key_cooldowns[active_idx] = time.time() + cooldown
+
+                # Find the next available key starting from (active_idx + 1)
+                selected_idx = -1
+                for step in range(num_keys):
+                    candidate_idx = (active_idx + 1 + step) % num_keys
+                    if time.time() >= RotationalChatGroq._key_cooldowns[candidate_idx]:
+                        selected_idx = candidate_idx
+                        break
+                if selected_idx == -1:
+                    selected_idx = min(
+                        range(num_keys),
+                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx]
+                        )
+
+                RotationalChatGroq._current_key_idx = selected_idx
                 print(
                     "Switching to key "
                     f"{RotationalChatGroq._current_key_idx + 1}/{num_keys}."
@@ -144,12 +220,32 @@ class RotationalChatGroq(ChatGroq):
                     f"{active_idx + 1}/{num_keys}."
                 )
                 return res
-            except RateLimitError:
+            except RateLimitError as exc:
                 print(f"Groq key {active_idx + 1}/{num_keys} exhausted.\n")
                 logger.warning(f"Groq key {active_idx + 1}/{num_keys} exhausted.")
 
-                # Switch to the next key index
-                RotationalChatGroq._current_key_idx = (active_idx + 1) % num_keys
+                # Increment the rate limit count
+                RotationalChatGroq._rate_limit_count += 1
+
+                # Set cooldown for the current key
+                import time
+                cooldown = self._get_cooldown_from_error(exc)
+                RotationalChatGroq._key_cooldowns[active_idx] = time.time() + cooldown
+
+                # Find the next available key starting from (active_idx + 1)
+                selected_idx = -1
+                for step in range(num_keys):
+                    candidate_idx = (active_idx + 1 + step) % num_keys
+                    if time.time() >= RotationalChatGroq._key_cooldowns[candidate_idx]:
+                        selected_idx = candidate_idx
+                        break
+                if selected_idx == -1:
+                    selected_idx = min(
+                        range(num_keys),
+                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx]
+                    )
+
+                RotationalChatGroq._current_key_idx = selected_idx
                 print(
                     "Switching to key "
                     f"{RotationalChatGroq._current_key_idx + 1}/{num_keys}."

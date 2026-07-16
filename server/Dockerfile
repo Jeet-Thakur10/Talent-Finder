@@ -7,8 +7,9 @@ ENV PYTHONUNBUFFERED=1 \
 	UV_PROJECT_ENVIRONMENT=/app/.venv \
 	PATH="/app/.venv/bin:$PATH"
 
-RUN apt-get update \
- && apt-get install -y --no-install-recommends curl \
+# Use a custom browser User-Agent to bypass potential host/VPN/proxy filters that block default Debian APT requests
+RUN apt-get -o Acquire::http::User-Agent=Mozilla/5.0 update \
+ && apt-get -o Acquire::http::User-Agent=Mozilla/5.0 install -y --no-install-recommends curl \
  && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir uv

@@ -65,7 +65,7 @@ export function AddRecruiterModal({
       onClose();
     } catch (err: any) {
       const serverMessage = err.response?.data?.detail;
-      setError(serverMessage || "An error occurred while creating the recruiter account.");
+      setError(serverMessage || "An error occurred while creating the user account.");
     } finally {
       setIsSubmitting(false);
     }
@@ -83,7 +83,7 @@ export function AddRecruiterModal({
         <div className="workspace-modal-panel animate-fade-in flex w-full max-w-md flex-col relative z-10">
           {/* Header */}
           <div className="mb-5 pb-3 border-b border-slate-100">
-            <h3 className="text-lg font-bold text-slate-900 leading-tight">Add Recruiter</h3>
+            <h3 className="text-lg font-bold text-slate-900 leading-tight">Add User</h3>
             <p className="text-xs text-slate-500 mt-1">
               Create a new user account and dispatch a welcome email with credentials.
             </p>
@@ -169,7 +169,7 @@ export function AddRecruiterModal({
                 disabled={isSubmitting}
                 className="workspace-primary-button !px-5 !py-2 text-xs font-semibold shadow-md shadow-slate-900/10 cursor-pointer"
               >
-                {isSubmitting ? "Creating..." : "Create Recruiter"}
+                {isSubmitting ? "Creating..." : "Create User"}
               </button>
             </div>
           </form>

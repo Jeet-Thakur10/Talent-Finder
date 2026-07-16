@@ -2,38 +2,38 @@
 
 @layer components {
 	.dashboard-shell {
-		@apply flex min-h-screen w-full bg-transparent;
+		@apply flex min-h-screen w-full bg-[#BDDDFC];
 	}
 
 	.dashboard-sidebar,
 	.workspace-app-sidebar,
 	.workspace-app-sidebar-mobile {
-		@apply flex w-72 flex-col border-r border-slate-200/80 bg-white;
+		@apply flex w-72 flex-col border-r border-[#6A89A7]/20 bg-[#384959] text-[#BDDDFC];
 	}
 
 	.workspace-app-sidebar {
-		@apply shadow-[12px_0_40px_-32px_rgba(15,23,42,0.18)];
+		@apply shadow-[12px_0_40px_-32px_rgba(56,73,89,0.15)];
 	}
 
 	.workspace-app-sidebar-mobile {
-		@apply shadow-[0_28px_70px_-42px_rgba(15,23,42,0.4)];
+		@apply shadow-[0_28px_70px_-42px_rgba(56,73,89,0.3)];
 	}
 
 	.dashboard-brand {
-		@apply flex items-center gap-3;
+		@apply flex items-center gap-3 border-b border-[#6A89A7]/20 px-6 py-5;
 	}
 
 	.dashboard-brand-mark,
 	.workspace-avatar {
-		@apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_12px_24px_-16px_rgba(15,23,42,0.6)];
+		@apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6A89A7] text-sm font-bold text-white shadow-[0_12px_24px_-16px_rgba(56,73,89,0.3)];
 	}
 
 	.dashboard-brand-name {
-		@apply text-[0.97rem] font-semibold tracking-tight text-slate-950;
+		@apply text-[0.97rem] font-semibold tracking-tight text-white;
 	}
 
 	.dashboard-brand-copy {
-		@apply text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-400;
+		@apply text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#BDDDFC]/80;
 	}
 
 	.dashboard-nav {
@@ -41,29 +41,29 @@
 	}
 
 	.dashboard-nav-link {
-		@apply flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-950;
+		@apply flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#BDDDFC] transition hover:bg-[#6A89A7]/20 hover:text-white;
 	}
 
 	.dashboard-nav-link-active {
-		@apply bg-blue-50 text-blue-700 shadow-[inset_0_0_0_1px_rgba(37,99,235,0.08)];
+		@apply bg-[#88BDF2] text-[#384959] shadow-[inset_0_0_0_1px_rgba(56,73,89,0.08)];
 	}
 
 	.profile-card,
 	.workspace-sidebar-footer {
-		@apply mt-auto rounded-[1.2rem] border border-slate-200 bg-slate-50/80 p-4;
+		@apply mt-auto rounded-[1.2rem] border border-[#6A89A7]/20 bg-transparent p-4;
 	}
 
 	.profile-card-name {
-		@apply text-sm font-semibold text-slate-900;
+		@apply text-sm font-semibold text-white;
 	}
 
 	.profile-card-email {
-		@apply mt-1 text-xs text-slate-500;
+		@apply mt-1 text-xs text-[#BDDDFC];
 	}
 
 	.dashboard-main,
 	.workspace-main {
-		@apply flex min-w-0 flex-1 flex-col;
+		@apply flex min-w-0 flex-1 flex-col bg-[#BDDDFC];
 	}
 
 	.dashboard-main {
@@ -72,23 +72,24 @@
 
 	.dashboard-topbar,
 	.workspace-topbar {
-		@apply sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-slate-200/80 bg-white px-5 py-4;
+		@apply sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-[#6A89A7]/20 bg-[#384959] px-5 py-5;
 	}
 
 	.dashboard-breadcrumbs,
 	.workspace-breadcrumbs {
-		@apply flex flex-wrap items-center gap-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400;
+		@apply flex flex-wrap items-center gap-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[#6A89A7];
 	}
 
 	.workspace-breadcrumbs a,
+	.workspace-breadcrumbs span,
 	.workspace-breadcrumbs button,
 	.dashboard-breadcrumbs button {
-		@apply hover:text-slate-700;
+		@apply transition hover:text-[#384959] hover:underline cursor-pointer;
 	}
 
 	.notification-indicator,
 	.workspace-icon-button {
-		@apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900;
+		@apply inline-flex items-center justify-center gap-2 rounded-xl border border-[#6A89A7]/30 bg-transparent px-3 py-2 text-xs font-semibold text-[#BDDDFC] shadow-none transition hover:border-[#6A89A7]/50 hover:bg-[#6A89A7]/20 hover:text-white;
 	}
 
 	.notification-dot {
@@ -97,25 +98,32 @@
 	}
 
 	.campaign-table {
-		@apply mt-6 overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_18px_50px_-36px_rgba(15,23,42,0.35)];
+		@apply mt-6 overflow-hidden rounded-[1.25rem] border border-[#384959]/10 bg-[#6A89A7] shadow-sm;
 	}
 
 	.campaign-table-header,
 	.candidate-board-header {
-		@apply grid gap-4 border-b border-slate-200 bg-slate-50/95 px-5 py-3 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500;
+		@apply grid gap-4 border-b border-[#384959]/10 bg-[#384959] px-5 py-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#BDDDFC];
 	}
 
 	.campaign-table-row,
 	.candidate-board-row {
-		@apply grid gap-4 border-b border-slate-100 px-5 py-3.5 text-sm text-slate-700 transition last:border-b-0 hover:bg-slate-50/70;
+		@apply grid gap-4 border-b border-[#384959]/10 px-5 py-3.5 text-sm text-white transition last:border-b-0 hover:bg-[#88BDF2] hover:text-[#384959];
+	}
+
+	.campaign-table-row:hover .campaign-table-title,
+	.campaign-table-row:hover .campaign-table-value,
+	.candidate-board-row:hover .campaign-table-title,
+	.candidate-board-row:hover .campaign-table-value {
+		color: #384959 !important;
 	}
 
 	.campaign-table-title {
-		@apply break-words font-semibold text-slate-900;
+		@apply break-words font-semibold text-white;
 	}
 
 	.campaign-table-value {
-		@apply text-slate-600;
+		@apply text-[#BDDDFC];
 	}
 
 	.status-badge {
@@ -179,35 +187,35 @@
 	}
 
 	.workspace-shell {
-		@apply mx-auto flex w-full max-w-[1400px] min-h-full flex-col gap-6 px-4 py-6 md:px-6 md:py-7 xl:px-8;
+		@apply mx-auto flex w-full max-w-[1720px] min-h-full flex-col gap-6 px-4 py-6 md:px-6 md:py-7 xl:px-8;
 	}
 
 	.workspace-header {
-		@apply mx-auto flex w-full max-w-[1400px] flex-col gap-3;
+		@apply mx-auto flex w-full max-w-[1720px] flex-col gap-3;
 	}
 
 	.workspace-title {
-		@apply text-[1.75rem] font-semibold tracking-tight text-slate-950 break-words md:text-[2.1rem];
+		@apply text-[1.75rem] font-semibold tracking-tight text-[#384959] break-words md:text-[2.1rem];
 	}
 
 	.workspace-subtitle {
-		@apply max-w-3xl text-sm leading-6 text-slate-500;
+		@apply max-w-3xl text-sm leading-6 text-[#384959]/80;
 	}
 
 	.workspace-grid {
-		@apply mx-auto grid w-full max-w-[1400px] gap-6;
+		@apply mx-auto grid w-full max-w-[1720px] gap-6;
 	}
 
 	.metrics-grid {
-		@apply mx-auto grid w-full max-w-[1400px] gap-4;
+		@apply mx-auto grid w-full max-w-[1720px] gap-4;
 	}
 
 	.surface-card {
-		@apply rounded-[1.35rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_50px_-36px_rgba(15,23,42,0.35)];
+		@apply rounded-[1.35rem] border border-[#384959]/10 bg-[#6A89A7] p-5 shadow-sm text-white;
 	}
 
 	.surface-card-hero {
-		@apply mx-auto w-full max-w-[1400px];
+		@apply mx-auto w-full max-w-[1720px];
 	}
 
 	.section-header {
@@ -219,63 +227,63 @@
 	}
 
 	.section-title {
-		@apply text-[1.25rem] font-semibold tracking-tight text-slate-950;
+		@apply text-[1.25rem] font-semibold tracking-tight text-white;
 	}
 
 	.section-copy {
-		@apply mt-1 text-sm leading-6 text-slate-500;
+		@apply mt-1 text-sm leading-6 text-[#BDDDFC];
 	}
 
 	.count-chip {
-		@apply inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500;
+		@apply inline-flex items-center rounded-full border border-[#384959]/10 bg-[#384959]/35 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#BDDDFC];
 	}
 
 	.metric-surface {
-		@apply rounded-[1.2rem] border border-slate-200/80 bg-white p-5 shadow-[0_16px_40px_-34px_rgba(15,23,42,0.35)];
+		@apply rounded-[1.2rem] border border-[#384959]/10 bg-[#6A89A7] p-5 shadow-sm text-white;
 	}
 
 	.metric-surface-label {
-		@apply text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500;
+		@apply text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-[#BDDDFC];
 	}
 
 	.metric-surface-value {
-		@apply mt-3 text-3xl font-semibold tracking-tight text-slate-950;
+		@apply mt-3 text-3xl font-semibold tracking-tight text-white;
 	}
 
 	.metric-surface-copy {
-		@apply mt-2 text-sm leading-6 text-slate-500;
+		@apply mt-2 text-sm leading-6 text-[#BDDDFC];
 	}
 
 	.workspace-primary-button {
-		@apply inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_16px_30px_-18px_rgba(37,99,235,0.7)] transition duration-150 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60;
+		@apply inline-flex items-center justify-center rounded-xl bg-[#88BDF2] px-4 py-2.5 text-sm font-bold text-[#384959] shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md hover:shadow-[#384959]/10 focus:outline-none focus:ring-4 focus:ring-[#88BDF2]/20 disabled:cursor-not-allowed disabled:opacity-60;
 	}
 
 	.workspace-ghost-button {
-		@apply inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:opacity-60;
+		@apply inline-flex items-center justify-center rounded-xl border border-[#6A89A7] bg-transparent px-4 py-2.5 text-sm font-semibold text-[#384959] shadow-none transition duration-150 hover:bg-[#6A89A7]/10 focus:outline-none focus:ring-4 focus:ring-[#88BDF2]/20 disabled:cursor-not-allowed disabled:opacity-60;
 	}
 
 	.workspace-inline-link {
-		@apply text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:text-blue-700 hover:decoration-blue-500;
+		@apply text-sm font-bold text-[#384959] underline decoration-[#6A89A7] underline-offset-4 transition hover:text-[#88BDF2] hover:decoration-[#88BDF2];
 	}
 
 	.workspace-alert {
-		@apply mx-auto w-full max-w-[1400px] rounded-[1.1rem] border border-amber-200 bg-amber-50/95 px-4 py-3 text-sm leading-6 text-amber-900 shadow-[0_14px_35px_-30px_rgba(180,83,9,0.7)];
+		@apply mx-auto w-full max-w-[1720px] rounded-[1.1rem] border border-amber-200 bg-amber-50/95 px-4 py-3 text-sm leading-6 text-amber-900 shadow-[0_14px_35px_-30px_rgba(180,83,9,0.7)];
 	}
 
 	.empty-copy {
-		@apply text-sm leading-6 text-slate-500;
+		@apply text-sm leading-6 text-[#BDDDFC];
 	}
 
 	.workspace-empty-state {
-		@apply mx-auto flex w-full max-w-2xl flex-col items-center rounded-[1.35rem] border border-dashed border-slate-200 bg-white p-10 text-center shadow-[0_16px_40px_-34px_rgba(15,23,42,0.28)];
+		@apply mx-auto flex w-full max-w-2xl flex-col items-center rounded-[1.35rem] border border-dashed border-[#384959]/20 bg-[#6A89A7] p-10 text-center text-white shadow-sm;
 	}
 
 	.workspace-empty-icon {
-		@apply flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-500;
+		@apply flex h-14 w-14 items-center justify-center rounded-2xl border border-[#384959]/10 bg-[#384959]/30 text-[#BDDDFC];
 	}
 
 	.workspace-table-wrap {
-		@apply overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_18px_50px_-36px_rgba(15,23,42,0.35)];
+		@apply overflow-hidden rounded-[1.25rem] border border-[#384959]/10 bg-[#6A89A7] shadow-sm text-white;
 	}
 
 	.workspace-table {
@@ -283,35 +291,41 @@
 	}
 
 	.workspace-table thead th {
-		@apply bg-slate-50/95 px-5 py-3 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500;
+		@apply bg-[#384959] px-5 py-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#BDDDFC];
 	}
 
 	.workspace-table tbody {
-		@apply divide-y divide-slate-100;
+		@apply divide-y divide-[#384959]/10;
 	}
 
 	.workspace-table-row {
-		@apply transition hover:bg-slate-50/70;
+		@apply transition hover:bg-[#88BDF2] hover:text-[#384959];
+	}
+
+	.workspace-table-row:hover .workspace-table-title,
+	.workspace-table-row:hover .workspace-table-meta,
+	.workspace-table-row:hover .workspace-table-cell {
+		color: #384959 !important;
 	}
 
 	.workspace-table-cell {
-		@apply px-5 py-3.5 align-middle text-sm text-slate-600;
+		@apply px-5 py-3.5 align-middle text-sm text-white;
 	}
 
 	.workspace-table-title {
-		@apply break-words font-semibold text-slate-900;
+		@apply break-words font-semibold text-white;
 	}
 
 	.workspace-table-meta {
-		@apply mt-1 text-xs text-slate-500;
+		@apply mt-1 text-xs text-[#BDDDFC];
 	}
 
 	.workspace-list-card {
-		@apply rounded-[1.2rem] border border-slate-200 bg-white p-5 shadow-[0_14px_36px_-34px_rgba(15,23,42,0.32)] transition duration-150 hover:border-slate-300;
+		@apply rounded-[1.2rem] border border-[#384959]/10 bg-[#6A89A7] p-5 shadow-sm text-white transition duration-150 hover:border-[#6A89A7];
 	}
 
 	.workspace-list-card-muted {
-		@apply bg-slate-50/65;
+		@apply bg-[#384959]/30;
 	}
 
 	.job-list,
@@ -321,11 +335,11 @@
 	}
 
 	.job-card {
-		@apply w-full rounded-[1.2rem] border border-slate-200 bg-white p-5 text-left shadow-[0_14px_36px_-34px_rgba(15,23,42,0.32)] transition duration-150 hover:border-slate-300 hover:bg-slate-50/40;
+		@apply w-full rounded-[1.2rem] border border-[#384959]/10 bg-[#6A89A7] p-5 text-left text-white shadow-sm transition duration-150 hover:border-[#6A89A7] hover:bg-[#6A89A7]/80;
 	}
 
 	.job-card-active {
-		@apply border-blue-200 bg-blue-50/40 shadow-[0_18px_40px_-30px_rgba(37,99,235,0.28)];
+		@apply border-[#88BDF2] bg-[#384959]/40 shadow-sm;
 	}
 
 	.job-card-header {
@@ -333,16 +347,16 @@
 	}
 
 	.job-card-title {
-		@apply text-base font-semibold text-slate-950;
+		@apply text-base font-semibold text-white;
 	}
 
 	.job-card-meta,
 	.candidate-meta {
-		@apply text-sm leading-6 text-slate-500;
+		@apply text-sm leading-6 text-[#BDDDFC];
 	}
 
 	.job-card-copy {
-		@apply mt-3 text-sm leading-6 text-slate-600;
+		@apply mt-3 text-sm leading-6 text-white;
 	}
 
 	.detail-grid {
@@ -353,7 +367,7 @@
 	.timeline-card,
 	.candidate-row,
 	.metric-card {
-		@apply rounded-[1.15rem] border border-slate-200 bg-slate-50/75 p-4;
+		@apply rounded-[1.15rem] border border-[#384959]/10 bg-[#384959]/30 p-4 text-white;
 	}
 
 	.detail-block-full {
@@ -361,11 +375,11 @@
 	}
 
 	.detail-label {
-		@apply text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-slate-500;
+		@apply text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-[#BDDDFC];
 	}
 
 	.detail-copy {
-		@apply mt-2.5 text-sm leading-6 text-slate-700 break-words;
+		@apply mt-2.5 text-sm font-medium leading-6 text-[#384959] break-words;
 	}
 
 	.chip-row {
@@ -378,7 +392,7 @@
 	}
 
 	.skill-chip-primary {
-		@apply border-slate-900 bg-slate-950 text-white;
+		@apply border-[#384959] bg-[#384959] text-white;
 	}
 
 	.skill-chip-secondary {
@@ -398,7 +412,7 @@
 	}
 
 	.candidate-name {
-		@apply break-words text-base font-semibold text-slate-950;
+		@apply break-words text-base font-semibold text-white;
 	}
 
 	.candidate-actions,
@@ -407,7 +421,7 @@
 	}
 
 	.score-pill {
-		@apply inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700;
+		@apply inline-flex items-center rounded-full border border-[#384959]/10 bg-[#384959]/25 px-3 py-1 text-sm font-semibold text-white;
 	}
 
 	.score-pill-muted {
@@ -421,7 +435,7 @@
 
 	.form-textarea,
 	.resume-textarea {
-		@apply w-full rounded-[1rem] border border-slate-200 bg-white px-3.5 py-3 text-sm leading-6 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100;
+		@apply w-full rounded-[1rem] border border-[#6A89A7] bg-white px-3.5 py-3 text-sm leading-6 text-[#384959] shadow-sm outline-none transition placeholder:text-[#6A89A7]/60 focus:border-[#88BDF2] focus:bg-white focus:ring-4 focus:ring-[#88BDF2]/20;
 	}
 
 	.form-textarea {
@@ -437,23 +451,23 @@
 	}
 
 	.skill-editor-row {
-		@apply flex flex-col gap-3 rounded-[1rem] border border-slate-200 bg-white p-3.5;
+		@apply flex flex-col gap-3 rounded-[1rem] border border-[#384959]/10 bg-[#384959]/30 p-3.5;
 	}
 
 	.skill-toggle {
-		@apply inline-flex items-center gap-2 text-sm font-medium text-slate-700;
+		@apply inline-flex items-center gap-2 text-sm font-medium text-[#BDDDFC];
 	}
 
 	.confirmation-panel {
-		@apply mt-6 rounded-[1.2rem] border border-slate-200 bg-slate-50/75 p-5;
+		@apply mt-6 rounded-[1.2rem] border border-[#384959]/10 bg-[#384959]/35 p-5 text-white;
 	}
 
 	.confirmation-count {
-		@apply text-blue-700;
+		@apply text-[#88BDF2];
 	}
 
 	.empty-state-panel {
-		@apply rounded-[1.2rem] border border-dashed border-slate-300 bg-slate-50/60 p-8;
+		@apply rounded-[1.2rem] border border-dashed border-[#384959]/20 bg-[#384959]/25 p-8;
 	}
 
 	.results-table {
@@ -461,15 +475,15 @@
 	}
 
 	.results-table-header {
-		@apply hidden gap-3 rounded-[1.15rem] border border-slate-200 bg-slate-50 px-4 py-3 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500;
+		@apply hidden gap-3 rounded-[1.15rem] border border-[#384959]/10 bg-[#384959] px-4 py-3 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#BDDDFC];
 	}
 
 	.results-table-row {
-		@apply grid gap-4 rounded-[1.2rem] border border-slate-200 bg-white p-4 shadow-[0_14px_36px_-34px_rgba(15,23,42,0.32)];
+		@apply grid gap-4 rounded-[1.2rem] border border-[#384959]/10 bg-[#6A89A7] p-4 shadow-sm text-white;
 	}
 
 	.results-table-link {
-		@apply transition duration-150 hover:border-slate-300 hover:bg-slate-50/40;
+		@apply transition duration-150 hover:border-[#6A89A7] hover:bg-[#6A89A7]/85;
 	}
 
 	.results-cell {
@@ -477,7 +491,7 @@
 	}
 
 	.results-label {
-		@apply text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500 md:hidden;
+		@apply text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#BDDDFC] md:hidden;
 	}
 
 	.results-score-stack {
@@ -485,7 +499,7 @@
 	}
 
 	.results-link-title {
-		@apply underline decoration-slate-300 underline-offset-4 transition hover:text-blue-700 hover:decoration-blue-500;
+		@apply underline decoration-[#BDDDFC] underline-offset-4 transition hover:text-[#88BDF2] hover:decoration-white;
 	}
 
 	.chip-row-compact {
@@ -493,7 +507,7 @@
 	}
 
 	.score-hero {
-		@apply mb-6 flex flex-col gap-5 rounded-[1.35rem] bg-[linear-gradient(135deg,#0f172a_0%,#1e3a8a_100%)] p-6 text-white shadow-[0_24px_60px_-38px_rgba(15,23,42,0.55)];
+		@apply mb-6 flex flex-col gap-5 rounded-[1.35rem] bg-[linear-gradient(135deg,#384959_0%,#6A89A7_100%)] p-6 text-white shadow-sm;
 	}
 
 	.score-cluster {
@@ -501,11 +515,11 @@
 	}
 
 	.score-badge {
-		@apply flex min-w-32 flex-col rounded-[1rem] border border-white/15 bg-white/12 px-4 py-3;
+		@apply flex min-w-32 flex-col rounded-[1rem] border border-white/10 bg-white/10 px-4 py-3;
 	}
 
 	.score-badge-secondary {
-		@apply bg-white/8;
+		@apply bg-white/5;
 	}
 
 	.score-badge-value {
@@ -513,7 +527,7 @@
 	}
 
 	.score-badge-label {
-		@apply mt-1 text-[0.68rem] uppercase tracking-[0.2em] text-slate-200;
+		@apply mt-1 text-[0.68rem] uppercase tracking-[0.2em] text-[#BDDDFC];
 	}
 
 	.score-grid {
@@ -525,31 +539,31 @@
 	}
 
 	.metric-title {
-		@apply text-sm font-semibold text-slate-800;
+		@apply text-sm font-semibold text-white;
 	}
 
 	.metric-value {
-		@apply text-xs font-medium text-slate-500;
+		@apply text-xs font-medium text-[#BDDDFC];
 	}
 
 	.metric-bar {
-		@apply mt-3 h-2 overflow-hidden rounded-full bg-slate-200;
+		@apply mt-3 h-2 overflow-hidden rounded-full bg-[#384959]/40;
 	}
 
 	.metric-bar-fill {
-		@apply block h-full rounded-full bg-blue-600;
+		@apply block h-full rounded-full bg-[#88BDF2];
 	}
 
 	.workspace-modal-panel {
-		@apply relative w-full rounded-[1.25rem] border border-slate-200 bg-white p-6 shadow-[0_28px_70px_-40px_rgba(15,23,42,0.32)];
+		@apply relative w-full rounded-[1.25rem] border border-[#384959]/10 bg-[#6A89A7] p-6 shadow-sm text-white;
 	}
 
 	.workspace-modal-header {
-		@apply flex items-start justify-between gap-4 border-b border-slate-100 pb-4;
+		@apply flex items-start justify-between gap-4 border-b border-[#384959]/10 pb-4;
 	}
 
 	.workspace-modal-footer {
-		@apply flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 pt-4;
+		@apply flex flex-wrap items-center justify-end gap-3 border-t border-[#384959]/10 pt-4;
 	}
 
 	@media (min-width: 640px) {
@@ -784,3 +798,233 @@
 		transform: translateX(3px);
 	}
 }
+
+/* Stormy Morning Global Overrides for Container and Input Elements */
+.surface-card,
+.metric-surface,
+.workspace-empty-state,
+.job-card,
+.workspace-list-card,
+.workspace-table-wrap,
+.campaign-table,
+.workspace-modal-panel,
+.results-table-row,
+.candidate-drawer,
+.action-bar {
+	background-color: #ffffff !important;
+	border-color: rgba(106, 137, 167, 0.25) !important;
+	color: #384959 !important;
+	box-shadow: 0 20px 48px -10px rgba(56, 73, 89, 0.12) !important;
+}
+
+/* Inner card block surfaces (detailed cards, lists, panels) */
+.detail-block,
+.timeline-card,
+.candidate-row,
+.metric-card,
+.skill-editor-row,
+.confirmation-panel,
+.workspace-list-card-muted,
+.empty-state-panel {
+	background-color: rgba(189, 221, 252, 0.22) !important;
+	border-color: rgba(106, 137, 167, 0.15) !important;
+	color: #384959 !important;
+}
+
+/* Input Fields and Select Dropdowns styling inside dashboards */
+.form-textarea,
+.resume-textarea,
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+	background-color: #ffffff !important;
+	border-color: #6A89A7 !important;
+	color: #384959 !important;
+}
+.form-textarea::placeholder,
+.resume-textarea::placeholder,
+input::placeholder {
+	color: rgba(106, 137, 167, 0.6) !important;
+}
+.form-textarea:focus,
+.resume-textarea:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	border-color: #88BDF2 !important;
+	box-shadow: 0 0 0 4px rgba(136, 189, 242, 0.25) !important;
+}
+
+/* Label text color adjustment inside workspace forms */
+.import-form label,
+.dashboard-form label,
+form label {
+	color: #384959 !important;
+	font-weight: 700 !important;
+}
+
+/* Table styling updates for high contrast */
+.campaign-table-header,
+.candidate-board-header,
+.workspace-table thead th,
+.results-table-header {
+	background-color: #6A89A7 !important;
+	color: #ffffff !important;
+}
+.workspace-table tbody {
+	background-color: #ffffff !important;
+}
+.workspace-table-cell {
+	color: #384959 !important;
+}
+
+/* Row Hover Overrides to guarantee high text contrast and readability */
+.workspace-table-row:hover,
+.campaign-table-row:hover,
+.candidate-board-row:hover,
+.results-table-link:hover {
+	background-color: rgba(189, 221, 252, 0.3) !important;
+	color: #384959 !important;
+}
+.workspace-table-row:hover td,
+.workspace-table-row:hover span,
+.workspace-table-row:hover div,
+.workspace-table-row:hover p,
+.workspace-table-row:hover a,
+.campaign-table-row:hover td,
+.campaign-table-row:hover span,
+.campaign-table-row:hover div,
+.campaign-table-row:hover p,
+.campaign-table-row:hover a,
+.candidate-board-row:hover td,
+.candidate-board-row:hover span,
+.candidate-board-row:hover div,
+.candidate-board-row:hover p,
+.candidate-board-row:hover a,
+.results-table-link:hover div,
+.results-table-link:hover span,
+.results-table-link:hover text,
+.results-table-link:hover a {
+	color: #384959 !important;
+}
+
+/* Primary Button refinement */
+.workspace-primary-button {
+	background-color: #88BDF2 !important;
+	color: #384959 !important;
+	border-radius: 12px !important;
+	font-weight: 700 !important;
+	box-shadow: 0 6px 20px -6px rgba(136, 189, 242, 0.4) !important;
+	transition: all 0.2s ease-in-out !important;
+}
+.workspace-primary-button:hover {
+	transform: translateY(-2px) !important;
+	box-shadow: 0 10px 25px -5px rgba(136, 189, 242, 0.5) !important;
+}
+
+/* Secondary Button refinement */
+.workspace-ghost-button {
+	background-color: #ffffff !important;
+	border: 1px solid #6A89A7 !important;
+	color: #384959 !important;
+	border-radius: 12px !important;
+	box-shadow: none !important;
+	transition: all 0.2s ease-in-out !important;
+}
+.workspace-ghost-button:hover {
+	background-color: #BDDDFC !important;
+	border-color: #6a89a7 !important;
+	color: #384959 !important;
+	box-shadow: 0 4px 12px rgba(56, 73, 89, 0.15) !important;
+}
+
+/* Typography contrast hierarchy inside cards */
+.section-title,
+.metric-surface-value,
+.workspace-title,
+.job-card-title,
+.candidate-name,
+.workspace-table-title,
+.score-badge-value,
+.metric-title {
+	color: #384959 !important;
+}
+.section-copy,
+.empty-copy,
+.metric-surface-label,
+.detail-label,
+.job-card-meta,
+.candidate-meta,
+.workspace-table-meta,
+.score-badge-label {
+	color: #6A89A7 !important;
+	opacity: 0.95 !important;
+}
+
+/* Empty State elements */
+.workspace-empty-icon {
+	background-color: #BDDDFC !important;
+	color: #6A89A7 !important;
+}
+
+/* Icons inside cards */
+.surface-card svg,
+.workspace-empty-state svg,
+.job-card svg,
+.workspace-list-card svg,
+.workspace-table-wrap svg,
+.campaign-table svg {
+	color: #6A89A7 !important;
+}
+
+/* Accessibility: Disabled state styles for inputs, textareas, and select boxes */
+input:disabled,
+select:disabled,
+textarea:disabled {
+	background-color: rgba(189, 221, 252, 0.15) !important;
+	color: rgba(56, 73, 89, 0.5) !important;
+	border-color: rgba(106, 137, 167, 0.15) !important;
+	cursor: not-allowed !important;
+}
+
+/* Accessibility: Disabled buttons overrides */
+.workspace-primary-button:disabled,
+.workspace-ghost-button:disabled,
+button:disabled {
+	background-color: rgba(106, 137, 167, 0.1) !important;
+	border-color: rgba(106, 137, 167, 0.15) !important;
+	color: rgba(56, 73, 89, 0.4) !important;
+	cursor: not-allowed !important;
+	box-shadow: none !important;
+	transform: none !important;
+}
+
+/* Inline blue-600 buttons mapping to Accent Blue #88BDF2 must use Dark Slate text instead of white for contrast */
+button.bg-blue-600,
+a.bg-blue-600,
+.bg-blue-600.text-white {
+	color: #384959 !important;
+}
+button.bg-blue-600:hover,
+a.bg-blue-600:hover {
+	background-color: #BDDDFC !important;
+	color: #384959 !important;
+	box-shadow: 0 4px 12px rgba(56, 73, 89, 0.15) !important;
+}
+
+/* Selection / Bulk Action floating sticky bar overrides */
+.workspace-selection-bar {
+	background-color: #384959 !important;
+	border-color: rgba(106, 137, 167, 0.4) !important;
+	color: #ffffff !important;
+}
+.workspace-selection-bar span {
+	color: #BDDDFC !important;
+}
+.workspace-selection-bar button {
+	transition: all 0.2s ease-in-out !important;
+}
+
+
+
+

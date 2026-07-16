@@ -15,12 +15,13 @@ from src.schemas.job_description_schema import (
     JobDescriptionExtractRequest,
     JobDescriptionResponse,
     JobDescriptionUpdateRequest,
+    JobDescriptionExtractResponse,
 )
 
 router = APIRouter(prefix="/job-descriptions", tags=["Job Descriptions"])
 
 
-@router.post("/extract", response_model=JobDescriptionResponse)
+@router.post("/extract", response_model=JobDescriptionExtractResponse)
 async def extract_job_description(
     data: JobDescriptionExtractRequest,
     current_user: AuthenticatedUserContext = Depends(
@@ -29,7 +30,7 @@ async def extract_job_description(
     service: JobDescriptionService = Depends(
         get_job_description_service,
     ),
-) -> JobDescriptionResponse:
+) -> JobDescriptionExtractResponse:
     return await service.extract_job_description(
         data,
         current_user,

@@ -1,5 +1,30 @@
 @import "tailwindcss";
 
+@theme {
+  --color-slate-50: rgba(189, 221, 252, 0.15);
+  --color-slate-100: rgba(189, 221, 252, 0.25);
+  --color-slate-200: rgba(106, 137, 167, 0.25);
+  --color-slate-300: rgba(106, 137, 167, 0.4);
+  --color-slate-400: rgba(106, 137, 167, 0.7);
+  --color-slate-500: #6A89A7;
+  --color-slate-600: #6A89A7;
+  --color-slate-700: rgba(56, 73, 89, 0.85);
+  --color-slate-800: #384959;
+  --color-slate-900: #384959;
+  --color-slate-950: #384959;
+
+  --color-blue-50: rgba(189, 221, 252, 0.2);
+  --color-blue-100: rgba(189, 221, 252, 0.35);
+  --color-blue-200: #88BDF2;
+  --color-blue-300: #88BDF2;
+  --color-blue-400: #88BDF2;
+  --color-blue-500: #88BDF2;
+  --color-blue-600: #88BDF2;
+  --color-blue-700: #384959;
+  --color-blue-800: #384959;
+  --color-blue-900: #384959;
+}
+
 @layer base {
 	:root {
 		color-scheme: light;
@@ -9,18 +34,18 @@
 			"Segoe UI",
 			"Helvetica Neue",
 			sans-serif;
-		--tf-canvas: #f4f7fb;
-		--tf-canvas-strong: #e9eef5;
-		--tf-surface: rgba(255, 255, 255, 0.94);
-		--tf-surface-muted: rgba(248, 250, 252, 0.92);
-		--tf-border: rgba(148, 163, 184, 0.24);
-		--tf-border-strong: rgba(148, 163, 184, 0.38);
-		--tf-text: #0f172a;
-		--tf-text-muted: #475569;
-		--tf-text-subtle: #64748b;
-		--tf-accent: #2563eb;
-		--tf-accent-strong: #1d4ed8;
-		--tf-accent-soft: rgba(37, 99, 235, 0.1);
+		--tf-canvas: #BDDDFC;
+		--tf-canvas-strong: rgba(106, 137, 167, 0.2);
+		--tf-surface: #ffffff;
+		--tf-surface-muted: rgba(189, 221, 252, 0.22);
+		--tf-border: rgba(106, 137, 167, 0.25);
+		--tf-border-strong: rgba(106, 137, 167, 0.4);
+		--tf-text: #384959;
+		--tf-text-muted: #6A89A7;
+		--tf-text-subtle: rgba(106, 137, 167, 0.85);
+		--tf-accent: #88BDF2;
+		--tf-accent-strong: #384959;
+		--tf-accent-soft: rgba(136, 189, 242, 0.15);
 	}
 
 	html {
@@ -32,7 +57,7 @@
 	body {
 		min-height: 100vh;
 		background-color: var(--tf-canvas);
-		background-image: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+		background-image: none;
 		background-attachment: fixed;
 		color: var(--tf-text);
 		font-family: var(--tf-font-sans);
@@ -134,4 +159,14 @@
 	.auth-link {
 		@apply font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:text-blue-700 hover:decoration-blue-500;
 	}
+}
+
+@utility animate-shake {
+	animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+	0%, 100% { transform: translateX(0); }
+	20%, 60% { transform: translateX(-5px); }
+	40%, 80% { transform: translateX(5px); }
 }

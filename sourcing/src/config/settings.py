@@ -9,8 +9,6 @@ sourcing_dir = current_dir.parent.parent
 env_file_path = sourcing_dir / ".env"
 
 class Settings(BaseSettings):
-    GROQ_API_KEY: str = ""
-    GROQ_SECOND_API_KEY: str = ""
     GROQ_API_KEYS: str = ""
     DATABASE_URL: str = ""
     PORT: int = 8001
@@ -22,20 +20,15 @@ class Settings(BaseSettings):
     RECRUITER_PASSWORD: str = "Temppass@123"
 
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_CONCURRENCY_PER_KEY: int = 2
+    GROQ_DEFAULT_RATE_LIMIT_COOLDOWN_SECONDS: float = 10.0
     MAX_SOURCING_ATTEMPTS: int = 4
     MAX_CONSECUTIVE_NO_IMPROVEMENT: int = 2
     SOURCING_LOOP_TIMEOUT_SECONDS: float = 260.0
 
     @property
     def groq_keys(self) -> list[str]:
-        if self.GROQ_API_KEYS:
-            return [k.strip() for k in self.GROQ_API_KEYS.split(",") if k.strip()]
-        keys = []
-        if self.GROQ_API_KEY:
-            keys.append(self.GROQ_API_KEY)
-        if self.GROQ_SECOND_API_KEY:
-            keys.append(self.GROQ_SECOND_API_KEY)
-        return keys
+        return [k.strip() for k in self.GROQ_API_KEYS.split(",") if k.strip()]
 
     model_config = SettingsConfigDict(
         env_file=str(env_file_path) if env_file_path.exists() else None,

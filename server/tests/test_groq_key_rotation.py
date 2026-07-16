@@ -118,3 +118,32 @@ def test_other_exceptions_not_retried():
         # Should fail immediately on first try
         assert call_count == 1
         assert RotationalChatGroq._current_key_idx == 0
+
+def test_key_cooldown_header_parsing():
+    RotationalChatGroq._current_key_idx = 0
+    RotationalChatGroq._keys = []
+    
+    client = RotationalChatGroq(model="llama-3.3-70b-versatile")
+    
+    # 1. Test standard headers
+    dummy_request = httpx.Request("POST", "https://api.groq.com")
+    dummy_headers = httpx.Headers({"retry-after": "15.0"})
+    dummy_response = httpx.Response(429, request=dummy_request, headers=dummy_headers)
+    rate_limit_err = RateLimitError("Rate limit exceeded", response=dummy_response, body=None)
+    
+    cooldown = client._get_cooldown_from_error(rate_limit_err)
+    assert cooldown == 15.0
+    
+    # 2. Test x-ratelimit-reset-tokens with 's' suffix
+    dummy_headers_s = httpx.Headers({"x-ratelimit-reset-tokens": "2.5s"})
+    dummy_response_s = httpx.Response(429, request=dummy_request, headers=dummy_headers_s)
+    rate_limit_err_s = RateLimitError("Rate limit exceeded", response=dummy_response_s, body=None)
+    cooldown_s = client._get_cooldown_from_error(rate_limit_err_s)
+    assert cooldown_s == 2.5
+    
+    # 3. Test x-ratelimit-reset-tokens with 'ms' suffix
+    dummy_headers_ms = httpx.Headers({"x-ratelimit-reset-tokens": "500ms"})
+    dummy_response_ms = httpx.Response(429, request=dummy_request, headers=dummy_headers_ms)
+    rate_limit_err_ms = RateLimitError("Rate limit exceeded", response=dummy_response_ms, body=None)
+    cooldown_ms = client._get_cooldown_from_error(rate_limit_err_ms)
+    assert cooldown_ms == 0.5

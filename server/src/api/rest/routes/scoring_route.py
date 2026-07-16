@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import cast
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -89,10 +90,26 @@ async def list_recruiter_tasks(
                 if task.job_description
                 else "Unknown Position"
             ),
-            top_k=task.final_response_payload.get("top_k") if task.final_response_payload else None,
-            is_shortlist_incomplete=task.final_response_payload.get("is_shortlist_incomplete") if task.final_response_payload else None,
-            warning_reason=task.final_response_payload.get("warning_reason") if task.final_response_payload else None,
-            warning_message=task.final_response_payload.get("warning_message") if task.final_response_payload else None,
+            top_k=(
+                cast(int, task.final_response_payload.get("top_k"))
+                if task.final_response_payload
+                else None
+            ),
+            is_shortlist_incomplete=(
+                cast(bool, task.final_response_payload.get("is_shortlist_incomplete"))
+                if task.final_response_payload
+                else None
+            ),
+            warning_reason=(
+                cast(str, task.final_response_payload.get("warning_reason"))
+                if task.final_response_payload
+                else None
+            ),
+            warning_message=(
+                cast(str, task.final_response_payload.get("warning_message"))
+                if task.final_response_payload
+                else None
+            ),
         )
         for task in tasks
     ]
@@ -185,10 +202,26 @@ async def get_task_status(
         matched_candidate_count=task.matched_candidate_count,
         eligible_candidate_count=task.eligible_candidate_count,
         selected_candidate_count=task.selected_candidate_count,
-        top_k=task.final_response_payload.get("top_k") if task.final_response_payload else None,
-        is_shortlist_incomplete=task.final_response_payload.get("is_shortlist_incomplete") if task.final_response_payload else None,
-        warning_reason=task.final_response_payload.get("warning_reason") if task.final_response_payload else None,
-        warning_message=task.final_response_payload.get("warning_message") if task.final_response_payload else None,
+        top_k=(
+            cast(int, task.final_response_payload.get("top_k"))
+            if task.final_response_payload
+            else None
+        ),
+        is_shortlist_incomplete=(
+            cast(bool, task.final_response_payload.get("is_shortlist_incomplete"))
+            if task.final_response_payload
+            else None
+        ),
+        warning_reason=(
+            cast(str, task.final_response_payload.get("warning_reason"))
+            if task.final_response_payload
+            else None
+        ),
+        warning_message=(
+            cast(str, task.final_response_payload.get("warning_message"))
+            if task.final_response_payload
+            else None
+        ),
     )
 
 

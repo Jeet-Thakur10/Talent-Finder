@@ -67,8 +67,9 @@ async def job_description_exception_handler(
     request: Request,
     exc: JobDescriptionBaseException,
 ) -> JSONResponse:
+    status_code = getattr(exc, "status_code", 400)
     return JSONResponse(
-        status_code=400,
+        status_code=status_code,
         content={
             "error_code": exc.error_code
             if hasattr(exc, "error_code")

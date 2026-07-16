@@ -6,10 +6,12 @@ class JobDescriptionBaseException(Exception):
         message: str,
         details: str | None = None,
         error_code: str | None = None,
+        status_code: int = 400,
     ):
         self.message = message
         self.details = details
         self.error_code = error_code
+        self.status_code = status_code
 
         super().__init__(self.message)
 
@@ -62,4 +64,20 @@ class JobDescriptionNotFound(
             message="Job description not found",
             details=details,
             error_code=error_code,
+        )
+
+class JobDescriptionScoringInProgress(JobDescriptionBaseException):
+    def __init__(
+        self,
+        details: str | None = None,
+        error_code: str | None = None,
+    ):
+        super().__init__(
+            message=(
+                "This Job Description cannot be edited "
+                "while candidate scoring is in progress."
+            ),
+            details=details,
+            error_code=error_code or "SCORING_IN_PROGRESS",
+            status_code=409,
         )

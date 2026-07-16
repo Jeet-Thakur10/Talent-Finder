@@ -768,8 +768,10 @@ class ScoringRepository:
     ) -> None:
         """Remove stale Pipeline and CandidateJobScore records for the job description.
 
-        A record is considered stale if its candidate ID is not in `active_candidate_ids`.
-        Pipeline deletion is executed before CandidateJobScore deletion, and a single flush is performed.
+        A record is considered stale if its candidate ID is
+        not in `active_candidate_ids`.
+        Pipeline deletion is executed before CandidateJobScore deletion, and a single
+        flush is performed.
         """
         from sqlalchemy import delete
 
