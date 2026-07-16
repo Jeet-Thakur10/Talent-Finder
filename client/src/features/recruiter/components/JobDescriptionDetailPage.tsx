@@ -272,7 +272,11 @@ export function JobDescriptionDetailPage() {
             </div>
             <div className="detail-block">
               <div className="detail-label">Experience Range</div>
-              <p className="detail-copy">{jobDescription.min_experience} - {jobDescription.max_experience} Years</p>
+              <p className="detail-copy">
+                {jobDescription.max_experience === null || jobDescription.max_experience === undefined
+                  ? `${jobDescription.min_experience}+ Years`
+                  : `${jobDescription.min_experience} - ${jobDescription.max_experience} Years`}
+              </p>
             </div>
             <div className="detail-block">
               <div className="detail-label">Last Updated</div>

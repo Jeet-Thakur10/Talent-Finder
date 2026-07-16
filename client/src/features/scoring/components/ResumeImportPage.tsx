@@ -127,10 +127,9 @@ export function ResumeImportPage() {
 
                 <p className="section-copy">
                   {job.location} •{" "}
-                  {job.min_experience}
-                  {" - "}
-                  {job.max_experience}
-                  {" years"}
+                  {job.max_experience === null || job.max_experience === undefined
+                    ? `${job.min_experience}+ years`
+                    : `${job.min_experience} - ${job.max_experience} years`}
                 </p>
               </div>
             </div>

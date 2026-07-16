@@ -36,13 +36,13 @@ class RotationalChatGroq(ChatGroq):
                     RotationalChatGroq._keys = [api_key.get_secret_value()]
                 else:
                     RotationalChatGroq._keys = [str(api_key)]
-                RotationalChatGroq._key_cooldowns = [0.0] * len(RotationalChatGroq._keys)
+                RotationalChatGroq._key_cooldowns = [0.0]* len(RotationalChatGroq._keys)
 
         # Apply the active key
         active_idx = RotationalChatGroq._current_key_idx
         if RotationalChatGroq._keys:
             if len(RotationalChatGroq._key_cooldowns) != len(RotationalChatGroq._keys):
-                RotationalChatGroq._key_cooldowns = [0.0] * len(RotationalChatGroq._keys)
+                RotationalChatGroq._key_cooldowns = [0.0]* len(RotationalChatGroq._keys)
 
             import time
             selected_idx = -1
@@ -52,10 +52,12 @@ class RotationalChatGroq(ChatGroq):
                 if time.time() >= RotationalChatGroq._key_cooldowns[candidate_idx]:
                     selected_idx = candidate_idx
                     break
-            
+
             if selected_idx == -1:
                 # Fallback: choose the key with the smallest cooldown timestamp
-                selected_idx = min(range(num_keys), key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
+                selected_idx = min(
+                    range(num_keys),
+                    key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
 
             RotationalChatGroq._current_key_idx = selected_idx
             kwargs["api_key"] = RotationalChatGroq._keys[selected_idx]
@@ -64,12 +66,13 @@ class RotationalChatGroq(ChatGroq):
 
     def _get_cooldown_from_error(self, exc: RateLimitError) -> float:
         from src.config.settings import settings
-        default_cooldown = getattr(settings, "GROQ_DEFAULT_RATE_LIMIT_COOLDOWN_SECONDS", 10.0)
+        default_cooldown = getattr(
+            settings, "GROQ_DEFAULT_RATE_LIMIT_COOLDOWN_SECONDS", 10.0)
         if not exc.response or not hasattr(exc.response, "headers"):
             return default_cooldown
-        
+
         headers = exc.response.headers
-        
+
         # 1. Try "retry-after"
         retry_after = headers.get("retry-after")
         if retry_after:
@@ -77,7 +80,7 @@ class RotationalChatGroq(ChatGroq):
                 return float(retry_after)
             except ValueError:
                 pass
-                
+
         # 2. Try "x-ratelimit-reset-tokens"
         reset_tokens = headers.get("x-ratelimit-reset-tokens")
         if reset_tokens:
@@ -91,7 +94,7 @@ class RotationalChatGroq(ChatGroq):
                     return float(reset_tokens)
             except ValueError:
                 pass
-                
+
         return default_cooldown
 
     def _sync_client_to_active_key(self) -> None:
@@ -159,7 +162,9 @@ class RotationalChatGroq(ChatGroq):
                         selected_idx = candidate_idx
                         break
                 if selected_idx == -1:
-                    selected_idx = min(range(num_keys), key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
+                    selected_idx = min(
+                        range(num_keys),
+                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
 
                 RotationalChatGroq._current_key_idx = selected_idx
                 print(
@@ -233,7 +238,9 @@ class RotationalChatGroq(ChatGroq):
                         selected_idx = candidate_idx
                         break
                 if selected_idx == -1:
-                    selected_idx = min(range(num_keys), key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
+                    selected_idx = min(
+                        range(num_keys),
+                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
 
                 RotationalChatGroq._current_key_idx = selected_idx
                 print(

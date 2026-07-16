@@ -395,8 +395,8 @@ export function JobDescriptionCreatePage({
                 <input
                   type="number"
                   min={0}
-                  value={extractedJob.max_experience}
-                  onChange={(e) => updateStructuredField("max_experience", Number(e.target.value))}
+                  value={extractedJob.max_experience ?? ""}
+                  onChange={(e) => updateStructuredField("max_experience", e.target.value === "" ? null : Number(e.target.value))}
                   className="auth-input !py-2.5 !rounded-xl text-sm focus:outline-none"
                 />
               </div>
@@ -626,7 +626,11 @@ export function JobDescriptionCreatePage({
                 </div>
                 <div>
                   <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">Experience Requirement</span>
-                  <span className="text-slate-700 font-medium mt-0.5 block">{extractedJob.min_experience} - {extractedJob.max_experience} Years</span>
+                  <span className="text-slate-700 font-medium mt-0.5 block">
+                    {extractedJob.max_experience === null || extractedJob.max_experience === undefined
+                      ? `${extractedJob.min_experience}+ Years`
+                      : `${extractedJob.min_experience} - ${extractedJob.max_experience} Years`}
+                  </span>
                 </div>
                 <div>
                   <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">Skills Requirements Count</span>

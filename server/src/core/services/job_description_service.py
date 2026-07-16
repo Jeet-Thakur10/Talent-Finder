@@ -12,8 +12,8 @@ from src.core.exceptions.job_description_exception import (
     InvalidEmploymentType,
     InvalidJobDescriptionStatus,
     JobDescriptionNotFound,
-    RecruiterAccessRequired,
     JobDescriptionScoringInProgress,
+    RecruiterAccessRequired,
 )
 from src.data.models.postgres.jd_skill import JDSkill
 from src.data.models.postgres.job_description import JobDescription
@@ -30,6 +30,7 @@ from src.schemas.job_description_schema import (
     JobDescriptionResponse,
     JobDescriptionStatusResponse,
     JobDescriptionUpdateRequest,
+    JobDescriptionExtractResponse,
 )
 
 
@@ -161,8 +162,9 @@ class JobDescriptionService:
             )
 
         # Check if candidate scoring is currently in progress
-        from src.data.models.postgres.scoring_task import ScoringTask
         from sqlalchemy import select
+
+        from src.data.models.postgres.scoring_task import ScoringTask
         scoring_task_res = await self.job_description_repository.db.execute(
             select(ScoringTask).where(
                 ScoringTask.job_description_id == job_description_id,
@@ -371,7 +373,7 @@ class JobDescriptionService:
         self,
         data: JobDescriptionExtractRequest,
         current_user: AuthenticatedUserContext,
-    ) -> JobDescriptionResponse:
+    ) -> JobDescriptionExtractResponse:
         if current_user.role != UserRole.recruiter:
             raise RecruiterAccessRequired(
                 details="Only recruiters can extract job descriptions.",
@@ -429,14 +431,14 @@ class JobDescriptionService:
             for skill in extracted.skills
         ]
 
-        return JobDescriptionResponse(
+        return JobDescriptionExtractResponse(
             id=dummy_jd_id,
             title=extracted.title or "",
             department=extracted.department,
             job_purpose=extracted.job_purpose or "",
             responsibilities=responsibilities,
-            min_experience=extracted.min_experience or 0,
-            max_experience=extracted.max_experience or 0,
+            min_experience=extracted.min_experience,
+            max_experience=extracted.max_experience,
             location=extracted.location or "",
             education_requirement=extracted.education_requirement or "",
             preferred_qualifications=preferred_qualifications,

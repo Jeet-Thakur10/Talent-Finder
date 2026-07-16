@@ -73,7 +73,10 @@ class JobDescriptionScoringInProgress(JobDescriptionBaseException):
         error_code: str | None = None,
     ):
         super().__init__(
-            message="This Job Description cannot be edited while candidate scoring is in progress.",
+            message=(
+                "This Job Description cannot be edited "
+                "while candidate scoring is in progress."
+            ),
             details=details,
             error_code=error_code or "SCORING_IN_PROGRESS",
             status_code=409,

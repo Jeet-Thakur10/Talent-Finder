@@ -15,6 +15,7 @@ from src.control.agents.candidate_search_query_agent import CandidateSearchQuery
 from src.control.agents.scoring_agent import (
     CandidatePrescoringClient,
     CandidateScoringClient,
+    CandidateScoringResult,
 )
 from src.core.exceptions.job_description_exception import (
     RecruiterAccessRequired,
@@ -190,7 +191,9 @@ class ScoringService:
         active_requests_count = 0
         max_active_requests = 0
 
-        async def throttled_scoring_task(candidate):
+        async def throttled_scoring_task(
+            candidate: Candidate,
+        ) -> CandidateScoringResult:
             nonlocal active_requests_count, max_active_requests
             async with self.concurrency_semaphore:
                 active_requests_count += 1
@@ -295,7 +298,8 @@ class ScoringService:
                 stage="SHORTLISTED",
             )
             if context is not None:
-                active_candidate_ids = [score.candidate_id for score in candidate_scores]
+                active_candidate_ids = [
+                    score.candidate_id for score in candidate_scores]
                 await self.repository.delete_stale_candidate_scores_and_pipelines(
                     job_description_id=job_description_id,
                     active_candidate_ids=active_candidate_ids,
@@ -415,7 +419,7 @@ class ScoringService:
             is_incomplete = data.k > 0
             warning_reason = "INSUFFICIENT_QUALIFIED" if is_incomplete else None
             warning_message = (
-                f"Only 0 candidates satisfied the required criteria. "
+                "Only 0 candidates satisfied the required criteria. "
                 "The remaining candidates did not meet the qualification threshold."
             ) if is_incomplete else None
             return PipelineExecutionResponse(
@@ -536,7 +540,8 @@ class ScoringService:
             is_incomplete = data.k > 0
             warning_reason = "INSUFFICIENT_QUALIFIED" if is_incomplete else None
             warning_message = (
-                f"Only {eligible_candidate_count} candidates satisfied the required criteria. "
+                f"Only {eligible_candidate_count} candidates satisfied the required "
+                "criteria. "
                 "The remaining candidates did not meet the qualification threshold."
             ) if is_incomplete else None
             return PipelineExecutionResponse(
@@ -712,14 +717,17 @@ class ScoringService:
             if eligible_candidate_count < data.k:
                 warning_reason = "INSUFFICIENT_QUALIFIED"
                 warning_message = (
-                    f"Only {eligible_candidate_count} candidates satisfied the required criteria. "
+                    f"Only {eligible_candidate_count} candidates satisfied "
+                    "the required criteria. "
                     "The remaining candidates did not meet the qualification threshold."
                 )
             else:
                 warning_reason = "EVALUATION_FAILURE"
                 warning_message = (
-                    f"Only {len(candidates)} candidates successfully completed the evaluation. "
-                    "Some selected candidates could not be processed due to temporary evaluation failures. Try rescoring again later."
+                    f"Only {len(candidates)} candidates successfully "
+                    "completed the evaluation. "
+                    "Some selected candidates could not be processed due to temporary "
+                    "evaluation failures. Try rescoring again later."
                 )
 
         return PipelineExecutionResponse(
@@ -1406,10 +1414,14 @@ Reason:
             if not skill.is_mandatory
         ]
 
+        exp_range = (
+            f"{job_description.min_experience}+"
+            if job_description.max_experience is None
+            else f"{job_description.min_experience}-{job_description.max_experience}"
+        )
         profile_text = (
             f"Title: {job_description.title}\n"
-            f"Experience: {job_description.min_experience}-"
-            f"{job_description.max_experience} years\n"
+            f"Experience: {exp_range} years\n"
             f"Required Skills: {', '.join(mandatory_skills)}\n"
             f"Optional Skills: {', '.join(optional_skills)}"
         )

@@ -6,10 +6,9 @@ from dataclasses import dataclass
 from datetime import date
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
-from pydantic import SecretStr
 
 from src.config.settings import settings
+from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
 from src.control.agents.prompts import (
     CANDIDATE_DEEP_SCORING_PROMPT,
     CANDIDATE_PRESCORING_PROMPT,
@@ -93,7 +92,7 @@ class ResumeExtractionClient:
 
 @dataclass(slots=True)
 class CandidateScoringResult:
-    payload: CandidateEvaluationOutput | None
+    payload: CandidateScoreOutput | None
     provider: str
 
 
@@ -162,7 +161,7 @@ class CandidateScoringClient:
             )
 
             return CandidateScoringResult(
-                payload=score,  # type: ignore[arg-type]
+                payload=score,
                 provider="groq",
             )
 
@@ -333,6 +332,9 @@ class CandidateScoringClient:
                 0,
                 ratio * 25,
             )
+
+        if max_years is None:
+            return 25.0
 
         if candidate_years <= max_years:
             return 25
