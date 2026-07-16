@@ -12,6 +12,7 @@ from src.core.exceptions.job_description_exception import (
     InvalidEmploymentType,
     InvalidJobDescriptionStatus,
     JobDescriptionNotFound,
+    JobDescriptionScoringInProgress,
     RecruiterAccessRequired,
 )
 from src.data.models.postgres.jd_skill import JDSkill
@@ -29,6 +30,7 @@ from src.schemas.job_description_schema import (
     JobDescriptionResponse,
     JobDescriptionStatusResponse,
     JobDescriptionUpdateRequest,
+    JobDescriptionExtractResponse,
 )
 
 
@@ -157,6 +159,22 @@ class JobDescriptionService:
         if job_description.recruiter_id != current_user.user_id:
             raise JobDescriptionNotFound(
                 error_code="JOB_DESCRIPTION_NOT_FOUND",
+            )
+
+        # Check if candidate scoring is currently in progress
+        from sqlalchemy import select
+
+        from src.data.models.postgres.scoring_task import ScoringTask
+        scoring_task_res = await self.job_description_repository.db.execute(
+            select(ScoringTask).where(
+                ScoringTask.job_description_id == job_description_id,
+                ScoringTask.status.in_(["PENDING", "RUNNING"])
+            )
+        )
+        active_task = scoring_task_res.scalar_one_or_none()
+        if active_task:
+            raise JobDescriptionScoringInProgress(
+                details="Candidate scoring is in progress for this Job Description."
             )
 
         employment_type = (
@@ -355,7 +373,7 @@ class JobDescriptionService:
         self,
         data: JobDescriptionExtractRequest,
         current_user: AuthenticatedUserContext,
-    ) -> JobDescriptionResponse:
+    ) -> JobDescriptionExtractResponse:
         if current_user.role != UserRole.recruiter:
             raise RecruiterAccessRequired(
                 details="Only recruiters can extract job descriptions.",
@@ -413,14 +431,14 @@ class JobDescriptionService:
             for skill in extracted.skills
         ]
 
-        return JobDescriptionResponse(
+        return JobDescriptionExtractResponse(
             id=dummy_jd_id,
             title=extracted.title or "",
             department=extracted.department,
             job_purpose=extracted.job_purpose or "",
             responsibilities=responsibilities,
-            min_experience=extracted.min_experience or 0,
-            max_experience=extracted.max_experience or 0,
+            min_experience=extracted.min_experience,
+            max_experience=extracted.max_experience,
             location=extracted.location or "",
             education_requirement=extracted.education_requirement or "",
             preferred_qualifications=preferred_qualifications,

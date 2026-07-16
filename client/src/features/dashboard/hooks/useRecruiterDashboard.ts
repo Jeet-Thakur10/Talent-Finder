@@ -73,9 +73,10 @@ function mapJobToFormValues(
     min_experience: String(
       job.min_experience,
     ),
-    max_experience: String(
-      job.max_experience,
-    ),
+    max_experience:
+      job.max_experience !== null && job.max_experience !== undefined
+        ? String(job.max_experience)
+        : "",
     location: job.location,
     employment_type_id:
       job.employment_type_id,
@@ -138,9 +139,10 @@ function toJobDescriptionPayload(
     min_experience: Number(
       values.min_experience,
     ),
-    max_experience: Number(
-      values.max_experience,
-    ),
+    max_experience:
+      values.max_experience.trim() === ""
+        ? null
+        : Number(values.max_experience),
     location: values.location.trim(),
     employment_type_id:
       values.employment_type_id,

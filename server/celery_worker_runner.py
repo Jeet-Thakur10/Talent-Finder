@@ -1,8 +1,10 @@
 import os
 import socket
-import threading
 import sys
+import threading
+
 from celery.__main__ import main
+
 
 def start_health_server():
     port = int(os.environ.get("PORT", 8080))
@@ -10,7 +12,7 @@ def start_health_server():
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind(("0.0.0.0", port))
     s.listen(5)
-    
+
     def run():
         while True:
             try:
@@ -20,12 +22,19 @@ def start_health_server():
                 c.close()
             except Exception:
                 break
-                
+
     t = threading.Thread(target=run, daemon=True)
     t.start()
     print(f"Health server started on port {port}")
 
 if __name__ == "__main__":
     start_health_server()
-    sys.argv = ["celery", "-A", "src.core.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+    sys.argv = [
+        "celery",
+        "-A",
+        "src.core.celery_app",
+        "worker",
+        "--loglevel=info",
+        "--concurrency=2"
+        ]
     main()

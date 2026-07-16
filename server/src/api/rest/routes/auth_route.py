@@ -10,19 +10,19 @@ from src.api.rest.dependencies import (
     get_refresh_token_payload,
 )
 from src.config.settings import settings
+from src.core.exceptions.job_description_exception import RecruiterAccessRequired
 from src.core.services.auth_service import AuthService
+from src.core.services.notification_service import NotificationService
 from src.schemas.auth_schema import (
+    AddUserRequest,
     AuthenticatedUserContext,
     LoginRequest,
     LoginResponse,
     LogoutResponse,
     RefreshResponse,
     UserResponse,
-    AddUserRequest,
     UserRole,
 )
-from src.core.exceptions.job_description_exception import RecruiterAccessRequired
-from src.core.services.notification_service import NotificationService
 from src.schemas.otp_schema import ResetPasswordRequest, ResetPasswordResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])

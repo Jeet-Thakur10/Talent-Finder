@@ -1,4 +1,5 @@
 import asyncio
+import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 import httpx
 from groq import RateLimitError
@@ -15,22 +16,18 @@ def mock_create_chat_result(self, response, params):
 def test_settings_groq_keys_merging():
     print("Running test_settings_groq_keys_merging...")
     settings = Settings(
-        GROQ_API_KEY="key1",
-        GROQ_SECOND_API_KEY="key2",
         GROQ_API_KEYS="key3, key4",
         DATABASE_URL="sqlite:///:memory:",
         SECRET_KEY="test"
     )
     assert settings.groq_keys == ["key3", "key4"], f"Expected ['key3', 'key4'], got {settings.groq_keys}"
 
-    settings_fallback = Settings(
-        GROQ_API_KEY="key1",
-        GROQ_SECOND_API_KEY="key2",
+    settings_empty = Settings(
         GROQ_API_KEYS="",
         DATABASE_URL="sqlite:///:memory:",
         SECRET_KEY="test"
     )
-    assert settings_fallback.groq_keys == ["key1", "key2"], f"Expected ['key1', 'key2'], got {settings_fallback.groq_keys}"
+    assert settings_empty.groq_keys == [], f"Expected [], got {settings_empty.groq_keys}"
     print("Passed.")
 
 @patch("langchain_groq.ChatGroq._create_chat_result", mock_create_chat_result)
@@ -133,6 +130,7 @@ def test_rotational_client_all_keys_exhausted():
         assert raised, "Expected RateLimitError to be raised"
     print("Passed.")
 
+@pytest.mark.asyncio
 @patch("langchain_groq.ChatGroq._create_chat_result", mock_create_chat_result)
 async def test_async_rotational_client_rotates_and_persists():
     print("Running test_async_rotational_client_rotates_and_persists...")

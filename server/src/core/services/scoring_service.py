@@ -15,6 +15,7 @@ from src.control.agents.candidate_search_query_agent import CandidateSearchQuery
 from src.control.agents.scoring_agent import (
     CandidatePrescoringClient,
     CandidateScoringClient,
+    CandidateScoringResult,
 )
 from src.core.exceptions.job_description_exception import (
     RecruiterAccessRequired,
@@ -90,6 +91,13 @@ class ScoringService:
         self.resume_parser = ResumeParser()
         self.scoring_client = CandidateScoringClient()
         self.prescoring_client = CandidatePrescoringClient()
+
+        # Concurrency Semaphore configuration
+        num_keys = len(settings.groq_keys)
+        if num_keys == 0:
+            num_keys = 1
+        effective_concurrency = num_keys * settings.GROQ_CONCURRENCY_PER_KEY
+        self.concurrency_semaphore = asyncio.Semaphore(effective_concurrency)
 
         # Instantiate clients and agents
         self.search_client: CandidateSearchClient | None = CandidateSearchClient()
@@ -180,6 +188,28 @@ class ScoringService:
 
         scoring_tasks = []
         task_candidate_ids = []
+        active_requests_count = 0
+        max_active_requests = 0
+
+        async def throttled_scoring_task(
+            candidate: Candidate,
+        ) -> CandidateScoringResult:
+            nonlocal active_requests_count, max_active_requests
+            async with self.concurrency_semaphore:
+                active_requests_count += 1
+                if active_requests_count > max_active_requests:
+                    max_active_requests = active_requests_count
+                try:
+                    res = await self.scoring_client.score_candidate(
+                        scoring_job,
+                        self._build_candidate_scoring_input(
+                            candidate,
+                        ),
+                    )
+                    return res
+                finally:
+                    active_requests_count -= 1
+
         for candidate in candidates:
             cid = candidate.id
             if context and cid in context.candidates:
@@ -193,12 +223,7 @@ class ScoringService:
                 state.scoring = StageStatus.PENDING
 
             scoring_tasks.append(
-                self.scoring_client.score_candidate(
-                    scoring_job,
-                    self._build_candidate_scoring_input(
-                        candidate,
-                    ),
-                )
+                throttled_scoring_task(candidate)
             )
             task_candidate_ids.append(cid)
 
@@ -214,6 +239,14 @@ class ScoringService:
         )
         scoring_duration = (time.perf_counter() - start_time) * 1000.0
         per_task_duration = scoring_duration / len(scoring_tasks)
+
+        logger.info(
+            f"Candidate scoring batch execution complete. "
+            f"Max simultaneous requests: {max_active_requests}. "
+            f"Total tasks: {len(scoring_tasks)}. "
+            f"Duration: {scoring_duration:.2f}ms. "
+            f"Average task duration: {per_task_duration:.2f}ms."
+        )
 
         candidate_scores: list[CandidateScoreOutput] = []
         for cid, result in zip(task_candidate_ids, results):
@@ -265,7 +298,8 @@ class ScoringService:
                 stage="SHORTLISTED",
             )
             if context is not None:
-                active_candidate_ids = [score.candidate_id for score in candidate_scores]
+                active_candidate_ids = [
+                    score.candidate_id for score in candidate_scores]
                 await self.repository.delete_stale_candidate_scores_and_pipelines(
                     job_description_id=job_description_id,
                     active_candidate_ids=active_candidate_ids,
@@ -385,7 +419,7 @@ class ScoringService:
             is_incomplete = data.k > 0
             warning_reason = "INSUFFICIENT_QUALIFIED" if is_incomplete else None
             warning_message = (
-                f"Only 0 candidates satisfied the required criteria. "
+                "Only 0 candidates satisfied the required criteria. "
                 "The remaining candidates did not meet the qualification threshold."
             ) if is_incomplete else None
             return PipelineExecutionResponse(
@@ -506,7 +540,8 @@ class ScoringService:
             is_incomplete = data.k > 0
             warning_reason = "INSUFFICIENT_QUALIFIED" if is_incomplete else None
             warning_message = (
-                f"Only {eligible_candidate_count} candidates satisfied the required criteria. "
+                f"Only {eligible_candidate_count} candidates satisfied the required "
+                "criteria. "
                 "The remaining candidates did not meet the qualification threshold."
             ) if is_incomplete else None
             return PipelineExecutionResponse(
@@ -682,14 +717,17 @@ class ScoringService:
             if eligible_candidate_count < data.k:
                 warning_reason = "INSUFFICIENT_QUALIFIED"
                 warning_message = (
-                    f"Only {eligible_candidate_count} candidates satisfied the required criteria. "
+                    f"Only {eligible_candidate_count} candidates satisfied "
+                    "the required criteria. "
                     "The remaining candidates did not meet the qualification threshold."
                 )
             else:
                 warning_reason = "EVALUATION_FAILURE"
                 warning_message = (
-                    f"Only {len(candidates)} candidates successfully completed the evaluation. "
-                    "Some selected candidates could not be processed due to temporary evaluation failures. Try rescoring again later."
+                    f"Only {len(candidates)} candidates successfully "
+                    "completed the evaluation. "
+                    "Some selected candidates could not be processed due to temporary "
+                    "evaluation failures. Try rescoring again later."
                 )
 
         return PipelineExecutionResponse(
@@ -1376,10 +1414,14 @@ Reason:
             if not skill.is_mandatory
         ]
 
+        exp_range = (
+            f"{job_description.min_experience}+"
+            if job_description.max_experience is None
+            else f"{job_description.min_experience}-{job_description.max_experience}"
+        )
         profile_text = (
             f"Title: {job_description.title}\n"
-            f"Experience: {job_description.min_experience}-"
-            f"{job_description.max_experience} years\n"
+            f"Experience: {exp_range} years\n"
             f"Required Skills: {', '.join(mandatory_skills)}\n"
             f"Optional Skills: {', '.join(optional_skills)}"
         )

@@ -6,10 +6,9 @@ from dataclasses import dataclass
 from datetime import date
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_groq import ChatGroq
-from pydantic import SecretStr
 
 from src.config.settings import settings
+from src.control.agents.groq_client import RotationalChatGroq as ChatGroq
 from src.control.agents.prompts import (
     CANDIDATE_DEEP_SCORING_PROMPT,
     CANDIDATE_PRESCORING_PROMPT,
@@ -38,18 +37,6 @@ class ResumeExtractionClient:
         self.provider = settings.SCORING_LLM_PROVIDER
         self.groq_model = settings.GROQ_MODEL
 
-        self.llm = ChatGroq(
-            api_key=SecretStr(settings.GROQ_API_KEY),
-            model=self.groq_model,
-            temperature=0,
-        )
-
-        # Keeping your preferred with_structured_output framework using json_mode
-        self.structured_llm = self.llm.with_structured_output(
-            ResumeCandidateOutput,
-            method="json_mode"
-        )
-
     def extract(
         self,
         resume_text: str,
@@ -71,8 +58,17 @@ class ResumeExtractionClient:
                 ),
             ]
 
+            llm = ChatGroq(
+                model=self.groq_model,
+                temperature=0,
+            )
+            structured_llm = llm.with_structured_output(
+                ResumeCandidateOutput,
+                method="json_mode"
+            )
+
             result: ResumeCandidateOutput = (
-                self.structured_llm.invoke( # type: ignore[assignment]
+                structured_llm.invoke( # type: ignore[assignment]
                     messages,
                 )
             )
@@ -96,7 +92,7 @@ class ResumeExtractionClient:
 
 @dataclass(slots=True)
 class CandidateScoringResult:
-    payload: CandidateEvaluationOutput | None
+    payload: CandidateScoreOutput | None
     provider: str
 
 
@@ -104,19 +100,6 @@ class CandidateScoringClient:
     def __init__(self) -> None:
         self.provider = settings.SCORING_LLM_PROVIDER
         self.groq_model = settings.GROQ_MODEL
-
-        self.llm = ChatGroq(
-            api_key=SecretStr(settings.GROQ_API_KEY),
-            model=self.groq_model,
-            temperature=0,
-        )
-
-        self.structured_llm = (
-            self.llm.with_structured_output(
-                CandidateEvaluationOutput,
-                method="json_mode",
-            )
-        )
 
     async def score_candidate(
         self,
@@ -156,8 +139,17 @@ class CandidateScoringClient:
                 ),
             ]
 
+            llm = ChatGroq(
+                model=self.groq_model,
+                temperature=0,
+            )
+            structured_llm = llm.with_structured_output(
+                CandidateEvaluationOutput,
+                method="json_mode",
+            )
+
             result: CandidateEvaluationOutput = (
-                await self.structured_llm.ainvoke( # type: ignore[assignment]
+                await structured_llm.ainvoke( # type: ignore[assignment]
                     messages,
                 )
             )
@@ -169,7 +161,7 @@ class CandidateScoringClient:
             )
 
             return CandidateScoringResult(
-                payload=score,  # type: ignore[arg-type]
+                payload=score,
                 provider="groq",
             )
 
@@ -341,6 +333,9 @@ class CandidateScoringClient:
                 ratio * 25,
             )
 
+        if max_years is None:
+            return 25.0
+
         if candidate_years <= max_years:
             return 25
 
@@ -412,18 +407,7 @@ class CandidatePrescoringResult:
 
 class CandidatePrescoringClient:
     def __init__(self) -> None:
-        self.llm = ChatGroq(
-            api_key=SecretStr(settings.GROQ_API_KEY),
-            model=settings.GROQ_MODEL,
-            temperature=0,
-        )
-
-        self.structured_llm = (
-            self.llm.with_structured_output(
-                CandidatePrescoreBatchOutput,
-                method="json_mode",
-            )
-        )
+        pass
 
     async def prescore_candidates(
         self,
@@ -462,6 +446,15 @@ class CandidatePrescoringClient:
             ),
         ]
 
-        return await self.structured_llm.ainvoke( # type: ignore[return-value]
+        llm = ChatGroq(
+            model=settings.GROQ_MODEL,
+            temperature=0,
+        )
+        structured_llm = llm.with_structured_output(
+            CandidatePrescoreBatchOutput,
+            method="json_mode",
+        )
+
+        return await structured_llm.ainvoke( # type: ignore[return-value]
             messages,
         )

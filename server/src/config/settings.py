@@ -42,10 +42,16 @@ class Settings(BaseSettings):
 
     ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]
 
-    GROQ_API_KEY: str = ""
+    GROQ_API_KEYS: str = ""
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_CONCURRENCY_PER_KEY: int = 2
+    GROQ_DEFAULT_RATE_LIMIT_COOLDOWN_SECONDS: float = 10.0
 
     SCORING_LLM_PROVIDER: str = "groq"
+
+    @property
+    def groq_keys(self) -> list[str]:
+        return [k.strip() for k in self.GROQ_API_KEYS.split(",") if k.strip()]
 
     HF_TOKEN: str = ""
     HF_MODEL: str = "meta-llama/Llama-3.3-70B-Instruct"

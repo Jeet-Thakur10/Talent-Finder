@@ -59,9 +59,9 @@ class JobDescription(Base):
         nullable=False,
     )
 
-    max_experience: Mapped[int] = mapped_column(
+    max_experience: Mapped[int | None] = mapped_column(
         Integer,
-        nullable=False,
+        nullable=True,
     )
 
     location: Mapped[str] = mapped_column(

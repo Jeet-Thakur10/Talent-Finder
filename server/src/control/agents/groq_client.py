@@ -67,8 +67,7 @@ class RotationalChatGroq(ChatGroq):
     def _get_cooldown_from_error(self, exc: RateLimitError) -> float:
         from src.config.settings import settings
         default_cooldown = getattr(
-            settings, "GROQ_DEFAULT_RATE_LIMIT_COOLDOWN_SECONDS",
-            10.0)
+            settings, "GROQ_DEFAULT_RATE_LIMIT_COOLDOWN_SECONDS", 10.0)
         if not exc.response or not hasattr(exc.response, "headers"):
             return default_cooldown
 
@@ -165,8 +164,7 @@ class RotationalChatGroq(ChatGroq):
                 if selected_idx == -1:
                     selected_idx = min(
                         range(num_keys),
-                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx]
-                        )
+                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
 
                 RotationalChatGroq._current_key_idx = selected_idx
                 print(
@@ -242,8 +240,7 @@ class RotationalChatGroq(ChatGroq):
                 if selected_idx == -1:
                     selected_idx = min(
                         range(num_keys),
-                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx]
-                    )
+                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
 
                 RotationalChatGroq._current_key_idx = selected_idx
                 print(

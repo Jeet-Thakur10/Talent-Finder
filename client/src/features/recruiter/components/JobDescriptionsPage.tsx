@@ -104,7 +104,7 @@ export function JobDescriptionsPage() {
             onClick={() => setIsAddRecruiterOpen(true)}
             className="workspace-ghost-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer focus:outline-none"
           >
-            Add Recruiter
+            Add User
           </button>
           <button
             type="button"

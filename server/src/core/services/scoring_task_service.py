@@ -1,24 +1,22 @@
 from __future__ import annotations
 
+import logging
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.data.models.postgres.scoring_task import ScoringTask
-from src.data.repositories.scoring_task_repository import ScoringTaskRepository
-
-import logging
-from datetime import UTC, datetime, timedelta
-
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.settings import settings
 from src.core.services.notification_service import NotificationService
 from src.data.models.postgres.job_description import JobDescription
 from src.data.models.postgres.notification import NotificationType
+from src.data.models.postgres.scoring_task import ScoringTask
 from src.data.models.postgres.user import User
+from src.data.repositories.scoring_task_repository import ScoringTaskRepository
 from src.utils.email_templates import get_generic_email_html
+
 
 class ScoringTaskService:
     def __init__(self, db: AsyncSession):

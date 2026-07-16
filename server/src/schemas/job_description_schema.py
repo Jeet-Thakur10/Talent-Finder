@@ -15,7 +15,7 @@ class JobDescriptionWriteRequest(BaseModel):
     job_purpose: str
     responsibilities: str
     min_experience: int = Field(ge=0)
-    max_experience: int = Field(ge=0)
+    max_experience: int | None = Field(default=None, ge=0)
     location: str
     employment_type_id: UUID
     education_requirement: str
@@ -26,7 +26,10 @@ class JobDescriptionWriteRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_experience_range(self) -> "JobDescriptionWriteRequest":
-        if self.max_experience < self.min_experience:
+        if (
+            self.max_experience is not None
+            and self.max_experience < self.min_experience
+        ):
             raise ValueError(
                 "max_experience must be greater than or equal to min_experience",
             )
@@ -64,7 +67,31 @@ class JobDescriptionResponse(BaseModel):
     job_purpose: str
     responsibilities: str
     min_experience: int
-    max_experience: int
+    max_experience: int | None
+    location: str
+    education_requirement: str
+    preferred_qualifications: str | None
+    employment_type_id: UUID
+    status_id: UUID
+    hiring_manager_id: UUID | None = None
+    created_at: datetime
+    updated_at: datetime
+    skills: list[JDSkillResponse]
+    raw_job_description: str | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+
+class JobDescriptionExtractResponse(BaseModel):
+    id: UUID
+    title: str
+    department: str | None
+    job_purpose: str
+    responsibilities: str
+    min_experience: int | None
+    max_experience: int | None
     location: str
     education_requirement: str
     preferred_qualifications: str | None

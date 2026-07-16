@@ -1,6 +1,6 @@
+import logging
 from datetime import UTC, datetime
 from uuid import UUID
-import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,8 +22,8 @@ from src.schemas.auth_schema import (
     UserResponse,
 )
 from src.utils.crypt import hash_password, verify_password
-from src.utils.validation import validate_password
 from src.utils.email_templates import get_welcome_email_html
+from src.utils.validation import validate_password
 
 logger = logging.getLogger(__name__)
 

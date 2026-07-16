@@ -29,7 +29,7 @@ export interface JobDescription {
   job_purpose: string;
   responsibilities: string;
   min_experience: number;
-  max_experience: number;
+  max_experience: number | null;
   location: string;
   education_requirement: string;
   preferred_qualifications: string | null;
@@ -48,7 +48,7 @@ export interface JobDescriptionPayload {
   job_purpose: string;
   responsibilities: string;
   min_experience: number;
-  max_experience: number;
+  max_experience: number | null;
   location: string;
   employment_type_id: string;
   education_requirement: string;

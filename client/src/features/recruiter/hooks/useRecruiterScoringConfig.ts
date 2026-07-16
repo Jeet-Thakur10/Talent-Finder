@@ -2,7 +2,16 @@ import { useState, useCallback } from "react";
 import { dashboardService } from "../../dashboard/services/dashboard.service";
 
 export function useRecruiterScoringConfig(jobDescriptionId: string | undefined) {
-  const [k, setK] = useState(10);
+  const [k, setK] = useState<number>(() => {
+    const saved = localStorage.getItem("recruiter_preferred_k");
+    if (saved) {
+      const val = parseInt(saved, 10);
+      if (!isNaN(val) && val >= 1 && val <= 25) {
+        return val;
+      }
+    }
+    return 10;
+  });
   const [minPrescoreThreshold, setMinPrescoreThreshold] = useState(0);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +45,7 @@ export function useRecruiterScoringConfig(jobDescriptionId: string | undefined) 
         minimum_prescore_threshold: minPrescoreThreshold,
       });
 
+      localStorage.setItem("recruiter_preferred_k", String(k));
       setTaskId(response.task_id);
       setIsSuccess(true);
     } catch {

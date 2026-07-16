@@ -9,6 +9,14 @@ GENERAL RULES
 - If a value is not available, return null.
 - For list fields, return an empty list instead of null.
 - Return ONLY valid JSON matching the provided schema.
+
+DEPARTMENT EXTRACTION
+---------------------
+- If the department is explicitly mentioned in the job description, extract it exactly.
+- If the department is not explicitly mentioned, infer the most appropriate department from the overall Job Description context (considering the job title, responsibilities, required skills, technologies, business context, and purpose of the role).
+- Prefer common, standardized business departments (e.g., Information Technology, Human Resources, Finance, Sales, Marketing, Operations, Product, Design, Data Science, Legal, Customer Success) rather than inventing organization-specific department names.
+- Only leave the department empty/null if there is genuinely insufficient information in the Job Description to make a reasonable inference.
+
 JOB PURPOSE EXTRACTION
 -----------------------
 - If the raw job description explicitly contains a Job Purpose (or equivalent section like overview, role summary, or role objective), extract it faithfully.

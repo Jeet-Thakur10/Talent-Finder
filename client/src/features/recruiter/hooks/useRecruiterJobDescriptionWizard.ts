@@ -97,7 +97,11 @@ export function useRecruiterJobDescriptionWizard(isEdit?: boolean, jobDescriptio
       setError("Job Purpose/Mission is required.");
       return null;
     }
-    if (extractedJob.max_experience < extractedJob.min_experience) {
+    if (
+      extractedJob.max_experience !== null &&
+      extractedJob.max_experience !== undefined &&
+      extractedJob.max_experience < extractedJob.min_experience
+    ) {
       setError("Maximum experience cannot be less than minimum experience.");
       return null;
     }
