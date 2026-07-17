@@ -145,7 +145,7 @@ async def async_run_scoring_pipeline(
                     else:
                         logger.warning(
                             "Could not send pipeline success notification: "
-                             "User or JobDescription not found."
+                            "User or JobDescription not found."
                         )
                 except Exception as ne:
                     logger.warning(
@@ -258,10 +258,8 @@ async def async_run_scoring_pipeline(
                             )
                         else:
                             logger.warning(
-
-                                    "Could not send pipeline failure notification: "
-                                    "User or JobDescription not found."
-
+                                "Could not send pipeline failure notification: "
+                                "User or JobDescription not found."
                             )
                     except Exception as ne:
                         logger.warning(
@@ -283,8 +281,8 @@ async def async_run_scoring_pipeline(
                 )
 
 
-@celery_app.task(bind=True) # type: ignore[untyped-decorator]
-def run_scoring_pipeline_task( # type: ignore[no-untyped-def]
+@celery_app.task(bind=True)  # type: ignore[untyped-decorator]
+def run_scoring_pipeline_task(  # type: ignore[no-untyped-def]
     self,
     task_id_str: str,
     recruiter_id_str: str,

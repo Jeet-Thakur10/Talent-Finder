@@ -8,7 +8,7 @@ from src.core.services.scoring_task_service import ScoringTaskService
 
 class PipelineProgressReporter(ABC):
     """Abstract interface for reporting stage transitions in the
-      scoring pipeline."""
+    scoring pipeline."""
 
     @abstractmethod
     async def update_stage(self, stage: str) -> None:
@@ -18,7 +18,7 @@ class PipelineProgressReporter(ABC):
 
 class NoOpProgressReporter(PipelineProgressReporter):
     """A no-op implementation of PipelineProgressReporter for when
-      progress updates are not needed (e.g. sync runs, tests)."""
+    progress updates are not needed (e.g. sync runs, tests)."""
 
     async def update_stage(self, stage: str) -> None:
         pass

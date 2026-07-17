@@ -9,7 +9,6 @@ from src.utils.email_templates import get_generic_email_html
 
 
 class NotificationService:
-
     def __init__(self, db: AsyncSession):
         self.db = db
         self.notification_repository = NotificationRepository(db)

@@ -19,17 +19,18 @@ class ResumeParser:
         extraction = self.extraction_client.extract(resume_text)
         payload = extraction.payload
 
-        print("\n"*3)
+        print("\n" * 3)
         print("Extraction payload:", payload)
         print("Extraction provider:", extraction.provider)
-        print("\n"*3)
+        print("\n" * 3)
 
         candidate = self.build_candidate_from_payload(payload)
 
         return candidate
-# codes that return the parsed, structured candidate profile information.
+
+    # codes that return the parsed, structured candidate profile information.
     def _parse_date(
-            self,
+        self,
         value: str | None,
     ) -> date | None:
         if not value:
@@ -39,7 +40,6 @@ class ResumeParser:
             return date.fromisoformat(value)
         except ValueError:
             return None
-
 
     def build_candidate_from_payload(
         self,
@@ -62,40 +62,33 @@ class ResumeParser:
                 if isinstance(exp, dict):
                     company_name_raw = exp.get("company_name")
                     company_name = (
-                        company_name_raw
-                        if isinstance(company_name_raw, str)
-                        else None)
+                        company_name_raw if isinstance(company_name_raw, str) else None
+                    )
 
                     title_raw = exp.get("title")
                     title = title_raw if isinstance(title_raw, str) else ""
 
                     description_raw = exp.get("description")
                     description = (
-                        description_raw
-                        if isinstance(description_raw, str)
-                        else None)
+                        description_raw if isinstance(description_raw, str) else None
+                    )
 
                     start_date_raw = exp.get("start_date")
                     start_date_str = (
-                        start_date_raw
-                        if isinstance(start_date_raw, str)
-                        else None
+                        start_date_raw if isinstance(start_date_raw, str) else None
                     )
                     start_date = self._parse_date(start_date_str)
 
                     end_date_raw = exp.get("end_date")
                     end_date_str = (
-                        end_date_raw
-                        if isinstance(end_date_raw, str)
-                        else None
+                        end_date_raw if isinstance(end_date_raw, str) else None
                     )
                     end_date = self._parse_date(end_date_str)
 
                     is_current_raw = exp.get("is_current")
                     is_current = (
-                        is_current_raw
-                        if isinstance(is_current_raw, bool)
-                        else False)
+                        is_current_raw if isinstance(is_current_raw, bool) else False
+                    )
 
                     exp_skills: list[ParsedSkill] = []
                     exp_skills_raw = exp.get("skills")
@@ -104,7 +97,9 @@ class ResumeParser:
                             if isinstance(skill, dict):
                                 skill_name = skill.get("skill_name")
                                 if isinstance(skill_name, str):
-                                    exp_skills.append(ParsedSkill(skill_name=skill_name))
+                                    exp_skills.append(
+                                        ParsedSkill(skill_name=skill_name)
+                                    )
 
                     experiences.append(
                         ParsedExperience(
@@ -134,17 +129,13 @@ class ResumeParser:
 
                     start_date_raw = edu.get("start_date")
                     start_date_str = (
-                        start_date_raw
-                        if isinstance(start_date_raw, str)
-                        else None
+                        start_date_raw if isinstance(start_date_raw, str) else None
                     )
                     start_date = self._parse_date(start_date_str)
 
                     end_date_raw = edu.get("end_date")
                     end_date_str = (
-                        end_date_raw
-                        if isinstance(end_date_raw, str)
-                        else None
+                        end_date_raw if isinstance(end_date_raw, str) else None
                     )
                     end_date = self._parse_date(end_date_str)
 
@@ -168,7 +159,9 @@ class ResumeParser:
         phone = phone_raw if isinstance(phone_raw, str) else None
 
         current_title_raw = payload.get("current_title")
-        current_title = current_title_raw if isinstance(current_title_raw,str) else None
+        current_title = (
+            current_title_raw if isinstance(current_title_raw, str) else None
+        )
 
         location_raw = payload.get("location")
         location = location_raw if isinstance(location_raw, str) else None
@@ -191,4 +184,3 @@ class ResumeParser:
             educations=educations,
             total_experience_months=total_experience_months,
         )
-

@@ -13,52 +13,55 @@ from src.core.exceptions.scoring_exceptions import ScoringBaseException
 
 
 async def invalid_token_handler(
-        request: Request, exc: InvalidToken,
-        ) -> JSONResponse:
+    request: Request,
+    exc: InvalidToken,
+) -> JSONResponse:
     return JSONResponse(
         status_code=401,
         content={
             "error_code": exc.error_code if hasattr(exc, "error_code") else None,
             "detail": exc.message,
-            **({"info": exc.details} if exc.details else {})
-        }
+            **({"info": exc.details} if exc.details else {}),
+        },
     )
 
 
 async def invalid_authorization_format_handler(
-        request: Request,
-        exc: InvalidAuthorizationFormat,
-        ) -> JSONResponse:
+    request: Request,
+    exc: InvalidAuthorizationFormat,
+) -> JSONResponse:
     return JSONResponse(
         status_code=401,
         content={
             "detail": exc.message,
-            **({"info": exc.details} if exc.details else {})
-        }
+            **({"info": exc.details} if exc.details else {}),
+        },
     )
 
 
 async def general_exception_handler(
-        request: Request, exc: GeneralException,
-        ) -> JSONResponse:
+    request: Request,
+    exc: GeneralException,
+) -> JSONResponse:
     return JSONResponse(
         status_code=500,
         content={
             "detail": exc.message,
-            **({"info": exc.details} if exc.details else {})
-        }
+            **({"info": exc.details} if exc.details else {}),
+        },
     )
 
+
 async def invalid_password_exception_handler(
-        request: Request,
-        exc: InvalidPasswordException,
-        ) -> JSONResponse:
+    request: Request,
+    exc: InvalidPasswordException,
+) -> JSONResponse:
     return JSONResponse(
         status_code=400,
         content={
             "detail": exc.message,
-            **({"info": exc.details} if exc.details else {})
-        }
+            **({"info": exc.details} if exc.details else {}),
+        },
     )
 
 
@@ -71,15 +74,9 @@ async def job_description_exception_handler(
     return JSONResponse(
         status_code=status_code,
         content={
-            "error_code": exc.error_code
-            if hasattr(exc, "error_code")
-            else None,
+            "error_code": exc.error_code if hasattr(exc, "error_code") else None,
             "detail": exc.message,
-            **(
-                {"info": exc.details}
-                if exc.details
-                else {}
-            ),
+            **({"info": exc.details} if exc.details else {}),
         },
     )
 
@@ -93,11 +90,7 @@ async def scoring_exception_handler(
         content={
             "error_code": exc.error_code,
             "detail": exc.message,
-            **(
-                {"info": exc.details}
-                if exc.details
-                else {}
-            ),
+            **({"info": exc.details} if exc.details else {}),
         },
     )
 
@@ -110,7 +103,6 @@ async def user_already_exists_exception_handler(
         status_code=400,
         content={
             "detail": exc.message,
-            **({"info": exc.details} if exc.details else {})
-        }
+            **({"info": exc.details} if exc.details else {}),
+        },
     )
-

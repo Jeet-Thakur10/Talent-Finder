@@ -11,6 +11,7 @@ from src.control.agents.job_description_extraction_agent import (
 from src.core.exceptions.job_description_exception import (
     InvalidEmploymentType,
     InvalidJobDescriptionStatus,
+    JobDescriptionClosed,
     JobDescriptionNotFound,
     JobDescriptionScoringInProgress,
     RecruiterAccessRequired,
@@ -27,10 +28,10 @@ from src.schemas.job_description_schema import (
     JDSkillResponse,
     JobDescriptionCreateRequest,
     JobDescriptionExtractRequest,
+    JobDescriptionExtractResponse,
     JobDescriptionResponse,
     JobDescriptionStatusResponse,
     JobDescriptionUpdateRequest,
-    JobDescriptionExtractResponse,
 )
 
 
@@ -161,14 +162,21 @@ class JobDescriptionService:
                 error_code="JOB_DESCRIPTION_NOT_FOUND",
             )
 
+        if job_description.status and job_description.status.code == "CLOSED":
+            raise JobDescriptionClosed(
+                details="This campaign has been completed.",
+                error_code="CAMPAIGN_CLOSED",
+            )
+
         # Check if candidate scoring is currently in progress
         from sqlalchemy import select
 
         from src.data.models.postgres.scoring_task import ScoringTask
+
         scoring_task_res = await self.job_description_repository.db.execute(
             select(ScoringTask).where(
                 ScoringTask.job_description_id == job_description_id,
-                ScoringTask.status.in_(["PENDING", "RUNNING"])
+                ScoringTask.status.in_(["PENDING", "RUNNING"]),
             )
         )
         active_task = scoring_task_res.scalar_one_or_none()

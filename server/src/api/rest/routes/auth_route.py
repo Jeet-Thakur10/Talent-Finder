@@ -32,10 +32,10 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 async def login(
     data: LoginRequest,
     response: Response,
-    auth_service: AuthService = Depends(get_auth_service)
-    ) -> LoginResponse:
+    auth_service: AuthService = Depends(get_auth_service),
+) -> LoginResponse:
 
-    access_token, refresh_token, result = (await auth_service.login(data))
+    access_token, refresh_token, result = await auth_service.login(data)
 
     response.set_cookie(
         key=settings.ACCESS_TOKEN_COOKIE_NAME,
@@ -43,7 +43,7 @@ async def login(
         httponly=settings.COOKIE_HTTP_ONLY,
         secure=settings.COOKIE_SECURE,
         samesite=settings.COOKIE_SAMESITE,
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60*2,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60 * 2,
     )
 
     response.set_cookie(
@@ -57,6 +57,7 @@ async def login(
 
     return result
 
+
 @router.get("/me", response_model=UserResponse)
 async def me(
     user_context: AuthenticatedUserContext = Depends(
@@ -65,6 +66,7 @@ async def me(
     auth_service: AuthService = Depends(get_auth_service),
 ) -> UserResponse:
     return await auth_service.get_user_by_id(user_context.user_id)
+
 
 @router.post(
     "/refresh",
@@ -97,6 +99,7 @@ async def refresh(
         message="Access token refreshed successfully",
     )
 
+
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(response: Response) -> LogoutResponse:
 
@@ -117,6 +120,7 @@ async def logout(response: Response) -> LogoutResponse:
     return LogoutResponse(
         message="Logged out successfully",
     )
+
 
 @router.post("/reset-password", response_model=ResetPasswordResponse)
 async def reset_password(
@@ -153,4 +157,3 @@ async def create_user(
         )
 
     return await auth_service.create_user(data, notification_service)
-

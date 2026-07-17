@@ -22,6 +22,7 @@ export function JobDescriptionCreatePage({
     extractedJob,
     employmentTypes,
     hiringManagers,
+    statuses,
     isLoading,
     error,
     setError,
@@ -31,6 +32,9 @@ export function JobDescriptionCreatePage({
     addSkill,
     removeSkill,
   } = useRecruiterJobDescriptionWizard(isEdit, jobDescriptionId);
+
+  const jobStatus = extractedJob ? statuses.find((s) => s.id === extractedJob.status_id) : null;
+  const isCampaignClosed = jobStatus ? jobStatus.code.toUpperCase() === "CLOSED" : false;
 
   // Local skills inputs
   const [newMandatorySkill, setNewMandatorySkill] = useState("");
@@ -155,6 +159,20 @@ export function JobDescriptionCreatePage({
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Campaign Closed Warning Alert */}
+      {isCampaignClosed && (
+        <div className="workspace-alert !max-w-full bg-rose-50 border border-rose-250 text-rose-800 p-4 rounded-xl mb-6">
+          <div className="flex items-start gap-2.5">
+            <svg className="w-5 h-5 text-rose-800 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="text-sm font-semibold">
+              This campaign has been completed. Editing is disabled.
+            </div>
           </div>
         </div>
       )}
@@ -290,6 +308,7 @@ export function JobDescriptionCreatePage({
         {/* Step 3 — Review Structured Job Description */}
         {step === 3 && extractedJob && (
           <div className="surface-card bg-white border border-slate-200/80 rounded-2xl shadow-sm p-6 space-y-6">
+            <fieldset disabled={isCampaignClosed} style={{ display: 'contents', border: 'none', padding: 0, margin: 0 }}>
             <div>
               <h2 className="text-base font-bold text-slate-900 mb-1">Verify AI Extraction</h2>
               <p className="text-xs text-slate-500 leading-relaxed">
@@ -573,6 +592,7 @@ export function JobDescriptionCreatePage({
             <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
               <button
                 type="button"
+                disabled={isCampaignClosed}
                 onClick={() => {
                   if (isEdit) {
                     navigate(`/recruiter/job-descriptions/${jobDescriptionId}`);
@@ -580,24 +600,29 @@ export function JobDescriptionCreatePage({
                     setStep(2);
                   }
                 }}
-                className="workspace-ghost-button !py-2.5 !px-5 !rounded-xl text-sm focus:outline-none"
+                title={isCampaignClosed ? "This campaign has been completed." : undefined}
+                className={`workspace-ghost-button !py-2.5 !px-5 !rounded-xl text-sm focus:outline-none ${isCampaignClosed ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {isEdit ? "Cancel" : "Back"}
               </button>
               <button
                 type="button"
+                disabled={isCampaignClosed}
                 onClick={handleNextFromStep3}
-                className="workspace-primary-button !py-2.5 !px-5 !rounded-xl text-sm focus:outline-none cursor-pointer"
+                title={isCampaignClosed ? "This campaign has been completed." : undefined}
+                className={`workspace-primary-button !py-2.5 !px-5 !rounded-xl text-sm focus:outline-none cursor-pointer ${isCampaignClosed ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 Next
               </button>
             </div>
+            </fieldset>
           </div>
         )}
 
         {/* Step 4 — Final Confirmation */}
         {step === 4 && extractedJob && (
           <div className="surface-card bg-white border border-slate-200/80 rounded-2xl shadow-sm p-6 space-y-6">
+            <fieldset disabled={isCampaignClosed} style={{ display: 'contents', border: 'none', padding: 0, margin: 0 }}>
             <div>
               <h2 className="text-base font-bold text-slate-900 mb-1">Verify Campaign Setup</h2>
               <p className="text-xs text-slate-500 leading-relaxed">
@@ -645,8 +670,10 @@ export function JobDescriptionCreatePage({
             <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 justify-between items-center w-full">
               <button
                 type="button"
+                disabled={isCampaignClosed}
                 onClick={() => setStep(3)}
-                className="workspace-ghost-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm focus:outline-none"
+                title={isCampaignClosed ? "This campaign has been completed." : undefined}
+                className={`workspace-ghost-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm focus:outline-none ${isCampaignClosed ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 Back
               </button>
@@ -654,8 +681,10 @@ export function JobDescriptionCreatePage({
               {isEdit ? (
                 <button
                   type="button"
+                  disabled={isCampaignClosed}
                   onClick={handleSaveDraft}
-                  className="workspace-primary-button w-full sm:w-auto !py-2.5 !px-6 !rounded-xl text-sm font-semibold focus:outline-none shadow-md shadow-slate-900/10"
+                  title={isCampaignClosed ? "This campaign has been completed." : undefined}
+                  className={`workspace-primary-button w-full sm:w-auto !py-2.5 !px-6 !rounded-xl text-sm font-semibold focus:outline-none shadow-md shadow-slate-900/10 ${isCampaignClosed ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   Save Changes
                 </button>
@@ -663,21 +692,26 @@ export function JobDescriptionCreatePage({
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                   <button
                     type="button"
+                    disabled={isCampaignClosed}
                     onClick={handleSaveDraft}
-                    className="workspace-ghost-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none"
+                    title={isCampaignClosed ? "This campaign has been completed." : undefined}
+                    className={`workspace-ghost-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none ${isCampaignClosed ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     Save as Draft
                   </button>
                   <button
                     type="button"
+                    disabled={isCampaignClosed}
                     onClick={handleContinueScoring}
-                    className="workspace-primary-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm font-semibold focus:outline-none shadow-md shadow-slate-900/10"
+                    title={isCampaignClosed ? "This campaign has been completed." : undefined}
+                    className={`workspace-primary-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm font-semibold focus:outline-none shadow-md shadow-slate-900/10 ${isCampaignClosed ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     Continue to Scoring
                   </button>
                 </div>
               )}
             </div>
+            </fieldset>
           </div>
         )}
 

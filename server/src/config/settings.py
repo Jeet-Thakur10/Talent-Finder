@@ -11,19 +11,20 @@ current_dir = Path(__file__).resolve().parent
 server_dir = current_dir.parent.parent
 env_file_path = server_dir / ".env"
 
+
 class Settings(BaseSettings):
-    DATABASE_URL: str = "" # Required field - removing fallback value to prevent
-                           # silent failure
+    DATABASE_URL: str = ""  # Required field - removing fallback value to prevent
+    # silent failure
     PORT: int = 8000
     HOST: str = "127.0.0.1"
 
     SECRET_KEY: str = "jeetsecret"
     ALGORITHM: str = "HS256"
 
-    ACCESS_TOKEN_COOKIE_NAME : str = "access_token"
+    ACCESS_TOKEN_COOKIE_NAME: str = "access_token"
     REFRESH_TOKEN_COOKIE_NAME: str = "refresh_token"
 
-    COOKIE_HTTP_ONLY : bool = True
+    COOKIE_HTTP_ONLY: bool = True
     COOKIE_SECURE: bool = True
     COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "none"
 
@@ -71,9 +72,7 @@ class Settings(BaseSettings):
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
-    def parse_origins(
-        cls, v : str | list[str]
-        ) -> list[str]:
+    def parse_origins(cls, v: str | list[str]) -> list[str]:
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
         return v
@@ -84,15 +83,19 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+
 settings = Settings()
 
 logger = logging.getLogger(__name__)
 # Mask database URL password for security
 try:
     from urllib.parse import urlparse
+
     url = urlparse(settings.DATABASE_URL)
-    masked_db_url = f"{url.scheme}://{url.username}:****@{url.hostname}:{url.port}{url.path}"
-    db_name = url.path.lstrip('/')
+    masked_db_url = (
+        f"{url.scheme}://{url.username}:****@{url.hostname}:{url.port}{url.path}"
+    )
+    db_name = url.path.lstrip("/")
 except Exception:
     masked_db_url = "Invalid URL structure"
     db_name = "Unknown"
@@ -107,4 +110,3 @@ print(f"[CONFIG] DATABASE_URL: {masked_db_url}")
 print(f"[CONFIG] Database Name: {db_name}")
 logger.info(f"DATABASE_URL: {masked_db_url}")
 logger.info(f"Database Name: {db_name}")
-

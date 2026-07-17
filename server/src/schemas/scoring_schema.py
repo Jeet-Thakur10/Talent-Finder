@@ -31,7 +31,6 @@ class ParsedEducation(BaseModel):
     end_date: date | None = None
 
 
-
 class ParsedCandidateProfile(BaseModel):
     full_name: str
     email: str | None = None
@@ -44,6 +43,7 @@ class ParsedCandidateProfile(BaseModel):
     educations: list[ParsedEducation] = Field(default_factory=list)
     total_experience_months: int = 0
 
+
 class CandidateImportRequest(BaseModel):
     job_description_id: UUID
     resume_text: str = Field(min_length=20)
@@ -51,6 +51,7 @@ class CandidateImportRequest(BaseModel):
 
 class ResumeSkillOutput(BaseModel):
     skill_name: str
+
 
 class ResumeExperienceOutput(BaseModel):
     company_name: str | None = None
@@ -84,6 +85,7 @@ class ResumeCandidateOutput(BaseModel):
 
 
 # LLM based resume scoring
+
 
 class CandidateSkillInput(BaseModel):
     skill_name: str
@@ -149,6 +151,7 @@ class JobDescriptionScoringInput(BaseModel):
     preferred_qualifications: str | None = None
 
     skills: list[JobSkillInput]
+
 
 class CandidateScoreExplanation(BaseModel):
     summary: str
@@ -335,7 +338,6 @@ class CandidatePrescoreOutput(BaseModel):
     score: int
 
 
-
 class CandidatePrescoreBatchOutput(BaseModel):
     scores: list[CandidatePrescoreOutput]
 
@@ -460,6 +462,8 @@ class HMCampaignResponse(BaseModel):
     accepted_candidate_count: int
     rejected_candidate_count: int
     pending_candidate_count: int
+    status_code: str
+
 
 class InterviewScheduleRequest(BaseModel):
     interview_link: str

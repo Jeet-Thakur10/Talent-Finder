@@ -8,6 +8,7 @@ export interface HMCampaign {
   accepted_candidate_count: number;
   rejected_candidate_count: number;
   pending_candidate_count: number;
+  status_code: string;
 }
 
 export interface HMSharedCandidate {

@@ -14,4 +14,3 @@ redis_client: aioredis.Redis = aioredis.from_url(
     settings.REDIS_URL,
     decode_responses=True,
 )
-

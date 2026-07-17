@@ -16,6 +16,9 @@ export function JobDescriptionScoringConfigPage() {
     error: jobError,
   } = useRecruiterJobDescriptionDetail(jobDescriptionId);
 
+  const jobStatus = jobDescription ? statuses.find((s) => s.id === jobDescription.status_id) : null;
+  const isCampaignClosed = jobStatus ? jobStatus.code.toUpperCase() === "CLOSED" : false;
+
   // Manage Scoring configuration parameter state
   const {
     k,
@@ -166,6 +169,7 @@ export function JobDescriptionScoringConfigPage() {
             </div>
           ) : (
             <form onSubmit={handleFormSubmit} className="surface-card space-y-6">
+              <fieldset disabled={isCampaignClosed} style={{ display: 'contents', border: 'none', padding: 0, margin: 0 }}>
               <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Candidate Match Constraints</h2>
               
               {/* Final Shortlist Size */}
@@ -237,17 +241,19 @@ export function JobDescriptionScoringConfigPage() {
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 <button
                   type="button"
+                  disabled={isCampaignClosed}
                   onClick={() => navigate(`/recruiter/job-descriptions/${jobDescriptionId}`)}
-                  className="workspace-ghost-button !px-5 !py-2.5 text-sm hover:bg-slate-50"
+                  title={isCampaignClosed ? "This campaign has been completed." : undefined}
+                  className={`workspace-ghost-button !px-5 !py-2.5 text-sm hover:bg-slate-50 ${isCampaignClosed ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   Cancel
                 </button>
                 
                 <button
                   type="submit"
-                  disabled={isSubmitting || k < 1 || k > 25 || isNaN(k) || minPrescoreThreshold < 0 || minPrescoreThreshold > 100}
-                  className="workspace-primary-button !px-5 !py-2.5 text-sm font-semibold disabled:opacity-50"
-                  title={k < 1 || k > 25 || isNaN(k) ? "Enter a shortlist size between 1 and 25 to continue." : undefined}
+                  disabled={isSubmitting || k < 1 || k > 25 || isNaN(k) || minPrescoreThreshold < 0 || minPrescoreThreshold > 100 || isCampaignClosed}
+                  title={isCampaignClosed ? "This campaign has been completed." : (k < 1 || k > 25 || isNaN(k) ? "Enter a shortlist size between 1 and 25 to continue." : undefined)}
+                  className={`workspace-primary-button !px-5 !py-2.5 text-sm font-semibold ${isCampaignClosed ? "opacity-50 cursor-not-allowed" : "disabled:opacity-50"}`}
                 >
                   {isSubmitting ? (
                     <>
@@ -259,7 +265,7 @@ export function JobDescriptionScoringConfigPage() {
                   )}
                 </button>
               </div>
-
+              </fieldset>
             </form>
           )}
 

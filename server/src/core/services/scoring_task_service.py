@@ -142,7 +142,7 @@ class ScoringTaskService:
                         title="Scoring Failed",
                         message=(
                             f'Candidate evaluation for "{jd.title}" '
-                            'could not be completed.'
+                            "could not be completed."
                         ),
                         target_url="/recruiter/tasks",
                         metadata={

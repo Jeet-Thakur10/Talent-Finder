@@ -14,7 +14,6 @@ from src.data.repositories.auth_repository import AuthRepository
 
 
 class OTPService:
-
     def __init__(self, db: AsyncSession) -> None:
         self.auth_repository = AuthRepository(db)
         self.jwt_provider = JWTProvider()
@@ -101,9 +100,7 @@ class OTPService:
 
     async def send_otp(self, email: str, otp: str) -> None:
 
-        message = MIMEText(
-            f"Your password reset OTP is: {otp}"
-        )
+        message = MIMEText(f"Your password reset OTP is: {otp}")
 
         message["Subject"] = "Password Reset OTP"
         message["From"] = settings.SMTP_EMAIL
@@ -118,4 +115,3 @@ class OTPService:
             use_tls=False,
             start_tls=True,
         )
-

@@ -6,6 +6,7 @@ import type {
   HiringManager,
   JDSkill,
   JobDescriptionPayload,
+  JobDescriptionStatus,
 } from "../../dashboard/services/dashboard.types";
 
 export type WizardStep = 1 | 2 | 3 | 4;
@@ -19,6 +20,7 @@ export function useRecruiterJobDescriptionWizard(isEdit?: boolean, jobDescriptio
   // Lookups
   const [employmentTypes, setEmploymentTypes] = useState<EmploymentType[]>([]);
   const [hiringManagers, setHiringManagers] = useState<HiringManager[]>([]);
+  const [statuses, setStatuses] = useState<JobDescriptionStatus[]>([]);
   
   // State indicators
   const [isLoading, setIsLoading] = useState(false);
@@ -30,12 +32,14 @@ export function useRecruiterJobDescriptionWizard(isEdit?: boolean, jobDescriptio
       try {
         setError(null);
         setIsLoading(true);
-        const [types, managers] = await Promise.all([
+        const [types, managers, lookupsStatuses] = await Promise.all([
           dashboardService.listEmploymentTypes(),
           dashboardService.listHiringManagers(),
+          dashboardService.listJobDescriptionStatuses(),
         ]);
         setEmploymentTypes(types);
         setHiringManagers(managers);
+        setStatuses(lookupsStatuses);
         
         if (isEdit && jobDescriptionId) {
           const jd = await dashboardService.getJobDescription(jobDescriptionId);
@@ -195,6 +199,7 @@ export function useRecruiterJobDescriptionWizard(isEdit?: boolean, jobDescriptio
     setExtractedJob,
     employmentTypes,
     hiringManagers,
+    statuses,
     isLoading,
     error,
     setError,

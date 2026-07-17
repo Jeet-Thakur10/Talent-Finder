@@ -1,10 +1,47 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useCampaignCandidates } from "../hooks/useCampaignCandidates";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
+import { hiringManagerService } from "../services/hiringManager.service";
 
 export function SharedCampaignDetailsPage() {
   const { jobDescriptionId } = useParams<{ jobDescriptionId: string }>();
   const navigate = useNavigate();
   const { campaign, candidates, isLoading, error, retry } = useCampaignCandidates(jobDescriptionId);
+
+  const [showEndModal, setShowEndModal] = useState(false);
+  const [showReopenModal, setShowReopenModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleEndCampaign = async () => {
+    if (!jobDescriptionId) return;
+    try {
+      setIsSubmitting(true);
+      await hiringManagerService.endCampaign(jobDescriptionId);
+      toast.success("Campaign ended successfully!");
+      setShowEndModal(false);
+      void retry();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || err?.message || "Failed to end campaign.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReopenCampaign = async () => {
+    if (!jobDescriptionId) return;
+    try {
+      setIsSubmitting(true);
+      await hiringManagerService.reopenCampaign(jobDescriptionId);
+      toast.success("Campaign reopened successfully!");
+      setShowReopenModal(false);
+      void retry();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || err?.message || "Failed to reopen campaign.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
@@ -126,26 +163,70 @@ export function SharedCampaignDetailsPage() {
                 </div>
               </div>
 
-              {/* Status Summary Pills */}
-              <div className="flex items-center gap-2">
-                <span className="status-badge rounded-md bg-slate-100 text-[11px] text-slate-700 border-slate-200">
-                  {campaign.shared_candidate_count} Shortlisted
-                </span>
-                {campaign.pending_candidate_count > 0 && (
-                  <span className="status-badge rounded-md bg-blue-50 text-[11px] text-blue-700 border-blue-100">
-                    {campaign.pending_candidate_count} Pending
+              {/* Status & Actions Container */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                {/* Status Summary Pills */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="status-badge rounded-md bg-slate-100 text-[11px] text-slate-700 border-slate-200">
+                    {campaign.shared_candidate_count} Shortlisted
                   </span>
-                )}
-                {campaign.accepted_candidate_count > 0 && (
-                  <span className="status-badge rounded-md bg-emerald-50 text-[11px] text-emerald-700 border-emerald-100">
-                    {campaign.accepted_candidate_count} Interview Scheduled
-                  </span>
-                )}
-                {campaign.rejected_candidate_count > 0 && (
-                  <span className="status-badge rounded-md bg-rose-50 text-[11px] text-rose-700 border-rose-100">
-                    {campaign.rejected_candidate_count} Rejected
-                  </span>
-                )}
+                  {campaign.pending_candidate_count > 0 && (
+                    <span className="status-badge rounded-md bg-blue-50 text-[11px] text-blue-700 border-blue-100">
+                      {campaign.pending_candidate_count} Pending
+                    </span>
+                  )}
+                  {campaign.accepted_candidate_count > 0 && (
+                    <span className="status-badge rounded-md bg-emerald-50 text-[11px] text-emerald-700 border-emerald-100">
+                      {campaign.accepted_candidate_count} Interview Scheduled
+                    </span>
+                  )}
+                  {campaign.rejected_candidate_count > 0 && (
+                    <span className="status-badge rounded-md bg-rose-50 text-[11px] text-rose-700 border-rose-100">
+                      {campaign.rejected_candidate_count} Rejected
+                    </span>
+                  )}
+                </div>
+
+                {/* Campaign Action Buttons */}
+                <div className="flex items-center gap-2 border-l border-slate-200/50 pl-3">
+                  {campaign.status_code === "CLOSED" ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setShowReopenModal(true)}
+                        className="workspace-primary-button !rounded-xl !py-2 !px-4 text-xs font-semibold focus:outline-none cursor-pointer"
+                      >
+                        Reopen Campaign
+                      </button>
+                      <button
+                        type="button"
+                        disabled
+                        title="This campaign has been completed."
+                        className="workspace-ghost-button !rounded-xl !py-2 !px-4 text-xs font-semibold opacity-40 cursor-not-allowed"
+                      >
+                        End Campaign
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={campaign.pending_candidate_count > 0}
+                      onClick={() => setShowEndModal(true)}
+                      title={
+                        campaign.pending_candidate_count > 0
+                          ? "Complete a decision for every shortlisted candidate before ending the campaign."
+                          : undefined
+                      }
+                      className={`workspace-ghost-button !rounded-xl !py-2 !px-4 text-xs font-semibold ${
+                        campaign.pending_candidate_count > 0
+                          ? "opacity-40 cursor-not-allowed"
+                          : "hover:bg-slate-50"
+                      }`}
+                    >
+                      End Campaign
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -239,6 +320,66 @@ export function SharedCampaignDetailsPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* End Campaign Confirmation Modal */}
+          {showEndModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 backdrop-blur-sm p-4">
+              <div className="surface-card max-w-md w-full p-6 animate-fade-in shadow-2xl">
+                <h3 className="text-lg font-bold text-slate-900 font-sans">End Campaign?</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  This will permanently mark the hiring campaign as completed. Recruiters will no longer be able to modify or continue this campaign.
+                </p>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => setShowEndModal(false)}
+                    className="workspace-ghost-button !py-2 !px-4 text-xs font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={handleEndCampaign}
+                    className="workspace-primary-button !py-2 !px-4 text-xs font-semibold bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-900/10 cursor-pointer"
+                  >
+                    {isSubmitting ? "Ending..." : "End Campaign"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reopen Campaign Confirmation Modal */}
+          {showReopenModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 backdrop-blur-sm p-4">
+              <div className="surface-card max-w-md w-full p-6 animate-fade-in shadow-2xl">
+                <h3 className="text-lg font-bold text-slate-900 font-sans">Reopen Campaign?</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  This will reopen the campaign, allowing recruiters to edit requirements or run scoring and allowing you to update candidate decisions.
+                </p>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => setShowReopenModal(false)}
+                    className="workspace-ghost-button !py-2 !px-4 text-xs font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={handleReopenCampaign}
+                    className="workspace-primary-button !py-2 !px-4 text-xs font-semibold cursor-pointer"
+                  >
+                    {isSubmitting ? "Reopening..." : "Reopen Campaign"}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

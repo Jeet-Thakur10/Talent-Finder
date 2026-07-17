@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 
 class BrevoClient:
-
     def __init__(self) -> None:
         self.api_key = settings.BREVO_API_KEY
         self.sender_email = settings.BREVO_SENDER_EMAIL

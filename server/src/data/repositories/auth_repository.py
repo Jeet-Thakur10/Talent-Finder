@@ -7,7 +7,6 @@ from src.data.models.postgres.user import User
 
 
 class AuthRepository:
-
     def __init__(self, db: AsyncSession):
         self.db = db
 
@@ -53,4 +52,3 @@ class AuthRepository:
         self.db.add(user)
         await self.save(user)
         return user
-

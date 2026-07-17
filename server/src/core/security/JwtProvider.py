@@ -9,14 +9,14 @@ from src.core.exceptions.auth_exceptions import InvalidToken
 
 
 class JWTProvider:
-
     def create_access_token(self, user_id: UUID, role: str) -> str:
 
         payload = {
             "sub": str(user_id),
             "role": role,
             "type": "access",
-            "exp": datetime.now(UTC) + timedelta(
+            "exp": datetime.now(UTC)
+            + timedelta(
                 minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
             ),
         }
@@ -32,7 +32,8 @@ class JWTProvider:
         payload = {
             "sub": str(user_id),
             "type": "refresh",
-            "exp": datetime.now(UTC) + timedelta(
+            "exp": datetime.now(UTC)
+            + timedelta(
                 days=settings.REFRESH_TOKEN_EXPIRE_DAYS,
             ),
         }
@@ -54,12 +55,11 @@ class JWTProvider:
 
         except ExpiredSignatureError as exc:
             raise InvalidToken(
-                details="Token has expired",
-                error_code="TOKEN_EXPIRED") from exc
+                details="Token has expired", error_code="TOKEN_EXPIRED"
+            ) from exc
 
         except JWTError as exc:
-            raise InvalidToken(
-                details="Token is malformed or invalid") from exc
+            raise InvalidToken(details="Token is malformed or invalid") from exc
 
         return payload
 
@@ -68,8 +68,7 @@ class JWTProvider:
         payload = {
             "sub": str(user_id),
             "type": "password_reset",
-            "exp": datetime.now(UTC)
-            + timedelta(minutes=10),
+            "exp": datetime.now(UTC) + timedelta(minutes=10),
         }
 
         return jwt.encode(
