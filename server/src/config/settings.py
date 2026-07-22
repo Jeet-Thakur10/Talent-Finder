@@ -70,6 +70,12 @@ class Settings(BaseSettings):
 
     REDIS_URL: str = "redis://localhost:6379/0"
 
+    # LangSmith tracing for local development
+    LANGSMITH_TRACING: bool = False
+    LANGSMITH_API_KEY: str = ""
+    LANGSMITH_PROJECT: str = "Talent-Finder-Local"
+    LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
+
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
     def parse_origins(cls, v: str | list[str]) -> list[str]:
@@ -85,6 +91,16 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Dynamically propagate LangSmith settings to os.environ so that LangChain's callback mechanism detects them
+import os
+
+if settings.LANGSMITH_TRACING and settings.LANGSMITH_API_KEY:
+    os.environ["LANGSMITH_TRACING"] = "true"
+    os.environ["LANGSMITH_API_KEY"] = settings.LANGSMITH_API_KEY
+    os.environ["LANGSMITH_PROJECT"] = settings.LANGSMITH_PROJECT
+    os.environ["LANGSMITH_ENDPOINT"] = settings.LANGSMITH_ENDPOINT
+
 
 logger = logging.getLogger(__name__)
 # Mask database URL password for security

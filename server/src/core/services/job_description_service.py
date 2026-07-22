@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import UTC, datetime
 from uuid import UUID
@@ -33,6 +34,10 @@ from src.schemas.job_description_schema import (
     JobDescriptionStatusResponse,
     JobDescriptionUpdateRequest,
 )
+from src.utils.jd_comparison_helper import has_scoring_fields_changed
+from src.utils.review_state_helper import has_campaign_review_started
+
+logger = logging.getLogger(__name__)
 
 
 class JobDescriptionService:
@@ -196,6 +201,9 @@ class JobDescriptionService:
                 details=f"Employment type '{data.employment_type_id}' does not exist"
             )
 
+        # Check if candidate scoring-relevant fields changed prior to updating fields
+        scoring_changed = has_scoring_fields_changed(job_description, data)
+
         job_description.title = data.title
         job_description.department = data.department
         job_description.job_purpose = data.job_purpose
@@ -215,6 +223,7 @@ class JobDescriptionService:
 
         job_description.skills = [
             JDSkill(
+                id=uuid.uuid4(),
                 jd_id=job_description.id,
                 skill_name=skill.skill_name,
                 is_mandatory=skill.is_mandatory,
@@ -227,6 +236,56 @@ class JobDescriptionService:
                 job_description,
             )
         )
+
+        # Invalidate shared shortlist if scoring fields changed
+        if scoring_changed:
+            pipeline_entries = (
+                await self.job_description_repository.get_pipeline_entries_for_job(
+                    job_description.id
+                )
+            )
+            shared_entries = [
+                p for p in pipeline_entries if p.shared_with_hiring_manager
+            ]
+
+            if shared_entries:
+                review_started = has_campaign_review_started(pipeline_entries)
+                if review_started:
+                    logger.info(
+                        "Shared shortlist invalidation SKIPPED for JobDescription %s "
+                        "(Recruiter %s): Hiring Manager review started.",
+                        job_description.id,
+                        current_user.user_id,
+                    )
+                else:
+                    repo = self.job_description_repository
+                    unshared_count = (
+                        await repo.unshare_pipeline_entries_for_job(
+                            job_description.id
+                        )
+                    )
+                    logger.info(
+                        "Shared shortlist INVALIDATED for JobDescription %s "
+                        "(Recruiter ID: %s): Candidate fields changed "
+                        "(%s candidates unshared).",
+                        job_description.id,
+                        current_user.user_id,
+                        unshared_count,
+                    )
+            else:
+                logger.info(
+                    "JobDescription %s updated (scoring fields changed), "
+                    "but no active shared shortlist exists. Recruiter ID: %s.",
+                    job_description.id,
+                    current_user.user_id,
+                )
+        else:
+            logger.info(
+                "JobDescription %s updated without changes to scoring-relevant "
+                "fields. Shared shortlist remains valid. Recruiter ID: %s.",
+                job_description.id,
+                current_user.user_id,
+            )
 
         return self._build_job_description_response(
             updated_job_description,

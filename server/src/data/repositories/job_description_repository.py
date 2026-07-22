@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -10,6 +10,7 @@ from src.data.models.postgres.job_description import JobDescription
 from src.data.models.postgres.job_description_status import (
     JobDescriptionStatus,
 )
+from src.data.models.postgres.pipeline import Pipeline
 from src.data.models.postgres.user import User
 
 
@@ -129,3 +130,24 @@ class JobDescriptionRepository:
         )
 
         return list(result.scalars().all())
+
+    async def get_pipeline_entries_for_job(
+        self, job_description_id: UUID
+    ) -> list[Pipeline]:
+        result = await self.db.execute(
+            select(Pipeline).where(Pipeline.jd_id == job_description_id)
+        )
+        return list(result.scalars().all())
+
+    async def unshare_pipeline_entries_for_job(self, job_description_id: UUID) -> int:
+        stmt = (
+            update(Pipeline)
+            .where(Pipeline.jd_id == job_description_id)
+            .values(
+                shared_with_hiring_manager=False,
+                shared_at=None,
+            )
+        )
+        result = await self.db.execute(stmt)
+        await self.db.flush()
+        return result.rowcount
