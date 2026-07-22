@@ -45,6 +45,7 @@ class ScoringRepository:
             select(JobDescription)
             .options(
                 selectinload(JobDescription.skills),
+                selectinload(JobDescription.status),
             )
             .where(JobDescription.id == job_description_id)
         )
@@ -524,14 +525,19 @@ class ScoringRepository:
             # ))
             matched_edus = set()
             for inc_edu in candidate_details.educations:
-                edu_key = (inc_edu.institution_name,
-                           inc_edu.degree, inc_edu.field_of_study)
+                edu_key = (
+                    inc_edu.institution_name,
+                    inc_edu.degree,
+                    inc_edu.field_of_study,
+                )
 
                 matched_edu = None
                 for ext_edu in existing_candidate.educations:
-                    ext_edu_key = (ext_edu.institution_name,
-                                   ext_edu.degree,
-                                   ext_edu.field_of_study)
+                    ext_edu_key = (
+                        ext_edu.institution_name,
+                        ext_edu.degree,
+                        ext_edu.field_of_study,
+                    )
                     if ext_edu_key == edu_key:
                         matched_edu = ext_edu
                         break
@@ -678,6 +684,7 @@ class ScoringRepository:
             .options(
                 selectinload(JobDescription.recruiter),
                 selectinload(JobDescription.pipeline_entries),
+                selectinload(JobDescription.status),
             )
             .join(Pipeline, Pipeline.jd_id == JobDescription.id)
             .where(
@@ -788,9 +795,7 @@ class ScoringRepository:
             )
         else:
             # Remove all pipeline records for this JD
-            stmt_pipeline = delete(Pipeline).where(
-                Pipeline.jd_id == job_description_id
-            )
+            stmt_pipeline = delete(Pipeline).where(Pipeline.jd_id == job_description_id)
             # Remove all candidate job scores for this JD
             stmt_scores = delete(CandidateJobScore).where(
                 CandidateJobScore.job_description_id == job_description_id
@@ -799,4 +804,3 @@ class ScoringRepository:
         await self.db.execute(stmt_pipeline)
         await self.db.execute(stmt_scores)
         await self.db.flush()
-

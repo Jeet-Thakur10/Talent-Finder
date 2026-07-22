@@ -8,7 +8,6 @@ from src.data.models.postgres.notification import Notification, NotificationType
 
 
 class NotificationRepository:
-
     def __init__(self, db: AsyncSession):
         self.db = db
 
@@ -38,9 +37,11 @@ class NotificationRepository:
         self,
         user_id: UUID,
     ) -> list[Notification]:
-        stmt = select(Notification).where(
-            Notification.user_id == user_id
-        ).order_by(Notification.created_at.desc())
+        stmt = (
+            select(Notification)
+            .where(Notification.user_id == user_id)
+            .order_by(Notification.created_at.desc())
+        )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 

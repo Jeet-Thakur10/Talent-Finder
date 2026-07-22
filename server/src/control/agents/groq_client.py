@@ -14,6 +14,7 @@ from pydantic import SecretStr
 
 logger = logging.getLogger(__name__)
 
+
 class RotationalChatGroq(ChatGroq):
     _current_key_idx: ClassVar[int] = 0
     _keys: ClassVar[list[str]] = []
@@ -36,15 +37,20 @@ class RotationalChatGroq(ChatGroq):
                     RotationalChatGroq._keys = [api_key.get_secret_value()]
                 else:
                     RotationalChatGroq._keys = [str(api_key)]
-                RotationalChatGroq._key_cooldowns = [0.0]* len(RotationalChatGroq._keys)
+                RotationalChatGroq._key_cooldowns = [0.0] * len(
+                    RotationalChatGroq._keys
+                )
 
         # Apply the active key
         active_idx = RotationalChatGroq._current_key_idx
         if RotationalChatGroq._keys:
             if len(RotationalChatGroq._key_cooldowns) != len(RotationalChatGroq._keys):
-                RotationalChatGroq._key_cooldowns = [0.0]* len(RotationalChatGroq._keys)
+                RotationalChatGroq._key_cooldowns = [0.0] * len(
+                    RotationalChatGroq._keys
+                )
 
             import time
+
             selected_idx = -1
             num_keys = len(RotationalChatGroq._keys)
             for step in range(num_keys):
@@ -57,7 +63,8 @@ class RotationalChatGroq(ChatGroq):
                 # Fallback: choose the key with the smallest cooldown timestamp
                 selected_idx = min(
                     range(num_keys),
-                    key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
+                    key=lambda idx: RotationalChatGroq._key_cooldowns[idx],
+                )
 
             RotationalChatGroq._current_key_idx = selected_idx
             kwargs["api_key"] = RotationalChatGroq._keys[selected_idx]
@@ -66,8 +73,10 @@ class RotationalChatGroq(ChatGroq):
 
     def _get_cooldown_from_error(self, exc: RateLimitError) -> float:
         from src.config.settings import settings
+
         default_cooldown = getattr(
-            settings, "GROQ_DEFAULT_RATE_LIMIT_COOLDOWN_SECONDS", 10.0)
+            settings, "GROQ_DEFAULT_RATE_LIMIT_COOLDOWN_SECONDS", 10.0
+        )
         if not exc.response or not hasattr(exc.response, "headers"):
             return default_cooldown
 
@@ -133,13 +142,9 @@ class RotationalChatGroq(ChatGroq):
             active_idx = RotationalChatGroq._current_key_idx % num_keys
             try:
                 res = super()._generate(messages, stop, run_manager, **kwargs)
-                print(
-                    "Groq request succeeded using key "
-                    f"{active_idx + 1}/{num_keys}."
-                )
+                print(f"Groq request succeeded using key {active_idx + 1}/{num_keys}.")
                 logger.info(
-                    "Groq request succeeded using key "
-                    f"{active_idx + 1}/{num_keys}."
+                    f"Groq request succeeded using key {active_idx + 1}/{num_keys}."
                 )
                 return res
             except RateLimitError as exc:
@@ -151,6 +156,7 @@ class RotationalChatGroq(ChatGroq):
 
                 # Set cooldown for the current key
                 import time
+
                 cooldown = self._get_cooldown_from_error(exc)
                 RotationalChatGroq._key_cooldowns[active_idx] = time.time() + cooldown
 
@@ -164,7 +170,8 @@ class RotationalChatGroq(ChatGroq):
                 if selected_idx == -1:
                     selected_idx = min(
                         range(num_keys),
-                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
+                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx],
+                    )
 
                 RotationalChatGroq._current_key_idx = selected_idx
                 print(
@@ -187,7 +194,7 @@ class RotationalChatGroq(ChatGroq):
         raise RateLimitError(
             "All configured Groq API keys are currently rate limited.",
             response=dummy_response,
-            body=None
+            body=None,
         )
 
     async def _agenerate(
@@ -209,13 +216,9 @@ class RotationalChatGroq(ChatGroq):
             active_idx = RotationalChatGroq._current_key_idx % num_keys
             try:
                 res = await super()._agenerate(messages, stop, run_manager, **kwargs)
-                print(
-                    "Groq request succeeded using key "
-                    f"{active_idx + 1}/{num_keys}."
-                )
+                print(f"Groq request succeeded using key {active_idx + 1}/{num_keys}.")
                 logger.info(
-                    "Groq request succeeded using key "
-                    f"{active_idx + 1}/{num_keys}."
+                    f"Groq request succeeded using key {active_idx + 1}/{num_keys}."
                 )
                 return res
             except RateLimitError as exc:
@@ -227,6 +230,7 @@ class RotationalChatGroq(ChatGroq):
 
                 # Set cooldown for the current key
                 import time
+
                 cooldown = self._get_cooldown_from_error(exc)
                 RotationalChatGroq._key_cooldowns[active_idx] = time.time() + cooldown
 
@@ -240,7 +244,8 @@ class RotationalChatGroq(ChatGroq):
                 if selected_idx == -1:
                     selected_idx = min(
                         range(num_keys),
-                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx])
+                        key=lambda idx: RotationalChatGroq._key_cooldowns[idx],
+                    )
 
                 RotationalChatGroq._current_key_idx = selected_idx
                 print(
@@ -263,5 +268,5 @@ class RotationalChatGroq(ChatGroq):
         raise RateLimitError(
             "All configured Groq API keys are currently rate limited.",
             response=dummy_response,
-            body=None
+            body=None,
         )

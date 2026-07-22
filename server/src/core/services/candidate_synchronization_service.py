@@ -157,8 +157,7 @@ class CandidateSynchronizationService:
                     success=False,
                     error_code="CANDIDATE_OMITTED_IN_RESPONSE",
                     error_message=(
-                        "Candidate details not returned by "
-                        "external sourcing service"
+                        "Candidate details not returned by external sourcing service"
                     ),
                     duration_ms=api_duration,
                 )

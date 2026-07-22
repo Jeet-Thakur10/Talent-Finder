@@ -10,6 +10,7 @@ class CandidateSyncResultItem:
     error_message: str | None = None
     duration_ms: float = 0.0
 
+
 @dataclass
 class SyncBatchResult:
     results: dict[UUID, CandidateSyncResultItem] = field(default_factory=dict)

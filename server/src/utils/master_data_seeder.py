@@ -38,11 +38,8 @@ async def seed_employment_types(
     ]
 
     for employment_type in employment_types:
-
         existing = await db.execute(
-            select(EmploymentType).where(
-                EmploymentType.code == employment_type["code"]
-            )
+            select(EmploymentType).where(EmploymentType.code == employment_type["code"])
         )
 
         if existing.scalar_one_or_none():
@@ -56,6 +53,7 @@ async def seed_employment_types(
         )
 
     await db.commit()
+
 
 async def seed_job_description_statuses(
     db: AsyncSession,
@@ -77,7 +75,6 @@ async def seed_job_description_statuses(
     ]
 
     for status in statuses:
-
         existing = await db.execute(
             select(JobDescriptionStatus).where(
                 JobDescriptionStatus.code == status["code"]
@@ -96,14 +93,16 @@ async def seed_job_description_statuses(
 
     await db.commit()
 
+
 async def seed_master_data(db: AsyncSession) -> None:
     # Update table schemas if needed
-    await db.execute(text("""
+    await db.execute(
+        text("""
         ALTER TABLE job_descriptions
         ADD COLUMN IF NOT EXISTS hiring_manager_id UUID REFERENCES users(id)
-    """))
+    """)
+    )
     await db.commit()
 
     await seed_employment_types(db)
     await seed_job_description_statuses(db)
-

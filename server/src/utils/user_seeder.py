@@ -8,7 +8,6 @@ from src.utils.crypt import hash_password
 
 
 class UserSeeder:
-
     @staticmethod
     async def seed(db: AsyncSession) -> None:
 
@@ -28,7 +27,6 @@ class UserSeeder:
         ]
 
         for data in users:
-
             stmt = select(User).where(
                 User.email == data["email"],
             )

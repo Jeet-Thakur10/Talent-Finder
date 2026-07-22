@@ -98,4 +98,3 @@ def get_welcome_email_html(
         title="Welcome to Talent Finder",
         body=body,
     )
-

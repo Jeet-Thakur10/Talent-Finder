@@ -13,9 +13,9 @@ from src.schemas.auth_schema import AuthenticatedUserContext
 from src.schemas.job_description_schema import (
     JobDescriptionCreateRequest,
     JobDescriptionExtractRequest,
+    JobDescriptionExtractResponse,
     JobDescriptionResponse,
     JobDescriptionUpdateRequest,
-    JobDescriptionExtractResponse,
 )
 
 router = APIRouter(prefix="/job-descriptions", tags=["Job Descriptions"])
@@ -52,6 +52,7 @@ async def create_job_description(
         current_user,
     )
 
+
 @router.get("", response_model=list[JobDescriptionResponse])
 async def get_job_descriptions(
     current_user: AuthenticatedUserContext = Depends(
@@ -64,6 +65,7 @@ async def get_job_descriptions(
     return await service.get_job_descriptions(
         current_user,
     )
+
 
 @router.get(
     "/{job_description_id}",

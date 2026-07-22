@@ -103,6 +103,7 @@ class ScoringTaskRepository:
 
     async def get_tasks_by_recruiter(self, recruiter_id: UUID) -> list[ScoringTask]:
         from sqlalchemy.orm import joinedload
+
         result = await self.db.execute(
             select(ScoringTask)
             .options(joinedload(ScoringTask.job_description))
@@ -113,25 +114,23 @@ class ScoringTaskRepository:
 
     async def find_stale_tasks(self, cutoff_time: datetime) -> list[ScoringTask]:
         from sqlalchemy import and_, or_
-        query = (
-            select(ScoringTask)
-            .where(
-                or_(
-                    and_(
-                        ScoringTask.status == "PENDING",
-                        ScoringTask.created_at < cutoff_time,
-                    ),
-                    and_(
-                        ScoringTask.status == "RUNNING",
-                        or_(
-                            ScoringTask.started_at < cutoff_time,
-                            and_(
-                                ScoringTask.started_at.is_(None),
-                                ScoringTask.created_at < cutoff_time,
-                            ),
+
+        query = select(ScoringTask).where(
+            or_(
+                and_(
+                    ScoringTask.status == "PENDING",
+                    ScoringTask.created_at < cutoff_time,
+                ),
+                and_(
+                    ScoringTask.status == "RUNNING",
+                    or_(
+                        ScoringTask.started_at < cutoff_time,
+                        and_(
+                            ScoringTask.started_at.is_(None),
+                            ScoringTask.created_at < cutoff_time,
                         ),
                     ),
-                )
+                ),
             )
         )
         result = await self.db.execute(query)

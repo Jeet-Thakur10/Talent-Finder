@@ -29,12 +29,11 @@ logger = logging.getLogger(__name__)
 
 
 class AuthService:
-
     def __init__(self, db: AsyncSession):
         self.auth_repository = AuthRepository(db)
         self.jwt_provider = JWTProvider()
 
-    async def login(self, data: LoginRequest ) -> tuple[str, str, LoginResponse]:
+    async def login(self, data: LoginRequest) -> tuple[str, str, LoginResponse]:
 
         user = await self.auth_repository.get_user_by_email(
             data.email,
@@ -60,7 +59,7 @@ class AuthService:
             refresh_token,
             LoginResponse(
                 user=UserResponse.model_validate(user),
-            )
+            ),
         )
 
     async def refresh(self, user_id: UUID) -> str:
@@ -171,5 +170,3 @@ class AuthService:
             logger.exception("Failed to send welcome email via Brevo: %s", str(e))
 
         return UserResponse.model_validate(created_user)
-
-

@@ -42,8 +42,10 @@ class AuthenticatedUserContext(BaseModel):
     user_id: UUID
     role: UserRole
 
+
 class RefreshResponse(BaseModel):
     message: str
+
 
 class LogoutResponse(BaseModel):
     message: str
@@ -70,4 +72,3 @@ class AddUserRequest(BaseModel):
         if "@" not in value:
             raise ValueError("Invalid email address")
         return value
-

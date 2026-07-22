@@ -18,6 +18,8 @@ from src.control.agents.scoring_agent import (
     CandidateScoringResult,
 )
 from src.core.exceptions.job_description_exception import (
+    JobDescriptionActive,
+    JobDescriptionClosed,
     RecruiterAccessRequired,
 )
 from src.core.exceptions.scoring_exceptions import (
@@ -84,6 +86,7 @@ from src.schemas.scoring_schema import (
 from src.utils.email_templates import get_generic_email_html
 
 logger = logging.getLogger(__name__)
+
 
 class ScoringService:
     def __init__(self, db: AsyncSession):
@@ -174,8 +177,7 @@ class ScoringService:
                             state.mark_scoring_failed(
                                 error_code="NO_CANDIDATE_RECORD_IN_DB",
                                 error_message=(
-                                    "Candidate record does not exist "
-                                    "in local database"
+                                    "Candidate record does not exist in local database"
                                 ),
                             )
             return CandidateBatchScoreOutput(
@@ -222,9 +224,7 @@ class ScoringService:
                     continue
                 state.scoring = StageStatus.PENDING
 
-            scoring_tasks.append(
-                throttled_scoring_task(candidate)
-            )
+            scoring_tasks.append(throttled_scoring_task(candidate))
             task_candidate_ids.append(cid)
 
         if not scoring_tasks:
@@ -267,7 +267,9 @@ class ScoringService:
                         error_message=str(result),
                         duration_ms=per_task_duration,
                     )
-            elif result is not None and isinstance(result.payload,CandidateScoreOutput):
+            elif result is not None and isinstance(
+                result.payload, CandidateScoreOutput
+            ):
                 candidate_scores.append(result.payload)
                 if cand_state:
                     cand_state.mark_scoring_success(
@@ -299,7 +301,8 @@ class ScoringService:
             )
             if context is not None:
                 active_candidate_ids = [
-                    score.candidate_id for score in candidate_scores]
+                    score.candidate_id for score in candidate_scores
+                ]
                 await self.repository.delete_stale_candidate_scores_and_pipelines(
                     job_description_id=job_description_id,
                     active_candidate_ids=active_candidate_ids,
@@ -419,9 +422,13 @@ class ScoringService:
             is_incomplete = data.k > 0
             warning_reason = "INSUFFICIENT_QUALIFIED" if is_incomplete else None
             warning_message = (
-                "Only 0 candidates satisfied the required criteria. "
-                "The remaining candidates did not meet the qualification threshold."
-            ) if is_incomplete else None
+                (
+                    "Only 0 candidates satisfied the required criteria. "
+                    "The remaining candidates did not meet the qualification threshold."
+                )
+                if is_incomplete
+                else None
+            )
             return PipelineExecutionResponse(
                 stage="completed",
                 matched_candidate_count=0,
@@ -540,10 +547,14 @@ class ScoringService:
             is_incomplete = data.k > 0
             warning_reason = "INSUFFICIENT_QUALIFIED" if is_incomplete else None
             warning_message = (
-                f"Only {eligible_candidate_count} candidates satisfied the required "
-                "criteria. "
-                "The remaining candidates did not meet the qualification threshold."
-            ) if is_incomplete else None
+                (
+                    f"Only {eligible_candidate_count} candidates "
+                    "satisfied the required criteria. The remaining "
+                    "candidates did not meet the qualification threshold."
+                )
+                if is_incomplete
+                else None
+            )
             return PipelineExecutionResponse(
                 stage="completed",
                 matched_candidate_count=matched_candidate_count,
@@ -580,13 +591,12 @@ class ScoringService:
                     )
                 else:
                     state.mark_synchronization_failed(
-                    error_code="SYNC_OMITTED",
-                    error_message=(
-                        "Sourcing service failed to process "
-                        "candidate profile"
-                    ),
-                    duration_ms=0.0,
-                )
+                        error_code="SYNC_OMITTED",
+                        error_message=(
+                            "Sourcing service failed to process candidate profile"
+                        ),
+                        duration_ms=0.0,
+                    )
 
         # 8. Load the selected Candidate ORM objects from local DB
         db_candidates = await self.repository.get_candidates_by_ids(top_candidate_ids)
@@ -612,10 +622,8 @@ class ScoringService:
             )
             print(f"{idx + 1}. Name: {c_name} (ID: {deep_score.candidate_id})")
             print(
-
-                    f"   Final Score: {deep_score.final_score} | "
-                    f"Confidence: {deep_score.confidence}%"
-
+                f"   Final Score: {deep_score.final_score} | "
+                f"Confidence: {deep_score.confidence}%"
             )
             print(
                 f"   Breakdown -> Skills: {deep_score.skills_score} | "
@@ -823,36 +831,28 @@ class ScoringService:
         reasons = []
         if not inv1:
             reasons.append(
-
-                    f"Selected count ({selected_count}) != "
-                    f"Sync Success ({sync_success}) + "
-                    f"Sync Failed ({sync_failed})"
-
+                f"Selected count ({selected_count}) != "
+                f"Sync Success ({sync_success}) + "
+                f"Sync Failed ({sync_failed})"
             )
 
         if not inv2:
             reasons.append(
-
-                    f"Sync Success ({sync_success}) != "
-                    f"Deep Score Success ({deep_success}) + "
-                    f"Deep Score Failed ({deep_failed})"
-
+                f"Sync Success ({sync_success}) != "
+                f"Deep Score Success ({deep_success}) + "
+                f"Deep Score Failed ({deep_failed})"
             )
 
         if not inv3:
             reasons.append(
-
-                    f"Deep Score Success ({deep_success}) != "
-                    f"Persist Success ({persist_success})"
-
+                f"Deep Score Success ({deep_success}) != "
+                f"Persist Success ({persist_success})"
             )
 
         if not inv4:
             reasons.append(
-
-                    f"Persist Success ({persist_success}) != "
-                    f"API Returned Count ({api_returned_count})"
-
+                f"Persist Success ({persist_success}) != "
+                f"API Returned Count ({api_returned_count})"
             )
 
         reason_str = (
@@ -1610,6 +1610,12 @@ Reason:
         if job_description is None:
             raise ValueError(f"Job Description with ID {job_description_id} not found")
 
+        if job_description.status and job_description.status.code == "CLOSED":
+            raise JobDescriptionClosed(
+                details="This campaign has been completed.",
+                error_code="CAMPAIGN_CLOSED",
+            )
+
         return JobDescriptionResponse(
             id=job_description.id,
             title=job_description.title,
@@ -1659,6 +1665,18 @@ Reason:
                 status_code=403,
             )
 
+        jd = await self.repository.get_job_description_by_id(job_description_id)
+        if not jd:
+            raise ScoringBaseException(
+                message="Job description not found",
+                status_code=404,
+            )
+        if jd.status and jd.status.code == "CLOSED":
+            raise JobDescriptionClosed(
+                details="This campaign has been completed.",
+                error_code="CAMPAIGN_CLOSED",
+            )
+
         # 1. Validate that all submitted candidates already exist in the
         # pipeline for this job description
         invalid_ids = await self.repository.validate_candidates_belong_to_job(
@@ -1670,8 +1688,7 @@ Reason:
             raise ScoringBaseException(
                 message="Validation failed",
                 details=(
-                    "Invalid candidate IDs for this job description: "
-                    f"{invalid_str}"
+                    f"Invalid candidate IDs for this job description: {invalid_str}"
                 ),
                 status_code=400,
             )
@@ -1847,6 +1864,7 @@ Reason:
                     accepted_candidate_count=accepted_candidate_count,
                     rejected_candidate_count=rejected_candidate_count,
                     pending_candidate_count=pending_candidate_count,
+                    status_code=jd.status.code if jd.status else "DRAFT",
                 )
             )
 
@@ -1905,6 +1923,18 @@ Reason:
                 status_code=403,
             )
 
+        jd = await self.repository.get_job_description_by_id(job_description_id)
+        if not jd:
+            raise ScoringBaseException(
+                message="Job description not found",
+                status_code=404,
+            )
+        if jd.status and jd.status.code == "CLOSED":
+            raise JobDescriptionClosed(
+                details="This campaign has been completed.",
+                error_code="CAMPAIGN_CLOSED",
+            )
+
         pipeline_entry = await self.repository.submit_hm_review(
             job_description_id,
             candidate_id,
@@ -1941,7 +1971,7 @@ Reason:
         interview_datetime: datetime,
         timezone: str,
         message: str | None,
-    ) -> Pipeline:
+    ) -> tuple[Pipeline, bool]:
 
         if current_user.role != UserRole.hiring_manager:
             raise ScoringBaseException(
@@ -1964,9 +1994,10 @@ Reason:
         if not jd or jd.hiring_manager_id != current_user.user_id:
             raise ScoringBaseException(
                 message="Access denied",
-                details=("Hiring manager does not own this campaign or "
+                details=(
+                    "Hiring manager does not own this campaign or "
                     "job description not found."
-                    ),
+                ),
                 status_code=403,
             )
 
@@ -1988,14 +2019,22 @@ Reason:
             raise CandidateNotFound(
                 details="Candidate could not be found", error_code="CANDIDATE_NOT_FOUND"
             )
-        if not candidate.email or not candidate.email.strip():
-            raise ScoringBaseException(
-                message="Validation failed",
-                details=(
-                    "Candidate email address is missing. "
-                    "Cannot send interview invitation."
-                    ),
-                status_code=400,
+
+        email_skipped = False
+        import re
+        email_pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+        if (
+            not candidate.email
+            or not candidate.email.strip()
+            or not re.match(email_pattern, candidate.email.strip())
+        ):
+            email_skipped = True
+            logger.info(
+                (
+                    "Candidate %s has no valid email address. "
+                    "Skipping interview invitation email dispatch."
+                ),
+                candidate.full_name,
             )
 
         # 4. Dispatch Email to Candidate
@@ -2004,36 +2043,38 @@ Reason:
         date_str = interview_datetime.strftime("%B %d, %Y")
         time_str = interview_datetime.strftime("%I:%M %p")
 
-        candidate_body = (
-            f"Hello {candidate.full_name},\n\n"
-            f"Congratulations! You have been selected for an interview for the "
-            f'"{jd.title}" role.\n\n'
-            f"Please find the details below:\n"
-            f"- **Date:** {date_str}\n"
-            f"- **Time:** {time_str}\n"
-            f"- **Timezone:** {timezone}\n"
-            f"- **Link:** {interview_link}\n"
-        )
-        if message:
-            candidate_body += f"\n**Message from Hiring Manager:**\n{message}\n"
+        if not email_skipped:
+            candidate_body = (
+                f"Hello {candidate.full_name},\n\n"
+                f"Congratulations! You have been selected for an interview for the "
+                f'"{jd.title}" role.\n\n'
+                f"Please find the details below:\n"
+                f"- **Date:** {date_str}\n"
+                f"- **Time:** {time_str}\n"
+                f"- **Timezone:** {timezone}\n"
+                f"- **Link:** {interview_link}\n"
+            )
+            if message:
+                candidate_body += f"\n**Message from Hiring Manager:**\n{message}\n"
 
-        candidate_html = get_generic_email_html(
-            title="Interview Invitation",
-            body=candidate_body,
-            action_text="Join Interview",
-            action_url=interview_link,
-        )
+            candidate_html = get_generic_email_html(
+                title="Interview Invitation",
+                body=candidate_body,
+                action_text="Join Interview",
+                action_url=interview_link,
+            )
 
-        # This will raise exception if Brevo client fails
-        await notification_service.send_email(
-            recipient_email=candidate.email,
-            recipient_name=candidate.full_name,
-            subject=f"Interview Invitation – {jd.title}",
-            html_content=candidate_html,
-        )
-        logger.info(
-            "Hiring Manager email sent successfully to candidate %s", candidate.email
-        )
+            # This will raise exception if Brevo client fails
+            await notification_service.send_email(
+                recipient_email=candidate.email or "",
+                recipient_name=candidate.full_name,
+                subject=f"Interview Invitation – {jd.title}",
+                html_content=candidate_html,
+            )
+            logger.info(
+                "Hiring Manager email sent successfully to candidate %s",
+                candidate.email,
+            )
 
         # 5. Only AFTER successful email dispatch, update pipeline in DB
         pipeline_entry.hm_decision = HiringManagerDecision.INTERVIEW_SENT
@@ -2069,7 +2110,7 @@ Reason:
                 f"Hello {recruiter_user.name},\n\n"
                 f"{hm_name} has scheduled an interview with "
                 f'{candidate.full_name} for your job description "{jd.title}".\n\n'
-                "Interview Details:\n"
+                f"Interview Details:\n"
                 f"- **Date & Time:** {date_str} at {time_str} ({timezone})\n"
                 f"- **Link:** {interview_link}\n"
             )
@@ -2085,7 +2126,7 @@ Reason:
                 notification_type=NotificationType.INTERVIEW_INVITATION,
                 title="Interview Scheduled",
                 message=(
-                    f'{hm_name} has scheduled an interview with '
+                    f"{hm_name} has scheduled an interview with "
                     f'{candidate.full_name} for "{jd.title}".'
                 ),
                 target_url=(
@@ -2115,7 +2156,125 @@ Reason:
                 str(recruiter_notify_err),
             )
 
-        return pipeline_entry
+        return pipeline_entry, email_skipped
+
+    async def end_campaign(
+        self,
+        job_description_id: UUID,
+        current_user: AuthenticatedUserContext,
+    ) -> JobDescription:
+        if current_user.role != UserRole.hiring_manager:
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Only hiring managers can end campaigns.",
+                status_code=403,
+            )
+
+        jd = await self.repository.get_job_description_by_id(job_description_id)
+        if not jd or jd.hiring_manager_id != current_user.user_id:
+            raise ScoringBaseException(
+                message="Access denied",
+                details=(
+                    "Hiring manager does not own this campaign or "
+                    "job description not found."
+                ),
+                status_code=403,
+            )
+
+        if jd.status and jd.status.code == "CLOSED":
+            raise JobDescriptionClosed(
+                details="This campaign is already completed.",
+                error_code="CAMPAIGN_CLOSED",
+            )
+
+        # A candidate is processed if they are REJECTED or INTERVIEW_SENT
+        pipeline_entries = await self.repository.bulk_get_pipeline_entries_for_job(
+            job_description_id
+        )
+        shared_entries = [p for p in pipeline_entries if p.shared_with_hiring_manager]
+
+        # Filter out decided candidates
+        undecided = [
+            p
+            for p in shared_entries
+            if p.hm_decision
+            not in [
+                HiringManagerDecision.INTERVIEW_SENT,
+                HiringManagerDecision.REJECTED,
+            ]
+        ]
+        if undecided:
+            raise ScoringBaseException(
+                message="Validation failed",
+                details=(
+                    "All shared candidates must be decided "
+                    "(scheduled or rejected) before ending the campaign."
+                ),
+                status_code=409,
+            )
+
+        closed_status_id = await self.repository.get_status_by_code("CLOSED")
+        if not closed_status_id:
+            raise ScoringBaseException(
+                message="Database error",
+                details="CLOSED status code not found in master data.",
+                status_code=500,
+            )
+
+        await self.repository.update_job_description_status(
+            job_description_id, closed_status_id
+        )
+        await self.repository.db.commit()
+
+        updated_jd = await self.repository.get_job_description_by_id(job_description_id)
+        assert updated_jd is not None
+        return updated_jd
+
+    async def reopen_campaign(
+        self,
+        job_description_id: UUID,
+        current_user: AuthenticatedUserContext,
+    ) -> JobDescription:
+        if current_user.role != UserRole.hiring_manager:
+            raise ScoringBaseException(
+                message="Access denied",
+                details="Only hiring managers can reopen campaigns.",
+                status_code=403,
+            )
+
+        jd = await self.repository.get_job_description_by_id(job_description_id)
+        if not jd or jd.hiring_manager_id != current_user.user_id:
+            raise ScoringBaseException(
+                message="Access denied",
+                details=(
+                    "Hiring manager does not own this campaign or "
+                    "job description not found."
+                ),
+                status_code=403,
+            )
+
+        if jd.status and jd.status.code != "CLOSED":
+            raise JobDescriptionActive(
+                details="This campaign is already active.",
+                error_code="CAMPAIGN_ACTIVE",
+            )
+
+        active_status_id = await self.repository.get_status_by_code("ACTIVE")
+        if not active_status_id:
+            raise ScoringBaseException(
+                message="Database error",
+                details="ACTIVE status code not found in master data.",
+                status_code=500,
+            )
+
+        await self.repository.update_job_description_status(
+            job_description_id, active_status_id
+        )
+        await self.repository.db.commit()
+
+        updated_jd = await self.repository.get_job_description_by_id(job_description_id)
+        assert updated_jd is not None
+        return updated_jd
 
     async def close(self) -> None:
         """Close any active resources, clients, or connection pools."""

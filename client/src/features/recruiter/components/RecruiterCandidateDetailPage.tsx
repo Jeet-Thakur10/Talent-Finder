@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useRecruiterCandidateDetail } from "../hooks/useRecruiterCandidateDetail";
+import { dashboardService } from "../../dashboard/services/dashboard.service";
+import type { JobDescriptionStatus } from "../../dashboard/services/dashboard.types";
 import { CandidateExperienceTimeline } from "../../../components/candidate/CandidateExperienceTimeline";
 import { CandidateSkillsProfile } from "../../../components/candidate/CandidateSkillsProfile";
 import { CandidateEducationProfile } from "../../../components/candidate/CandidateEducationProfile";
@@ -22,6 +24,14 @@ export function RecruiterCandidateDetailPage() {
   // Remarks state
   const [remarks, setRemarks] = useState("");
   const [remarksSavedSuccessfully, setRemarksSavedSuccessfully] = useState(false);
+
+  const [statuses, setStatuses] = useState<JobDescriptionStatus[]>([]);
+  useEffect(() => {
+    dashboardService.listJobDescriptionStatuses().then(setStatuses).catch(() => {});
+  }, []);
+
+  const jobStatus = jobDescription ? statuses.find((s) => s.id === jobDescription.status_id) : null;
+  const isCampaignClosed = jobStatus ? jobStatus.code.toUpperCase() === "CLOSED" : false;
 
   // Sync remarks state when evaluationBoard loads
   useEffect(() => {
@@ -203,8 +213,9 @@ export function RecruiterCandidateDetailPage() {
           <div className="space-y-3">
             <textarea
               value={remarks}
+              disabled={isCampaignClosed}
               onChange={(e) => setRemarks(e.target.value)}
-              className="resume-textarea !min-h-[8rem] text-xs focus:outline-none"
+              className={`resume-textarea !min-h-[8rem] text-xs focus:outline-none ${isCampaignClosed ? "opacity-60 cursor-not-allowed bg-slate-50" : ""}`}
               placeholder="Add recruiter notes, candidate feedback, screening results..."
               rows={5}
             />
@@ -220,9 +231,10 @@ export function RecruiterCandidateDetailPage() {
 
               <button
                 type="button"
-                disabled={isSavingNotes}
+                disabled={isSavingNotes || isCampaignClosed}
                 onClick={handleSaveRemarks}
-                className="workspace-primary-button !px-4 !py-2 text-xs font-semibold disabled:opacity-50"
+                title={isCampaignClosed ? "This campaign has been completed." : undefined}
+                className={`workspace-primary-button !px-4 !py-2 text-xs font-semibold ${isCampaignClosed ? "opacity-50 cursor-not-allowed" : "disabled:opacity-50"}`}
               >
                 {isSavingNotes ? "Saving Remarks..." : "Save Remarks"}
               </button>

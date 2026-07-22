@@ -9,6 +9,7 @@ class StageStatus(StrEnum):
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
 
+
 class CandidateTerminalOutcome(StrEnum):
     PENDING = "PENDING"
     SUCCESS = "SUCCESS"
@@ -18,12 +19,14 @@ class CandidateTerminalOutcome(StrEnum):
     SKIPPED_THRESHOLD = "SKIPPED_THRESHOLD"
     SKIPPED_TOP_K = "SKIPPED_TOP_K"
 
+
 @dataclass
 class StageOutcome:
     status: StageStatus = StageStatus.PENDING
     error_code: str | None = None
     error_message: str | None = None
     duration_ms: float = 0.0
+
 
 @dataclass
 class CandidateMetrics:
@@ -32,6 +35,7 @@ class CandidateMetrics:
     final_score: float | None = None
     confidence: float | None = None
 
+
 @dataclass
 class CandidateDiagnostics:
     acquisition: StageOutcome = field(default_factory=StageOutcome)
@@ -39,6 +43,7 @@ class CandidateDiagnostics:
     synchronization: StageOutcome = field(default_factory=StageOutcome)
     scoring: StageOutcome = field(default_factory=StageOutcome)
     persistence: StageOutcome = field(default_factory=StageOutcome)
+
 
 @dataclass
 class PipelineCandidateState:
@@ -63,13 +68,15 @@ class PipelineCandidateState:
     def mark_acquired(self, duration_ms: float = 0.0) -> None:
         self.acquisition = StageStatus.SUCCESS
         self.diagnostics.acquisition = StageOutcome(
-            status=StageStatus.SUCCESS, duration_ms=duration_ms)
+            status=StageStatus.SUCCESS, duration_ms=duration_ms
+        )
 
     def mark_prescored(self, prescore: int, duration_ms: float = 0.0) -> None:
         self.prescoring = StageStatus.SUCCESS
         self.metrics.prescore = prescore
         self.diagnostics.prescoring = StageOutcome(
-            status=StageStatus.SUCCESS, duration_ms=duration_ms)
+            status=StageStatus.SUCCESS, duration_ms=duration_ms
+        )
 
     def mark_skipped_threshold(self) -> None:
         self.terminal_outcome = CandidateTerminalOutcome.SKIPPED_THRESHOLD
@@ -91,12 +98,12 @@ class PipelineCandidateState:
     def mark_synchronization_success(self, duration_ms: float = 0.0) -> None:
         self.synchronization = StageStatus.SUCCESS
         self.diagnostics.synchronization = StageOutcome(
-            status=StageStatus.SUCCESS, duration_ms=duration_ms)
+            status=StageStatus.SUCCESS, duration_ms=duration_ms
+        )
 
-    def mark_synchronization_failed(self,
-            error_code: str,
-            error_message: str,
-            duration_ms: float = 0.0) -> None:
+    def mark_synchronization_failed(
+        self, error_code: str, error_message: str, duration_ms: float = 0.0
+    ) -> None:
         self.synchronization = StageStatus.FAILED
         self.terminal_outcome = CandidateTerminalOutcome.FAILED_SYNCHRONIZATION
         self.scoring = StageStatus.SKIPPED
@@ -105,23 +112,22 @@ class PipelineCandidateState:
             status=StageStatus.FAILED,
             error_code=error_code,
             error_message=error_message,
-            duration_ms=duration_ms
+            duration_ms=duration_ms,
         )
 
-    def mark_scoring_success(self,
-            final_score: float,
-            confidence: float,
-            duration_ms: float = 0.0) -> None:
+    def mark_scoring_success(
+        self, final_score: float, confidence: float, duration_ms: float = 0.0
+    ) -> None:
         self.scoring = StageStatus.SUCCESS
         self.metrics.final_score = final_score
         self.metrics.confidence = confidence
         self.diagnostics.scoring = StageOutcome(
-            status=StageStatus.SUCCESS, duration_ms=duration_ms)
+            status=StageStatus.SUCCESS, duration_ms=duration_ms
+        )
 
-    def mark_scoring_failed(self,
-            error_code: str,
-            error_message: str,
-            duration_ms: float = 0.0) -> None:
+    def mark_scoring_failed(
+        self, error_code: str, error_message: str, duration_ms: float = 0.0
+    ) -> None:
         self.scoring = StageStatus.FAILED
         self.terminal_outcome = CandidateTerminalOutcome.FAILED_SCORING
         self.persistence = StageStatus.SKIPPED
@@ -129,27 +135,28 @@ class PipelineCandidateState:
             status=StageStatus.FAILED,
             error_code=error_code,
             error_message=error_message,
-            duration_ms=duration_ms
+            duration_ms=duration_ms,
         )
 
     def mark_persistence_success(self, duration_ms: float = 0.0) -> None:
         self.persistence = StageStatus.SUCCESS
         self.terminal_outcome = CandidateTerminalOutcome.SUCCESS
         self.diagnostics.persistence = StageOutcome(
-            status=StageStatus.SUCCESS, duration_ms=duration_ms)
+            status=StageStatus.SUCCESS, duration_ms=duration_ms
+        )
 
-    def mark_persistence_failed(self,
-        error_code: str,
-        error_message: str,
-        duration_ms: float = 0.0) -> None:
+    def mark_persistence_failed(
+        self, error_code: str, error_message: str, duration_ms: float = 0.0
+    ) -> None:
         self.persistence = StageStatus.FAILED
         self.terminal_outcome = CandidateTerminalOutcome.FAILED_PERSISTENCE
         self.diagnostics.persistence = StageOutcome(
             status=StageStatus.FAILED,
             error_code=error_code,
             error_message=error_message,
-            duration_ms=duration_ms
+            duration_ms=duration_ms,
         )
+
 
 @dataclass
 class PipelineExecutionContext:

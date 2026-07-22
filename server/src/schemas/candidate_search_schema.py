@@ -10,7 +10,7 @@ class CandidateSearchRequest(BaseModel):
     min_experience: int
     required_candidates: int = Field(
         validation_alias=AliasChoices("required_candidates", "min_candidates")
-        )
+    )
     max_source_resumes: int
     exclude_candidate_ids: list[UUID] = Field(default_factory=list)
 
