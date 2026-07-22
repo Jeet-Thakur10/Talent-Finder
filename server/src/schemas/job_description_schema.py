@@ -132,4 +132,3 @@ class HiringManagerResponse(BaseModel):
 
 class JobDescriptionExtractRequest(BaseModel):
     raw_job_description: str
-

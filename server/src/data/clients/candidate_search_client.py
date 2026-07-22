@@ -63,8 +63,7 @@ class CandidateSearchClient:
         except httpx.HTTPError as e:
             raise SourcingServiceClientError(
                 details=(
-                    f"HTTP network error while communicating with "
-                    f"Sourcing Service: {e}"
+                    f"HTTP network error while communicating with Sourcing Service: {e}"
                 ),
                 status_code=500,
             ) from e
@@ -111,15 +110,13 @@ class CandidateSearchClient:
 
             response_json = response.json()
             return [
-                CandidateDetailsResponse.model_validate(item)
-                for item in response_json
-                ]
+                CandidateDetailsResponse.model_validate(item) for item in response_json
+            ]
 
         except httpx.HTTPError as e:
             raise SourcingServiceClientError(
                 details=(
-                    f"HTTP network error while communicating with "
-                    f"Sourcing Service: {e}"
+                    f"HTTP network error while communicating with Sourcing Service: {e}"
                 ),
                 status_code=500,
             ) from e
@@ -139,6 +136,6 @@ class CandidateSearchClient:
         return self
 
     async def __aexit__(  # type: ignore[no-untyped-def]
-            self, exc_type, exc_val, exc_tb
-            ) -> None:
+        self, exc_type, exc_val, exc_tb
+    ) -> None:
         await self.close()

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import { useCandidateReview } from "../hooks/useCandidateReview";
 import { CandidateExperienceTimeline } from "../../../components/candidate/CandidateExperienceTimeline";
 import { CandidateSkillsProfile } from "../../../components/candidate/CandidateSkillsProfile";
@@ -89,6 +90,13 @@ export function HiringManagerCandidateReviewPage() {
       setMessage("");
       setIsSavedSuccessfully(true);
       setTimeout(() => setIsSavedSuccessfully(false), 3000);
+
+      // Toast notification
+      if (!evaluationBoard?.candidate?.email) {
+        toast.success("Candidate approved. No email address was available, so no interview invitation was sent.");
+      } else {
+        toast.success("Interview scheduled successfully and invitation email sent!");
+      }
     }
   };
 
@@ -104,6 +112,7 @@ export function HiringManagerCandidateReviewPage() {
     if (success) {
       setIsSavedSuccessfully(true);
       setTimeout(() => setIsSavedSuccessfully(false), 3000);
+      toast.success("Candidate rejected successfully.");
     }
   };
 
@@ -263,80 +272,114 @@ export function HiringManagerCandidateReviewPage() {
             </div>
 
             <div className="space-y-4">
-              {activeDecision === "INTERVIEW_SENT" ? (
-                <div className="space-y-3.5">
-                  <div className="space-y-2 rounded-xl border border-emerald-200/60 bg-emerald-50 p-4">
-                    <span className="block text-[10px] font-bold uppercase tracking-widest text-emerald-800">Status</span>
-                    <span className="block text-sm font-bold text-slate-900">Interview Invitation Sent</span>
-                    <div className="space-y-1.5 border-t border-emerald-100 pt-2 text-xs text-slate-655">
-                      <p><strong>Link:</strong> <a href={pipeline?.interview_link || ""} target="_blank" rel="noreferrer" className="break-all text-indigo-650 hover:underline">{pipeline?.interview_link}</a></p>
-                      <p><strong>Date & Time:</strong> {pipeline?.interview_datetime ? new Date(pipeline.interview_datetime).toLocaleDateString() : "N/A"} at {pipeline?.interview_datetime ? new Date(pipeline.interview_datetime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A"} ({pipeline?.interview_timezone})</p>
-                      {pipeline?.interview_message && <p><strong>Message:</strong> "{pipeline.interview_message}"</p>}
+              {(() => {
+                const isCampaignClosed = campaign?.status_code === "CLOSED";
+
+                if (activeDecision === "INTERVIEW_SENT") {
+                  return (
+                    <div className="space-y-3.5">
+                      <div className="space-y-2 rounded-xl border border-emerald-200/60 bg-emerald-50 p-4">
+                        <span className="block text-[10px] font-bold uppercase tracking-widest text-emerald-800">Status</span>
+                        <span className="block text-sm font-bold text-slate-900">
+                          {evaluationBoard?.candidate?.email ? "Interview Invitation Sent" : "Candidate Approved"}
+                        </span>
+                        {!evaluationBoard?.candidate?.email && (
+                          <p className="text-xs text-emerald-850 mt-1 font-medium">
+                            No email address was available, so no interview invitation was sent.
+                          </p>
+                        )}
+                        <div className="space-y-1.5 border-t border-emerald-100 pt-2 text-xs text-slate-655">
+                          <p><strong>Link:</strong> <a href={pipeline?.interview_link || ""} target="_blank" rel="noreferrer" className="break-all text-indigo-650 hover:underline">{pipeline?.interview_link}</a></p>
+                          <p><strong>Date & Time:</strong> {pipeline?.interview_datetime ? new Date(pipeline.interview_datetime).toLocaleDateString() : "N/A"} at {pipeline?.interview_datetime ? new Date(pipeline.interview_datetime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "N/A"} ({pipeline?.interview_timezone})</p>
+                          {pipeline?.interview_message && <p><strong>Message:</strong> "{pipeline.interview_message}"</p>}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={isCampaignClosed}
+                        onClick={() => setIsModalOpen(true)}
+                        title={isCampaignClosed ? "This campaign has been completed and is read-only." : undefined}
+                        className={`w-full workspace-ghost-button !py-2.5 text-xs font-semibold hover:border-indigo-250 hover:text-indigo-650 ${
+                          isCampaignClosed ? "opacity-40 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        Reschedule Interview
+                      </button>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(true)}
-                    className="w-full workspace-ghost-button !py-2.5 text-xs font-semibold hover:border-indigo-250 hover:text-indigo-650"
-                  >
-                    Reschedule Interview
-                  </button>
-                </div>
-              ) : activeDecision === "REJECTED" ? (
-                <div className="space-y-3.5">
-                  <div className="space-y-2 rounded-xl border border-rose-200/60 bg-rose-50 p-4">
-                    <span className="block text-[10px] font-bold uppercase tracking-widest text-rose-800">Status</span>
-                    <span className="block text-sm font-bold text-slate-900">Rejected</span>
-                    {pipeline?.hiring_manager_notes && (
-                      <p className="border-t border-rose-100 pt-2 text-xs text-slate-655">
-                        <strong>Remarks:</strong> "{pipeline.hiring_manager_notes}"
-                      </p>
+                  );
+                }
+
+                if (activeDecision === "REJECTED") {
+                  return (
+                    <div className="space-y-3.5">
+                      <div className="space-y-2 rounded-xl border border-rose-200/60 bg-rose-50 p-4">
+                        <span className="block text-[10px] font-bold uppercase tracking-widest text-rose-800">Status</span>
+                        <span className="block text-sm font-bold text-slate-900">Rejected</span>
+                        {pipeline?.hiring_manager_notes && (
+                          <p className="border-t border-rose-100 pt-2 text-xs text-slate-655">
+                            <strong>Remarks:</strong> "{pipeline.hiring_manager_notes}"
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        disabled={isCampaignClosed}
+                        onClick={() => setIsModalOpen(true)}
+                        title={isCampaignClosed ? "This campaign has been completed and is read-only." : undefined}
+                        className={`w-full workspace-primary-button !py-2.5 text-xs font-semibold shadow-sm ${
+                          isCampaignClosed ? "opacity-40 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        Schedule Interview
+                      </button>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Review Remarks (Optional)</label>
+                      <textarea
+                        value={notes}
+                        disabled={isCampaignClosed}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className={`resume-textarea !min-h-[7rem] text-xs focus:outline-none ${isCampaignClosed ? "opacity-60 cursor-not-allowed bg-slate-50" : ""}`}
+                        placeholder="Add remarks or justification prior to scheduling or rejecting..."
+                        rows={4}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <button
+                        type="button"
+                        disabled={isSaving || isCampaignClosed}
+                        onClick={handleSaveReview}
+                        title={isCampaignClosed ? "This campaign has been completed and is read-only." : undefined}
+                        className={`workspace-ghost-button !py-2.5 text-xs font-semibold border-rose-200 text-rose-700 hover:bg-rose-50 ${
+                          isCampaignClosed ? "opacity-40 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        {isSaving ? "Saving..." : "Reject"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isSaving || isCampaignClosed}
+                        onClick={() => setIsModalOpen(true)}
+                        title={isCampaignClosed ? "This campaign has been completed and is read-only." : undefined}
+                        className={`workspace-primary-button !py-2.5 text-xs font-semibold shadow-sm ${
+                          isCampaignClosed ? "opacity-40 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        Schedule Interview
+                      </button>
+                    </div>
+                    {isSavedSuccessfully && (
+                      <p className="text-center text-[10px] font-bold text-emerald-600">✓ Rejection saved successfully</p>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(true)}
-                    className="w-full workspace-primary-button !py-2.5 text-xs font-semibold shadow-sm"
-                  >
-                    Schedule Interview
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Review Remarks (Optional)</label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      className="resume-textarea !min-h-[7rem] text-xs focus:outline-none"
-                      placeholder="Add remarks or justification prior to scheduling or rejecting..."
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <button
-                      type="button"
-                      disabled={isSaving}
-                      onClick={handleSaveReview}
-                      className="workspace-ghost-button !py-2.5 text-xs font-semibold border-rose-200 text-rose-700 hover:bg-rose-50"
-                    >
-                      {isSaving ? "Saving..." : "Reject"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isSaving}
-                      onClick={() => setIsModalOpen(true)}
-                      className="workspace-primary-button !py-2.5 text-xs font-semibold shadow-sm"
-                    >
-                      Schedule Interview
-                    </button>
-                  </div>
-                  {isSavedSuccessfully && (
-                    <p className="text-center text-[10px] font-bold text-emerald-600">✓ Rejection saved successfully</p>
-                  )}
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
 

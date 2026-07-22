@@ -47,7 +47,7 @@ class ResumeExtractionClient:
             # 1. Grab the exact schema keys (full_name, experiences, etc.) dynamically
             schema_json = json.dumps(
                 ResumeCandidateOutput.model_json_schema(), indent=2
-                )
+            )
 
             system_content = RESUME_EXTRACTION_PROMPT.format(schema_json=schema_json)
 
@@ -63,14 +63,11 @@ class ResumeExtractionClient:
                 temperature=0,
             )
             structured_llm = llm.with_structured_output(
-                ResumeCandidateOutput,
-                method="json_mode"
+                ResumeCandidateOutput, method="json_mode"
             )
 
-            result: ResumeCandidateOutput = (
-                structured_llm.invoke( # type: ignore[assignment]
-                    messages,
-                )
+            result: ResumeCandidateOutput = structured_llm.invoke(  # type: ignore[assignment]
+                messages,
             )
 
             return ResumeExtractionResult(
@@ -80,6 +77,7 @@ class ResumeExtractionClient:
 
         except Exception:
             import traceback
+
             print("\n --- GROQ EXTRACTION CRASHED --- ")
             traceback.print_exc()
             print("------------------------------------\n")
@@ -148,10 +146,8 @@ class CandidateScoringClient:
                 method="json_mode",
             )
 
-            result: CandidateEvaluationOutput = (
-                await structured_llm.ainvoke( # type: ignore[assignment]
-                    messages,
-                )
+            result: CandidateEvaluationOutput = await structured_llm.ainvoke(  # type: ignore[assignment]
+                messages,
             )
 
             score = self._calculate_candidate_score(
@@ -225,12 +221,10 @@ class CandidateScoringClient:
         # The weights are consumed only by _calculate_skills_score above;
         # downstream consumers (persistence, API, frontend) receive clean names.
         clean_mandatory = [
-            self._parse_skill_weight(s)[0]
-            for s in evaluation.matched_mandatory_skills
+            self._parse_skill_weight(s)[0] for s in evaluation.matched_mandatory_skills
         ]
         clean_optional = [
-            self._parse_skill_weight(s)[0]
-            for s in evaluation.matched_optional_skills
+            self._parse_skill_weight(s)[0] for s in evaluation.matched_optional_skills
         ]
 
         return CandidateScoreOutput(
@@ -262,9 +256,7 @@ class CandidateScoringClient:
             ),
             matched_mandatory_skills=clean_mandatory,
             matched_optional_skills=clean_optional,
-            missing_mandatory_skills=(
-                evaluation.missing_mandatory_skills
-            ),
+            missing_mandatory_skills=(evaluation.missing_mandatory_skills),
             explanation=evaluation.explanation.model_dump(),  # type: ignore[arg-type]
         )
 
@@ -274,15 +266,11 @@ class CandidateScoringClient:
         job_description: JobDescriptionScoringInput,
     ) -> float:
         mandatory_skills = [
-            skill
-            for skill in job_description.skills
-            if skill.is_mandatory
+            skill for skill in job_description.skills if skill.is_mandatory
         ]
 
         optional_skills = [
-            skill
-            for skill in job_description.skills
-            if not skill.is_mandatory
+            skill for skill in job_description.skills if not skill.is_mandatory
         ]
 
         mandatory_score = 0.0
@@ -292,9 +280,7 @@ class CandidateScoringClient:
                 self._parse_skill_weight(skill)[1]
                 for skill in evaluation.matched_mandatory_skills
             )
-            mandatory_score = (
-                weighted_sum / len(mandatory_skills)
-            ) * 28
+            mandatory_score = (weighted_sum / len(mandatory_skills)) * 28
 
         optional_score = 0.0
 
@@ -303,9 +289,7 @@ class CandidateScoringClient:
                 self._parse_skill_weight(skill)[1]
                 for skill in evaluation.matched_optional_skills
             )
-            optional_score = (
-                weighted_sum / len(optional_skills)
-            ) * 12
+            optional_score = (weighted_sum / len(optional_skills)) * 12
 
         return mandatory_score + optional_score
 
@@ -314,9 +298,7 @@ class CandidateScoringClient:
         candidate: CandidateScoringInput,
         job_description: JobDescriptionScoringInput,
     ) -> float:
-        candidate_years = (
-            candidate.total_experience_months / 12
-        )
+        candidate_years = candidate.total_experience_months / 12
 
         min_years = job_description.min_experience
 
@@ -339,9 +321,7 @@ class CandidateScoringClient:
         if candidate_years <= max_years:
             return 25
 
-        excess_years = (
-            candidate_years - max_years
-        )
+        excess_years = candidate_years - max_years
 
         decay = min(
             excess_years * 0.5,
@@ -361,8 +341,7 @@ class CandidateScoringClient:
             return 0
 
         current_experience = any(
-            experience.is_current
-            for experience in candidate.experiences
+            experience.is_current for experience in candidate.experiences
         )
 
         if current_experience:
@@ -380,9 +359,7 @@ class CandidateScoringClient:
         if latest_end_date is None:
             return 5
 
-        years_since = (
-            date.today() - latest_end_date
-        ).days / 365
+        years_since = (date.today() - latest_end_date).days / 365
 
         if years_since <= 1:
             return 13.5
@@ -455,6 +432,6 @@ class CandidatePrescoringClient:
             method="json_mode",
         )
 
-        return await structured_llm.ainvoke( # type: ignore[return-value]
+        return await structured_llm.ainvoke(  # type: ignore[return-value]
             messages,
         )

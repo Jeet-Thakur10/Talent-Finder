@@ -62,6 +62,9 @@ export function JobDescriptionDetailPage() {
 
   const { latestTask } = useLatestJobTask(jobDescriptionId);
 
+  const jobStatus = jobDescription && statuses ? statuses.find((s) => s.id === jobDescription.status_id) : null;
+  const isCampaignClosed = jobStatus ? jobStatus.code.toUpperCase() === "CLOSED" : false;
+
   const isOutdated = Boolean(
     latestTask &&
     latestTask.status.toUpperCase() === "SUCCESS" &&
@@ -209,8 +212,12 @@ export function JobDescriptionDetailPage() {
                       </button>
                       <button
                         type="button"
+                        disabled={isCampaignClosed}
                         onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/score-config`)}
-                        className="workspace-ghost-button !py-2.5 text-sm font-semibold"
+                        title={isCampaignClosed ? "This campaign has been completed." : undefined}
+                        className={`workspace-ghost-button !py-2.5 text-sm font-semibold ${
+                          isCampaignClosed ? "opacity-45 cursor-not-allowed" : ""
+                        }`}
                       >
                         Start New Scoring
                       </button>
@@ -218,11 +225,12 @@ export function JobDescriptionDetailPage() {
                   );
                 }
 
-                if (isRunning) {
+                if (isRunning || isCampaignClosed) {
                   return (
                     <button
                       type="button"
                       disabled
+                      title={isCampaignClosed ? "This campaign has been completed." : undefined}
                       className="workspace-ghost-button !py-2.5 text-sm font-semibold opacity-45 cursor-not-allowed"
                     >
                       Start Candidate Evaluation
@@ -242,16 +250,18 @@ export function JobDescriptionDetailPage() {
               })()}
               <button
                 type="button"
-                disabled={isRunning}
+                disabled={isRunning || isCampaignClosed}
                 onClick={() => {
-                  if (isRunning) return;
+                  if (isRunning || isCampaignClosed) return;
                   navigate(`/recruiter/job-descriptions/${jobDescription.id}/edit`);
                 }}
                 className={`workspace-ghost-button !py-2.5 text-sm font-semibold ${
-                  isRunning ? "opacity-45 cursor-not-allowed" : ""
+                  (isRunning || isCampaignClosed) ? "opacity-45 cursor-not-allowed" : ""
                 }`}
                 title={
-                  isRunning
+                  isCampaignClosed
+                    ? "This campaign has been completed."
+                    : isRunning
                     ? "Editing is disabled while candidate scoring is in progress."
                     : undefined
                 }

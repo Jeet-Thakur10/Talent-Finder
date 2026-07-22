@@ -58,4 +58,18 @@ export const hiringManagerService = {
     );
     return response.data;
   },
+
+  async endCampaign(jobDescriptionId: string): Promise<any> {
+    const response = await api.post(
+      `/scoring/hm/campaigns/${jobDescriptionId}/end`
+    );
+    return response.data;
+  },
+
+  async reopenCampaign(jobDescriptionId: string): Promise<any> {
+    const response = await api.post(
+      `/scoring/hm/campaigns/${jobDescriptionId}/reopen`
+    );
+    return response.data;
+  },
 };

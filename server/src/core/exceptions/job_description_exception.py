@@ -28,6 +28,7 @@ class InvalidEmploymentType(JobDescriptionBaseException):
             error_code=error_code,
         )
 
+
 class InvalidJobDescriptionStatus(JobDescriptionBaseException):
     def __init__(
         self,
@@ -39,6 +40,7 @@ class InvalidJobDescriptionStatus(JobDescriptionBaseException):
             details=details,
             error_code=error_code,
         )
+
 
 class RecruiterAccessRequired(JobDescriptionBaseException):
     def __init__(
@@ -52,9 +54,8 @@ class RecruiterAccessRequired(JobDescriptionBaseException):
             error_code=error_code,
         )
 
-class JobDescriptionNotFound(
-    JobDescriptionBaseException
-):
+
+class JobDescriptionNotFound(JobDescriptionBaseException):
     def __init__(
         self,
         details: str | None = None,
@@ -65,6 +66,7 @@ class JobDescriptionNotFound(
             details=details,
             error_code=error_code,
         )
+
 
 class JobDescriptionScoringInProgress(JobDescriptionBaseException):
     def __init__(
@@ -79,5 +81,33 @@ class JobDescriptionScoringInProgress(JobDescriptionBaseException):
             ),
             details=details,
             error_code=error_code or "SCORING_IN_PROGRESS",
+            status_code=409,
+        )
+
+
+class JobDescriptionClosed(JobDescriptionBaseException):
+    def __init__(
+        self,
+        details: str | None = None,
+        error_code: str | None = None,
+    ):
+        super().__init__(
+            message="This campaign has been completed.",
+            details=details,
+            error_code=error_code or "CAMPAIGN_CLOSED",
+            status_code=409,
+        )
+
+
+class JobDescriptionActive(JobDescriptionBaseException):
+    def __init__(
+        self,
+        details: str | None = None,
+        error_code: str | None = None,
+    ):
+        super().__init__(
+            message="This campaign is already active.",
+            details=details,
+            error_code=error_code or "CAMPAIGN_ACTIVE",
             status_code=409,
         )

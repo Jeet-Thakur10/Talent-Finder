@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends
 
 from src.api.rest.dependencies import get_otp_service
@@ -11,6 +10,7 @@ from src.schemas.otp_schema import (
 )
 
 router = APIRouter(prefix="/otp", tags=["OTP"])
+
 
 @router.post("/forgot-password", response_model=ForgotPasswordResponse)
 async def forgot_password(
@@ -27,6 +27,7 @@ async def forgot_password(
     return ForgotPasswordResponse(
         message="If the email exists, an OTP has been sent.",
     )
+
 
 @router.post(
     "/verify",

@@ -69,4 +69,3 @@ class SourcingServiceClientError(ScoringBaseException):
             error_code=error_code,
             status_code=status_code,
         )
-

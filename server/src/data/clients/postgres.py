@@ -13,9 +13,7 @@ from src.config.settings import settings
 # Globally shared, long-lived engine for FastAPI request
 # handling (single long-lived event loop)
 engine = create_async_engine(
-    settings.DATABASE_URL,
-    isolation_level="AUTOCOMMIT",
-    echo=True
+    settings.DATABASE_URL, isolation_level="AUTOCOMMIT", echo=True
 )
 
 # Reference for request-scoped database session creation
@@ -23,15 +21,17 @@ engine = create_async_engine(
 request_scoped_sessionmaker = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
-    expire_on_commit=False # prevents objects from being unusable after commit
+    expire_on_commit=False,  # prevents objects from being unusable after commit
 )
 
 # Backwards compatibility alias for existing routes and test suites
 async_session_local = request_scoped_sessionmaker
 
+
 @contextlib.asynccontextmanager
-async def get_background_scoped_db_context(
-) -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+async def get_background_scoped_db_context() -> AsyncGenerator[
+    async_sessionmaker[AsyncSession], None
+]:
     """Provides a self-contained, transient DB engine and
        session maker for background executions.
 
@@ -40,14 +40,10 @@ async def get_background_scoped_db_context(
     asyncio event loops to prevent event loop contamination.
     """
     transient_engine = create_async_engine(
-        settings.DATABASE_URL,
-        isolation_level="AUTOCOMMIT",
-        echo=True
+        settings.DATABASE_URL, isolation_level="AUTOCOMMIT", echo=True
     )
     transient_session_local = async_sessionmaker(
-        bind=transient_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        bind=transient_engine, class_=AsyncSession, expire_on_commit=False
     )
     try:
         yield transient_session_local
@@ -57,4 +53,3 @@ async def get_background_scoped_db_context(
 
 class Base(DeclarativeBase):
     pass
-

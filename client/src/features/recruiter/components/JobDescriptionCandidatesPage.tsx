@@ -84,7 +84,8 @@ export function JobDescriptionCandidatesPage() {
   const assignedHM = jobDescription
     ? hiringManagers.find((hm) => hm.id === jobDescription.hiring_manager_id) || null
     : null;
-
+  const jobStatus = jobDescription ? statuses.find((s) => s.id === jobDescription.status_id) : null;
+  const isCampaignClosed = jobStatus ? jobStatus.code.toUpperCase() === "CLOSED" : false;
   return (
     <div className="workspace-shell">
       {/* 1. Breadcrumb */}
@@ -234,9 +235,11 @@ export function JobDescriptionCandidatesPage() {
                   return (
                     <div
                       key={c.candidate_id}
-                      onClick={() => toggleCandidate(c.candidate_id)}
+                      onClick={() => !isCampaignClosed && toggleCandidate(c.candidate_id)}
                       className={`relative flex cursor-pointer flex-col justify-between gap-5 rounded-[1.2rem] border p-5 shadow-[0_14px_36px_-34px_rgba(15,23,42,0.32)] transition md:flex-row md:items-center ${
-                        isChecked
+                        isCampaignClosed
+                          ? "border-slate-200 bg-white opacity-85 !cursor-default"
+                          : isChecked
                           ? "border-blue-500 bg-blue-50/25"
                           : "border-slate-200 bg-white hover:border-slate-350"
                       }`}
@@ -248,15 +251,19 @@ export function JobDescriptionCandidatesPage() {
                           className="mt-1 shrink-0"
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleCandidate(c.candidate_id);
+                            if (!isCampaignClosed) {
+                              toggleCandidate(c.candidate_id);
+                            }
                           }}
                         >
                           <input
                             type="checkbox"
                             checked={isChecked}
                             readOnly
-                            disabled={isLoading}
-                            className="h-4 w-4 rounded border-slate-300 text-indigo-650 transition focus:ring-indigo-500 cursor-pointer disabled:opacity-40"
+                            disabled={isLoading || isCampaignClosed}
+                            className={`h-4 w-4 rounded border-slate-300 text-indigo-650 transition focus:ring-indigo-500 disabled:opacity-40 ${
+                              isCampaignClosed ? "cursor-default" : "cursor-pointer"
+                            }`}
                           />
                         </div>
 
@@ -348,8 +355,12 @@ export function JobDescriptionCandidatesPage() {
                 </button>
                 <button
                   type="button"
+                  disabled={isCampaignClosed}
                   onClick={handleOpenShareDialog}
-                  className="workspace-primary-button !py-2 !px-4 text-xs"
+                  title={isCampaignClosed ? "This campaign has been completed." : undefined}
+                  className={`workspace-primary-button !py-2 !px-4 text-xs ${
+                    isCampaignClosed ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
                   Share Shortlist
                 </button>

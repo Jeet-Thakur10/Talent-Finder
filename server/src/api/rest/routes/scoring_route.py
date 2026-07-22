@@ -1,5 +1,5 @@
-from uuid import UUID
 from typing import cast
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -15,6 +15,7 @@ from src.core.services.scoring_task_service import ScoringTaskService
 from src.core.tasks import run_scoring_pipeline_task
 from src.data.models.postgres.pipeline import HiringManagerDecision
 from src.schemas.auth_schema import AuthenticatedUserContext
+from src.schemas.job_description_schema import JDSkillResponse, JobDescriptionResponse
 from src.schemas.scoring_schema import (
     CandidateDetailsResponse,
     CandidateEvaluationBoardResponse,
@@ -182,6 +183,7 @@ async def get_task_status(
     task = await task_service.get_task_by_id(task_id)
     if not task:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Task not found")
 
     # Authorize user access to the job description associated with the task
@@ -245,6 +247,7 @@ async def get_task_result(
     task = await task_service.get_task_by_id(task_id)
     if not task:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Task not found")
 
     # Authorize user access
@@ -261,14 +264,15 @@ async def get_task_result(
 
     if task.status == "FAILED":
         from fastapi import HTTPException
+
         raise HTTPException(
             status_code=400,
             detail=f"Task failed: {task.error_message}",
         )
 
     payload = (
-        task.final_response_payload
-        if task.final_response_payload is not None else {})
+        task.final_response_payload if task.final_response_payload is not None else {}
+    )
     return PipelineExecutionResponse.model_validate(payload)
 
 
@@ -548,7 +552,7 @@ async def schedule_interview(
         get_scoring_service,
     ),
 ) -> InterviewScheduleResponse:
-    pipeline_entry = await service.schedule_interview(
+    pipeline_entry, email_skipped = await service.schedule_interview(
         job_description_id=job_description_id,
         candidate_id=candidate_id,
         current_user=current_user,
@@ -573,15 +577,112 @@ async def schedule_interview(
     if interview_timezone is None:
         interview_timezone = data.timezone
 
+    success_message = (
+        (
+            "Candidate approved. No email address was available, "
+            "so no interview invitation was sent."
+        )
+        if email_skipped
+        else (
+            "Interview scheduled successfully and "
+            "invitation email sent to candidate."
+        )
+    )
+
     return InterviewScheduleResponse(
-        message=(
-            "Interview scheduled successfully and invitation "
-            "email sent to candidate."
-        ),
+        message=success_message,
         candidate_id=pipeline_entry.candidate_id,
         hm_decision=hm_decision,
         interview_link=interview_link,
         interview_datetime=interview_datetime,
         interview_timezone=interview_timezone,
         interview_message=pipeline_entry.interview_message,
+    )
+
+
+@router.post(
+    "/hm/campaigns/{job_description_id}/end",
+    response_model=JobDescriptionResponse,
+)
+async def end_campaign(
+    job_description_id: UUID,
+    current_user: AuthenticatedUserContext = Depends(
+        get_authenticated_user_context,
+    ),
+    service: ScoringService = Depends(
+        get_scoring_service,
+    ),
+) -> JobDescriptionResponse:
+    jd = await service.end_campaign(
+        job_description_id=job_description_id,
+        current_user=current_user,
+    )
+    return JobDescriptionResponse(
+        id=jd.id,
+        title=jd.title,
+        department=jd.department,
+        job_purpose=jd.job_purpose,
+        responsibilities=jd.responsibilities,
+        min_experience=jd.min_experience,
+        max_experience=jd.max_experience,
+        location=jd.location,
+        education_requirement=jd.education_requirement,
+        preferred_qualifications=jd.preferred_qualifications,
+        employment_type_id=jd.employment_type_id,
+        hiring_manager_id=jd.hiring_manager_id,
+        status_id=jd.status_id,
+        created_at=jd.created_at,
+        updated_at=jd.updated_at,
+        skills=[
+            JDSkillResponse(
+                id=skill.id,
+                skill_name=skill.skill_name,
+                is_mandatory=skill.is_mandatory,
+            )
+            for skill in jd.skills
+        ],
+    )
+
+
+@router.post(
+    "/hm/campaigns/{job_description_id}/reopen",
+    response_model=JobDescriptionResponse,
+)
+async def reopen_campaign(
+    job_description_id: UUID,
+    current_user: AuthenticatedUserContext = Depends(
+        get_authenticated_user_context,
+    ),
+    service: ScoringService = Depends(
+        get_scoring_service,
+    ),
+) -> JobDescriptionResponse:
+    jd = await service.reopen_campaign(
+        job_description_id=job_description_id,
+        current_user=current_user,
+    )
+    return JobDescriptionResponse(
+        id=jd.id,
+        title=jd.title,
+        department=jd.department,
+        job_purpose=jd.job_purpose,
+        responsibilities=jd.responsibilities,
+        min_experience=jd.min_experience,
+        max_experience=jd.max_experience,
+        location=jd.location,
+        education_requirement=jd.education_requirement,
+        preferred_qualifications=jd.preferred_qualifications,
+        employment_type_id=jd.employment_type_id,
+        hiring_manager_id=jd.hiring_manager_id,
+        status_id=jd.status_id,
+        created_at=jd.created_at,
+        updated_at=jd.updated_at,
+        skills=[
+            JDSkillResponse(
+                id=skill.id,
+                skill_name=skill.skill_name,
+                is_mandatory=skill.is_mandatory,
+            )
+            for skill in jd.skills
+        ],
     )

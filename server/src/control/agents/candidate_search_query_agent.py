@@ -20,7 +20,7 @@ from src.schemas.scoring_schema import JobDescriptionScoringInput
 class CandidateSearchQueryAgent:
     def __init__(self) -> None:
         # Use LangChain's native HuggingFaceEndpoint and ChatHuggingFace wrapper
-        self._endpoint = HuggingFaceEndpoint( # type: ignore[call-arg]
+        self._endpoint = HuggingFaceEndpoint(  # type: ignore[call-arg]
             repo_id=settings.HF_MODEL,
             task="text-generation",
             huggingfacehub_api_token=settings.HF_TOKEN,
@@ -39,9 +39,7 @@ class CandidateSearchQueryAgent:
     def generate_search_query(
         self,
         job_description: (
-            JobDescription
-            | JobDescriptionResponse
-            | JobDescriptionScoringInput
+            JobDescription | JobDescriptionResponse | JobDescriptionScoringInput
         ),
         min_candidates: int,
         max_source_resumes: int,
@@ -76,7 +74,7 @@ class CandidateSearchQueryAgent:
             result_dict = self._structured_llm.invoke(messages)
             if not result_dict:
                 # Return default/fallback request
-                return CandidateSearchRequest( # type: ignore[call-arg]
+                return CandidateSearchRequest(  # type: ignore[call-arg]
                     title=job_description.title,
                     skills=list(skill_names),
                     min_experience=job_description.min_experience,
@@ -89,7 +87,7 @@ class CandidateSearchQueryAgent:
 
             # Construct the final CandidateSearchRequest schema combining generated
             # and passed fields
-            return CandidateSearchRequest( # type: ignore[call-arg]
+            return CandidateSearchRequest(  # type: ignore[call-arg]
                 title=query_output.title,
                 skills=query_output.skills,
                 min_experience=query_output.min_experience,
@@ -107,7 +105,7 @@ class CandidateSearchQueryAgent:
             if job_description.skills:
                 fallback_skills = [skill.skill_name for skill in job_description.skills]
 
-            return CandidateSearchRequest( # type: ignore[call-arg]
+            return CandidateSearchRequest(  # type: ignore[call-arg]
                 title=job_description.title,
                 skills=fallback_skills,
                 min_experience=job_description.min_experience,

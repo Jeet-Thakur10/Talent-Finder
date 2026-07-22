@@ -272,4 +272,3 @@ IMPORTANT:
 
 Return JSON matching:
 {schema_json}"""
-

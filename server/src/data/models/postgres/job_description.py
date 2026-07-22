@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from src.data.models.postgres.pipeline import Pipeline
     from src.data.models.postgres.user import User
 
+
 class JobDescription(Base):
     __tablename__ = "job_descriptions"
 
