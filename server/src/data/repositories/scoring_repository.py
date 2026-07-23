@@ -763,7 +763,7 @@ class ScoringRepository:
         stmt = (
             update(JobDescription)
             .where(JobDescription.id == job_description_id)
-            .values(status_id=status_id, updated_at=datetime.now(UTC))
+            .values(status_id=status_id)
         )
         await self.db.execute(stmt)
         await self.db.flush()

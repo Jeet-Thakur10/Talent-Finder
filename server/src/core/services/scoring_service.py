@@ -904,6 +904,7 @@ Reason:
         await self._get_authorized_job_description(
             job_description_id,
             current_user,
+            allow_closed=True,
         )
 
         stored_scores = await self.repository.get_candidate_scores_for_job_description(
@@ -1004,6 +1005,7 @@ Reason:
         await self._get_authorized_job_description(
             job_description_id,
             current_user,
+            allow_closed=True,
         )
         return await self._get_candidate_details_dto(candidate_id)
 
@@ -1056,6 +1058,7 @@ Reason:
         await self._get_authorized_job_description(
             job_description_id,
             current_user,
+            allow_closed=True,
         )
         return await self._get_candidate_evaluation_board_internal(
             job_description_id,
@@ -1531,6 +1534,7 @@ Reason:
         await self._get_authorized_job_description(
             job_description_id,
             current_user,
+            allow_closed=True,
         )
         score = await self.repository.get_candidate_job_score(
             job_description_id,
@@ -1593,6 +1597,7 @@ Reason:
         self,
         job_description_id: UUID,
         current_user: AuthenticatedUserContext,
+        allow_closed: bool = False,
     ) -> JobDescriptionResponse:
         recruiter_id = await self.repository.get_recruiter_id_by_job_description_id(
             job_description_id,
@@ -1610,7 +1615,7 @@ Reason:
         if job_description is None:
             raise ValueError(f"Job Description with ID {job_description_id} not found")
 
-        if job_description.status and job_description.status.code == "CLOSED":
+        if not allow_closed and job_description.status and job_description.status.code == "CLOSED":
             raise JobDescriptionClosed(
                 details="This campaign has been completed.",
                 error_code="CAMPAIGN_CLOSED",
@@ -2221,10 +2226,22 @@ Reason:
                 status_code=500,
             )
 
+        prev_status_code = jd.status.code if jd.status else "UNKNOWN"
+
         await self.repository.update_job_description_status(
             job_description_id, closed_status_id
         )
         await self.repository.db.commit()
+
+        logger.info(
+            (
+                "Campaign CLOSED for JobDescription %s by User %s "
+                "(previous status: %s, new status: CLOSED)"
+            ),
+            job_description_id,
+            current_user.user_id,
+            prev_status_code,
+        )
 
         updated_jd = await self.repository.get_job_description_by_id(job_description_id)
         assert updated_jd is not None
@@ -2267,10 +2284,22 @@ Reason:
                 status_code=500,
             )
 
+        prev_status_code = jd.status.code if jd.status else "UNKNOWN"
+
         await self.repository.update_job_description_status(
             job_description_id, active_status_id
         )
         await self.repository.db.commit()
+
+        logger.info(
+            (
+                "Campaign REOPENED for JobDescription %s by User %s "
+                "(previous status: %s, new status: ACTIVE)"
+            ),
+            job_description_id,
+            current_user.user_id,
+            prev_status_code,
+        )
 
         updated_jd = await self.repository.get_job_description_by_id(job_description_id)
         assert updated_jd is not None

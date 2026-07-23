@@ -190,6 +190,7 @@ async def get_task_status(
     await service._get_authorized_job_description(
         task.job_description_id,
         current_user,
+        allow_closed=True,
     )
 
     return PipelineTaskStatusResponse(
@@ -254,6 +255,7 @@ async def get_task_result(
     await service._get_authorized_job_description(
         task.job_description_id,
         current_user,
+        allow_closed=True,
     )
 
     if task.status in ("PENDING", "RUNNING"):
