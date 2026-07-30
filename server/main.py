@@ -38,9 +38,6 @@ from src.utils.user_seeder import UserSeeder
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     async with async_session_local() as db:
         await seed_master_data(db)
         await UserSeeder.seed(db)

@@ -55,9 +55,20 @@ export function useRecruiterJobCandidates(jobDescriptionId: string | undefined) 
     void fetchCandidatesAndJob();
   }, [fetchCandidatesAndJob]);
 
+  const relevantCandidates = candidates.filter((c) => (c.relevance_status || "RELEVANT") === "RELEVANT");
+  const partiallyRelevantCandidates = candidates.filter(
+    (c) => c.relevance_status === "PARTIALLY_RELEVANT" || c.relevance_status === "IRRELEVANT"
+  );
+  const hasRelevantCandidates = relevantCandidates.length > 0;
+
   return {
     jobDescription,
     candidates,
+    relevantCandidates,
+    partiallyRelevantCandidates,
+    hasRelevantCandidates,
+    relevantCandidatesCount: relevantCandidates.length,
+    partiallyRelevantCandidatesCount: partiallyRelevantCandidates.length,
     statuses,
     hiringManagers,
     isLoading,

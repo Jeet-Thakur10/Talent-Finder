@@ -96,6 +96,21 @@ async def list_recruiter_tasks(
                 if task.final_response_payload
                 else None
             ),
+            has_relevant_candidates=(
+                cast(bool, task.final_response_payload.get("has_relevant_candidates"))
+                if task.final_response_payload
+                else None
+            ),
+            relevant_candidate_count=(
+                cast(int, task.final_response_payload.get("relevant_candidate_count"))
+                if task.final_response_payload
+                else None
+            ),
+            partially_relevant_candidate_count=(
+                cast(int, task.final_response_payload.get("partially_relevant_candidate_count"))
+                if task.final_response_payload
+                else None
+            ),
             is_shortlist_incomplete=(
                 cast(bool, task.final_response_payload.get("is_shortlist_incomplete"))
                 if task.final_response_payload
@@ -207,6 +222,21 @@ async def get_task_status(
         selected_candidate_count=task.selected_candidate_count,
         top_k=(
             cast(int, task.final_response_payload.get("top_k"))
+            if task.final_response_payload
+            else None
+        ),
+        has_relevant_candidates=(
+            cast(bool, task.final_response_payload.get("has_relevant_candidates"))
+            if task.final_response_payload
+            else None
+        ),
+        relevant_candidate_count=(
+            cast(int, task.final_response_payload.get("relevant_candidate_count"))
+            if task.final_response_payload
+            else None
+        ),
+        partially_relevant_candidate_count=(
+            cast(int, task.final_response_payload.get("partially_relevant_candidate_count"))
             if task.final_response_payload
             else None
         ),

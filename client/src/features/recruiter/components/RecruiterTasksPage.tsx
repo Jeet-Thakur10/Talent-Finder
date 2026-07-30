@@ -1,38 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRecruiterTasks } from "../hooks/useRecruiterTasks";
+import { RECRUITER_STAGES } from "../utils/recruiterTerms";
 
 const STAGES_LIST = [
-  { code: "QUEUED", label: "Queued" },
-  { code: "ACQUIRING", label: "Acquiring" },
+  { code: "QUEUED", label: "Requirements" },
+  { code: "ACQUIRING", label: "Sourcing" },
   { code: "SOURCING", label: "Sourcing" },
-  { code: "PRE_SCORING", label: "Pre-screening" },
-  { code: "SYNCHRONIZING", label: "Preparing Profiles" },
-  { code: "DEEP_SCORING", label: "Evaluation" },
-  { code: "COMPLETED", label: "Completed" },
+  { code: "PRE_SCORING", label: "Matching" },
+  { code: "SYNCHRONIZING", label: "Matching" },
+  { code: "DEEP_SCORING", label: "Matching" },
+  { code: "COMPLETED", label: "Shortlist" },
 ];
 
 function getStageFriendlyName(stage: string): string {
-  switch (stage.toUpperCase()) {
-    case "QUEUED":
-      return "Queued";
-    case "ACQUIRING":
-      return "Acquiring Candidates";
-    case "SOURCING":
-      return "External Sourcing";
-    case "PRE_SCORING":
-      return "Pre-screening Candidates";
-    case "SYNCHRONIZING":
-      return "Preparing Candidate Profiles";
-    case "DEEP_SCORING":
-      return "Evaluating Candidates";
-    case "COMPLETED":
-      return "Completed";
-    case "FAILED":
-      return "Failed";
-    default:
-      return stage;
-  }
+  const stageUpper = stage.toUpperCase();
+  if (stageUpper === "FAILED") return "Failed";
+  return RECRUITER_STAGES[stageUpper]?.label || stage;
 }
 
 function getStageIndex(stage: string): number {
@@ -98,7 +82,7 @@ export function RecruiterTasksPage() {
         <div>
           <div className="auth-kicker">Campaign Center</div>
           <div className="flex items-center gap-3">
-            <h1 className="workspace-title">Background Scoring Tasks</h1>
+            <h1 className="workspace-title">AI Evaluation Campaigns</h1>
             {isPolling && (
               <span className="status-badge bg-blue-50 text-blue-700 border-blue-200 text-[10px] !px-2.5 !py-0.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
@@ -107,7 +91,7 @@ export function RecruiterTasksPage() {
             )}
           </div>
           <p className="workspace-subtitle">
-            Monitor background recruiter matching pipelines, candidate extraction, and deep NLP evaluations.
+            Monitor background applicant matching campaigns, candidate extraction, and AI evaluations.
           </p>
         </div>
 
@@ -142,9 +126,9 @@ export function RecruiterTasksPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>
-          <h3 className="mt-4 text-base font-semibold text-slate-900">No scoring tasks yet</h3>
+          <h3 className="mt-4 text-base font-semibold text-slate-900">No evaluation campaigns yet</h3>
           <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-            No pipeline matching tasks have been created. Paste a Job Description to trigger AI matching campaigns.
+            No matching campaigns have been created. Paste a Job Description to trigger AI matching campaigns.
           </p>
           <div className="mt-6">
             <button
@@ -192,7 +176,7 @@ export function RecruiterTasksPage() {
                 {/* Middle Block: Active Stage display (recruiter-friendly) */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-400 font-semibold uppercase tracking-wider">Current Pipeline Stage</span>
+                    <span className="text-slate-400 font-semibold uppercase tracking-wider">Current Evaluation Stage</span>
                     <span className="text-slate-700 font-bold">
                       {isFailed ? "Failed" : getStageFriendlyName(task.current_stage)}
                     </span>

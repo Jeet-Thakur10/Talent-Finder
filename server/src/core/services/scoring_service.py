@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.config.settings import settings
+from src.control.agents.candidate_relevance_agent import CandidateRelevanceAgent
 from src.control.agents.candidate_search_query_agent import CandidateSearchQueryAgent
 from src.control.agents.scoring_agent import (
     CandidatePrescoringClient,
@@ -71,6 +72,7 @@ from src.schemas.scoring_schema import (
     CandidateSkillResponse,
     CompressedCandidate,
     CompressedJobDescription,
+    CandidateRelevanceReason,
     HMCampaignResponse,
     JobDescriptionScoringInput,
     JobSkillInput,
@@ -81,6 +83,7 @@ from src.schemas.scoring_schema import (
     PipelineNotesUpdateRequest,
     PipelineSnapshotResponse,
     PipelineStageUpdateRequest,
+    RelevanceStatus,
     SharedCampaignCandidateResponse,
 )
 from src.utils.email_templates import get_generic_email_html
@@ -105,6 +108,7 @@ class ScoringService:
         # Instantiate clients and agents
         self.search_client: CandidateSearchClient | None = CandidateSearchClient()
         self.search_query_agent = CandidateSearchQueryAgent()
+        self.relevance_agent = CandidateRelevanceAgent()
 
         # Instantiate services
         self.acquisition_service = CandidateAcquisitionService(
@@ -284,6 +288,131 @@ class ScoringService:
                         error_message="AI client returned an empty scoring result",
                         duration_ms=per_task_duration,
                     )
+
+        # Candidate Relevance Verification Audit Stage & Backend Guardrail Overrides
+        if candidate_scores:
+            try:
+                candidate_by_id = {c.id: c for c in candidates}
+                audit_inputs = []
+                for score_item in candidate_scores:
+                    cand_obj = candidate_by_id.get(score_item.candidate_id)
+                    cand_yoe = (
+                        round(cand_obj.total_experience_months / 12, 1)
+                        if cand_obj
+                        else 0.0
+                    )
+                    min_exp = scoring_job.min_experience
+                    max_exp = scoring_job.max_experience
+                    yoe_in_range = (cand_yoe >= min_exp) and (
+                        max_exp is None or cand_yoe <= max_exp
+                    )
+
+                    recency_desc = "Current position active"
+                    if cand_obj and cand_obj.experiences:
+                        has_curr = any(e.is_current for e in cand_obj.experiences)
+                        if not has_curr:
+                            recency_desc = f"Recency score: {score_item.recency_score}/15"
+
+                    audit_inputs.append(
+                        {
+                            "candidate_id": str(score_item.candidate_id),
+                            "full_name": cand_obj.full_name if cand_obj else "Unknown",
+                            "candidate_title": cand_obj.current_title if cand_obj else "N/A",
+                            "candidate_location": cand_obj.location if cand_obj else "Missing",
+                            "total_experience_years": cand_yoe,
+                            "jd_min_experience": min_exp,
+                            "jd_max_experience": max_exp,
+                            "yoe_in_range": yoe_in_range,
+                            "matched_mandatory_skills": score_item.matched_mandatory_skills,
+                            "missing_mandatory_skills": score_item.missing_mandatory_skills,
+                            "skills_score": score_item.skills_score,
+                            "experience_score": score_item.experience_score,
+                            "recency_score": score_item.recency_score,
+                            "recency_summary": recency_desc,
+                            "role_fit_score": score_item.role_fit_score,
+                            "final_score": score_item.final_score,
+                        }
+                    )
+
+                audit_results = await self.relevance_agent.verify_relevance_batch(
+                    scoring_job, audit_inputs
+                )
+
+                for score_item in candidate_scores:
+                    cand_obj = candidate_by_id.get(score_item.candidate_id)
+                    cand_yoe = (
+                        cand_obj.total_experience_months / 12 if cand_obj else 0.0
+                    )
+                    min_exp = scoring_job.min_experience
+                    max_exp = scoring_job.max_experience
+                    yoe_valid = (cand_yoe >= min_exp) and (
+                        max_exp is None or cand_yoe <= max_exp
+                    )
+
+                    mandatory_matched = len(score_item.matched_mandatory_skills)
+                    mandatory_missing = len(score_item.missing_mandatory_skills)
+                    mandatory_total = mandatory_matched + mandatory_missing
+
+                    if mandatory_total <= 2:
+                        mandatory_threshold_met = (
+                            mandatory_matched == mandatory_total
+                            if mandatory_total > 0
+                            else True
+                        )
+                    else:
+                        mandatory_threshold_met = (
+                            (mandatory_matched / max(1, mandatory_total)) >= 0.5
+                        )
+
+                    audit_item = audit_results.get(score_item.candidate_id)
+                    if audit_item:
+                        rel_status = audit_item.relevance_status
+                        rel_reason = audit_item.relevance_reason
+                    else:
+                        rel_status = (
+                            RelevanceStatus.RELEVANT
+                            if (yoe_valid and mandatory_threshold_met)
+                            else RelevanceStatus.PARTIALLY_RELEVANT
+                        )
+                        rel_reason = CandidateRelevanceReason(
+                            experience=f"{cand_yoe:.1f} yrs YOE",
+                            role="Standard title match",
+                            skills=f"{mandatory_matched}/{mandatory_total} mandatory skills",
+                            location=(
+                                cand_obj.location
+                                if cand_obj and cand_obj.location
+                                else "Location missing"
+                            ),
+                            recency=f"Recency score: {score_item.recency_score}",
+                            summary="Evaluated via fallback heuristics.",
+                        )
+
+                    # BACKEND DETERMINISTIC OVERRIDES
+                    if rel_status == RelevanceStatus.RELEVANT:
+                        if not yoe_valid:
+                            rel_status = RelevanceStatus.PARTIALLY_RELEVANT
+                            rel_reason.experience += (
+                                f" (Overridden: {cand_yoe:.1f} YOE outside requested {min_exp}-{max_exp or '∞'} yrs range)"
+                            )
+                            rel_reason.summary = (
+                                "Overridden to PARTIALLY_RELEVANT due to experience range constraint."
+                            )
+                        elif not mandatory_threshold_met:
+                            rel_status = RelevanceStatus.PARTIALLY_RELEVANT
+                            rel_reason.skills += (
+                                f" (Overridden: Insufficient mandatory skills match {mandatory_matched}/{mandatory_total})"
+                            )
+                            rel_reason.summary = (
+                                "Overridden to PARTIALLY_RELEVANT due to mandatory skill threshold."
+                            )
+
+                    score_item.relevance_status = rel_status
+                    score_item.relevance_reason = rel_reason
+
+            except Exception as ae:
+                logger.error(
+                    f"Error during candidate relevance audit: {ae}", exc_info=True
+                )
 
         # Persistence Stage
         persist_start = time.perf_counter()
@@ -738,6 +867,16 @@ class ScoringService:
                     "evaluation failures. Try rescoring again later."
                 )
 
+        rel_count = sum(
+            1 for c in candidates if c.relevance_status == RelevanceStatus.RELEVANT
+        )
+        part_rel_count = sum(
+            1
+            for c in candidates
+            if c.relevance_status == RelevanceStatus.PARTIALLY_RELEVANT
+        )
+        has_rel = rel_count > 0
+
         return PipelineExecutionResponse(
             stage="completed",
             matched_candidate_count=matched_candidate_count,
@@ -745,6 +884,9 @@ class ScoringService:
             selected_candidate_count=api_returned_count,
             top_k=data.k,
             candidates=candidates,
+            has_relevant_candidates=has_rel,
+            relevant_candidate_count=rel_count,
+            partially_relevant_candidate_count=part_rel_count,
             is_shortlist_incomplete=is_shortlist_incomplete,
             warning_reason=warning_reason,
             warning_message=warning_message,
@@ -1349,6 +1491,15 @@ Reason:
             False,
         )
 
+        rel_status_attr = getattr(score, "relevance_status", RelevanceStatus.RELEVANT)
+        if isinstance(rel_status_attr, str):
+            try:
+                rel_status_attr = RelevanceStatus(rel_status_attr)
+            except ValueError:
+                rel_status_attr = RelevanceStatus.RELEVANT
+
+        rel_reason_attr = getattr(score, "relevance_reason", None)
+
         return PipelineCandidateResult(
             candidate_id=candidate.id,
             full_name=candidate.full_name,
@@ -1362,6 +1513,8 @@ Reason:
             matched_mandatory_skills=matched_mandatory_skills,
             matched_optional_skills=matched_optional_skills,
             missing_mandatory_skills=missing_mandatory_skills,
+            relevance_status=rel_status_attr,
+            relevance_reason=rel_reason_attr,
             stage=stage,
             recruiter_notes=recruiter_notes,
             hiring_manager_notes=hiring_manager_notes,

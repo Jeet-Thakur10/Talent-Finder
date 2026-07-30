@@ -370,6 +370,18 @@ class ScoringRepository:
                     if isinstance(k, str):
                         explanation_dict[k] = v
 
+            reason_dict: dict[str, object] | None = None
+            if hasattr(score.relevance_reason, "model_dump"):
+                reason_dict = score.relevance_reason.model_dump()
+            elif isinstance(score.relevance_reason, dict):
+                reason_dict = score.relevance_reason
+
+            rel_status_str = (
+                score.relevance_status.value
+                if hasattr(score.relevance_status, "value")
+                else str(score.relevance_status or "RELEVANT")
+            )
+
             if existing:
                 existing.final_score = score.final_score
                 existing.confidence = score.confidence
@@ -387,6 +399,9 @@ class ScoringRepository:
                 existing.missing_mandatory_skills = score.missing_mandatory_skills
 
                 existing.explanation = explanation_dict
+
+                existing.relevance_status = rel_status_str
+                existing.relevance_reason = reason_dict
 
                 existing.updated_at = now
 
@@ -406,6 +421,8 @@ class ScoringRepository:
                         matched_optional_skills=(score.matched_optional_skills),
                         missing_mandatory_skills=(score.missing_mandatory_skills),
                         explanation=explanation_dict,
+                        relevance_status=rel_status_str,
+                        relevance_reason=reason_dict,
                         created_at=now,
                         updated_at=now,
                     )

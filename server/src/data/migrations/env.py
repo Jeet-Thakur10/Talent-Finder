@@ -10,6 +10,7 @@ from src.config.settings import settings
 
 ## my imports , the models, base and settings
 from src.data.clients.postgres import Base
+from src.data.models.postgres import candidate, candidate_job_score, job_description, notification, pipeline, scoring_task, user  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -146,7 +146,7 @@ export function JobDescriptionScoringConfigPage() {
                   Current Status: <span className="ml-1 font-bold">Queued</span>
                 </div>
                 <p className="text-sm text-slate-500 leading-relaxed max-w-md mx-auto pt-2">
-                  You may safely leave this page. The scoring pipeline will continue running in the background.
+                  You may safely leave this page. The candidate matching campaign will continue running in the background.
                 </p>
               </div>
 
@@ -233,7 +233,7 @@ export function JobDescriptionScoringConfigPage() {
                   className="auth-input !py-2.5 text-sm"
                 />
                 <p className="text-[11px] text-slate-400">
-                  Candidates scoring below this value in the initial fast-match phase will be excluded from the detailed LLM candidate evaluation (0 - 100).
+                  Candidates scoring below this value in the initial fast-match phase will be excluded from the detailed AI candidate evaluation (0 - 100).
                 </p>
               </div>
 
@@ -258,7 +258,7 @@ export function JobDescriptionScoringConfigPage() {
                   {isSubmitting ? (
                     <>
                       <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Starting candidate evaluation...</span>
+                      <span>Finding candidates...</span>
                     </>
                   ) : (
                     <span>Find Candidates</span>

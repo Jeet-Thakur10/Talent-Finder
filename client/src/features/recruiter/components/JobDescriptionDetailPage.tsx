@@ -1,50 +1,55 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useRecruiterJobDescriptionDetail } from "../hooks/useRecruiterJobDescriptionDetail";
 import { useLatestJobTask } from "../hooks/useLatestJobTask";
+import { RECRUITER_LABELS, RECRUITER_STAGES } from "../utils/recruiterTerms";
+import { useSmoothProgress } from "../hooks/useSmoothProgress";
 
-function getRecruiterFriendlyStatus(
-  status: string,
-  stage: string,
-  matchedCount?: number | null
-): { text: string; icon: "spinner" | "check" | "warning" | "neutral" } {
-  const statusUpper = status.toUpperCase();
-  const stageUpper = stage.toUpperCase();
 
-  if (statusUpper === "FAILED" || stageUpper === "FAILED") {
-    return {
-      text: "We couldn't complete the candidate evaluation. Please try again.",
-      icon: "warning",
-    };
+
+function getStepStatus(
+  stepCode: "req" | "src" | "eval" | "short",
+  latestTask: any
+): "completed" | "active" | "pending" | "failed" {
+  if (!latestTask) return "pending";
+
+  const statusUpper = latestTask.status.toUpperCase();
+  const stageUpper = latestTask.current_stage.toUpperCase();
+  const isTaskFailed = statusUpper === "FAILED";
+  const isTaskSuccess = statusUpper === "SUCCESS" || stageUpper === "COMPLETED";
+
+  if (isTaskSuccess) return "completed";
+
+  if (stepCode === "req") {
+    if (stageUpper === "QUEUED") {
+      return isTaskFailed ? "failed" : "active";
+    }
+    return "completed";
   }
 
-  if (statusUpper === "SUCCESS" || stageUpper === "COMPLETED") {
-    return {
-      text: "Your shortlist is ready.",
-      icon: "check",
-    };
+  if (stepCode === "src") {
+    if (stageUpper === "QUEUED") return "pending";
+    if (stageUpper === "ACQUIRING" || stageUpper === "SOURCING") {
+      return isTaskFailed ? "failed" : "active";
+    }
+    return "completed";
   }
 
-  switch (stageUpper) {
-    case "QUEUED":
-      return { text: "Preparing your search...", icon: "spinner" };
-    case "ACQUIRING":
-    case "SOURCING":
-      return { text: "Searching our candidate database...", icon: "spinner" };
-    case "SYNCHRONIZING":
-      return {
-        text: `Found ${matchedCount ?? 18} potential candidates.`,
-        icon: "spinner",
-      };
-    case "PRE_SCORING":
-      return { text: "Evaluating candidate suitability...", icon: "spinner" };
-    case "DEEP_SCORING":
-      return { text: "Ranking the best candidates...", icon: "spinner" };
-    case "PERSISTING":
-    case "PERSISTING_RESULTS":
-      return { text: "Preparing your shortlist...", icon: "spinner" };
-    default:
-      return { text: "Searching our candidate database...", icon: "spinner" };
+  if (stepCode === "eval") {
+    if (stageUpper === "QUEUED" || stageUpper === "ACQUIRING" || stageUpper === "SOURCING") return "pending";
+    if (stageUpper === "PRE_SCORING" || stageUpper === "SYNCHRONIZING" || stageUpper === "DEEP_SCORING") {
+      return isTaskFailed ? "failed" : "active";
+    }
+    return "completed";
   }
+
+  if (stepCode === "short") {
+    if (stageUpper === "COMPLETED") {
+      return isTaskFailed ? "failed" : "active";
+    }
+    return "pending";
+  }
+
+  return "pending";
 }
 
 export function JobDescriptionDetailPage() {
@@ -61,6 +66,7 @@ export function JobDescriptionDetailPage() {
   } = useRecruiterJobDescriptionDetail(jobDescriptionId);
 
   const { latestTask } = useLatestJobTask(jobDescriptionId);
+  const smoothPercent = useSmoothProgress(latestTask?.current_stage, latestTask?.status);
 
   const jobStatus = jobDescription && statuses ? statuses.find((s) => s.id === jobDescription.status_id) : null;
   const isCampaignClosed = jobStatus ? jobStatus.code.toUpperCase() === "CLOSED" : false;
@@ -219,12 +225,12 @@ export function JobDescriptionDetailPage() {
                           isCampaignClosed ? "opacity-45 cursor-not-allowed" : ""
                         }`}
                       >
-                        Start New Scoring
+                        {RECRUITER_LABELS.REEVALUATE_CANDIDATES}
                       </button>
                     </>
                   );
                 }
-
+ 
                 if (isRunning || isCampaignClosed) {
                   return (
                     <button
@@ -233,18 +239,18 @@ export function JobDescriptionDetailPage() {
                       title={isCampaignClosed ? "This campaign has been completed." : undefined}
                       className="workspace-ghost-button !py-2.5 text-sm font-semibold opacity-45 cursor-not-allowed"
                     >
-                      Start Candidate Evaluation
+                      Find Matching Candidates
                     </button>
                   );
                 }
-
+ 
                 return (
                   <button
                     type="button"
                     onClick={() => navigate(`/recruiter/job-descriptions/${jobDescription.id}/score-config`)}
                     className="workspace-ghost-button !py-2.5 text-sm font-semibold"
                   >
-                    Start Candidate Evaluation
+                    Find Matching Candidates
                   </button>
                 );
               })()}
@@ -262,7 +268,7 @@ export function JobDescriptionDetailPage() {
                   isCampaignClosed
                     ? "This campaign has been completed."
                     : isRunning
-                    ? "Editing is disabled while candidate scoring is in progress."
+                    ? "Editing is disabled while candidate evaluation is in progress."
                     : undefined
                 }
               >
@@ -300,53 +306,132 @@ export function JobDescriptionDetailPage() {
               <p className="detail-copy">{jobDescription.education_requirement}</p>
             </div>
 
-            <div className="detail-block bg-slate-50/85 text-xs">
-              <span className="block font-bold text-slate-700 mb-1">Evaluation Status</span>
-              {(() => {
-                if (!latestTask) {
-                  return (
-                    <div className="flex items-start gap-2 mt-2 text-slate-500">
-                      <p className="leading-relaxed">Click 'Start Candidate Evaluation' to find and rank candidates for this job description.</p>
-                    </div>
-                  );
+            <div className="detail-block bg-white text-xs border border-slate-200/80 rounded-2xl p-5 space-y-4 shadow-sm">
+              <style>{`
+                @keyframes progress-bar-stripes {
+                  0% { background-position: 1rem 0; }
+                  100% { background-position: 0 0; }
                 }
-
-                const friendlyStatus = getRecruiterFriendlyStatus(
-                  latestTask.status,
-                  latestTask.current_stage,
-                  latestTask.matched_candidate_count
-                );
-
-                if (friendlyStatus.icon === "spinner") {
-                  return (
-                    <div key={friendlyStatus.text} className="flex items-center gap-2.5 mt-2 text-blue-700 animate-fade-in">
-                      <div className="h-4 w-4 shrink-0 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
-                      <span className="font-semibold text-sm leading-none">{friendlyStatus.text}</span>
-                    </div>
-                  );
+                .animate-stripes-slow {
+                  background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+                  background-size: 1rem 1rem;
+                  animation: progress-bar-stripes 1.5s linear infinite;
                 }
+              `}</style>
 
-                if (friendlyStatus.icon === "check") {
-                  return (
-                    <div key={friendlyStatus.text} className="flex items-center gap-2 mt-2 text-emerald-700 animate-fade-in">
-                      <span className="text-base font-bold shrink-0 leading-none mr-0.5">✓</span>
-                      <span className="font-semibold text-sm leading-none">{friendlyStatus.text}</span>
-                    </div>
-                  );
-                }
+              <div className="flex justify-between items-baseline border-b border-slate-100 pb-2">
+                <span className="block font-bold text-slate-700">Evaluation Status</span>
+                {latestTask && (
+                  <span className={`status-badge shrink-0 !rounded-md !px-2 !py-0.5 text-[9px] uppercase tracking-[0.12em] ${
+                    latestTask.status.toUpperCase() === "FAILED"
+                      ? "bg-rose-50 text-rose-700 border-rose-250"
+                      : (latestTask.status.toUpperCase() === "SUCCESS" || latestTask.current_stage.toUpperCase() === "COMPLETED"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-blue-50 text-blue-700 border-blue-200")
+                  }`}>
+                    {latestTask.status.toUpperCase() === "FAILED"
+                      ? "Failed"
+                      : (latestTask.status.toUpperCase() === "SUCCESS" || latestTask.current_stage.toUpperCase() === "COMPLETED"
+                        ? "Completed"
+                        : "In Progress")}
+                  </span>
+                )}
+              </div>
 
-                if (friendlyStatus.icon === "warning") {
-                  return (
-                    <div key={friendlyStatus.text} className="flex items-center gap-2 mt-2 text-rose-700 animate-fade-in">
-                      <span className="text-base font-bold shrink-0 leading-none mr-0.5">⚠</span>
-                      <span className="font-semibold text-sm leading-none">{friendlyStatus.text}</span>
-                    </div>
-                  );
-                }
+              {!latestTask ? (
+                <div className="space-y-3">
+                  <p className="text-slate-500 leading-relaxed text-[11px]">
+                    No evaluation campaigns executed. Click 'Find Matching Candidates' to start candidate search and matching.
+                  </p>
+                </div>
+              ) : (() => {
+                const stageUpper = latestTask.current_stage.toUpperCase();
+                const taskStatusUpper = latestTask.status.toUpperCase();
+                const isFailed = taskStatusUpper === "FAILED";
+                const isSuccess = taskStatusUpper === "SUCCESS" || stageUpper === "COMPLETED";
+
+                const currentStageConfig = RECRUITER_STAGES[stageUpper] || { label: "Evaluating Candidate Matches", percent: 50 };
+                const percent = smoothPercent;
+                const currentRecruiterLabel = isSuccess 
+                  ? "Candidate Shortlist Ready" 
+                  : currentStageConfig.label;
 
                 return (
-                  <div className="flex items-start gap-2 mt-2 text-slate-500">
-                    <p className="leading-relaxed">{friendlyStatus.text}</p>
+                  <div className="space-y-4">
+                    {/* Progress Header & Percent */}
+                    <div className="flex justify-between items-center">
+                      <span className="text-[11px] font-semibold text-slate-600 block truncate max-w-[70%]">
+                        {isFailed ? "Failed at: " + currentRecruiterLabel : currentRecruiterLabel}
+                      </span>
+                      <span className="text-lg font-black text-slate-900 font-sans tracking-tight">{percent}%</span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden relative">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ease-out relative ${
+                          isFailed ? "bg-rose-500" : (isSuccess ? "bg-emerald-500" : "bg-blue-600 animate-stripes-slow")
+                        }`}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+
+                    {/* Steps Checklist */}
+                    <div className="space-y-2.5 pt-1">
+                      {[
+                        { id: "req", label: "Understanding Job Requirements" },
+                        { id: "src", label: "Searching Candidate Sources" },
+                        { id: "eval", label: "Evaluating Candidate Matches" },
+                        { id: "short", label: "Preparing Candidate Shortlist" },
+                      ].map((step) => {
+                        const stepStatus = getStepStatus(step.id as any, latestTask);
+                        let icon = null;
+                        let textClass = "text-slate-400";
+                        
+                        if (stepStatus === "completed") {
+                          icon = (
+                            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-50 border border-emerald-200 shrink-0">
+                              <span className="text-[9px] font-bold text-emerald-600">✓</span>
+                            </div>
+                          );
+                          textClass = "text-slate-700 font-medium";
+                        } else if (stepStatus === "failed") {
+                          icon = (
+                            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-rose-50 border border-rose-200 shrink-0">
+                              <span className="text-[9px] font-bold text-rose-600">✕</span>
+                            </div>
+                          );
+                          textClass = "text-rose-700 font-semibold";
+                        } else if (stepStatus === "active") {
+                          icon = (
+                            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-50 border border-blue-200 shrink-0">
+                              <div className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-ping" />
+                            </div>
+                          );
+                          textClass = "text-slate-900 font-bold";
+                        } else {
+                          icon = (
+                            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-50 border border-slate-150 shrink-0">
+                              <span className="text-[7px] text-slate-355">○</span>
+                            </div>
+                          );
+                          textClass = "text-slate-400";
+                        }
+
+                        return (
+                          <div key={step.id} className="flex items-center gap-2.5 text-xs">
+                            {icon}
+                            <span className={textClass}>{step.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {isFailed && (
+                      <div className="mt-2 p-2 bg-rose-50 border border-rose-100 rounded-lg text-[10px] text-rose-700 leading-relaxed">
+                        {latestTask.error_message || "A system error occurred during AI evaluation."}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
