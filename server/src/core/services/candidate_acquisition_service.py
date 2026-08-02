@@ -122,13 +122,14 @@ class CandidateAcquisitionService:
         search_request.exclude_candidate_ids = [
             candidate.id for candidate in local_candidates
         ]
-        print("\n[ScoringService] LLM generated CandidateSearchRequest:")
-        print(f"  Generated title: {search_request.title}")
-        print(f"  Generated skills (full list): {search_request.skills}")
-        print(f"  min_experience: {search_request.min_experience}")
-        print(f"  required_candidates: {search_request.required_candidates}")
-        print(f"  max_source_resumes: {search_request.max_source_resumes}")
-        print()
+        from src.utils.debug_logger import debug_log
+        debug_log("\nCandidate Search Query sent to sourcing service:")
+        debug_log(f"  Title: {search_request.title}")
+        debug_log(f"  Skills: {search_request.skills}")
+        debug_log(f"  Location: {search_request.location}")
+        debug_log(f"  Experience: {search_request.min_experience}")
+        debug_log(f"  Search Parameters: required_candidates={search_request.required_candidates}, max_source_resumes={search_request.max_source_resumes}")
+        debug_log()
 
         logger.info(
             "External search request: required_candidates=%d, exclude_ids=%d, title=%s",

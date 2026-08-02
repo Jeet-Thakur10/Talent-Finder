@@ -52,17 +52,45 @@ class PostJobFreeSourcingService:
     def generate_postjobfree_search_request(
         self,
         request: CandidateSearchRequest,
+        original_request: CandidateSearchRequest | None = None,
+        current_attempt: int = 1,
     ) -> PostJobFreeSearchRequest:
+        required_words_list = list(request.skills)
+        location_param = ""
+
+        if request.is_remote:
+            location_param = ""
+            if settings.APPEND_REMOTE_KEYWORD:
+                if not any(w.lower() == "remote" for w in required_words_list):
+                    required_words_list.append("remote")
+        else:
+            if current_attempt == 2 and original_request:
+                location_param = original_request.location or ""
+            else:
+                location_param = request.location or ""
+
+        # Map search fields to optimize recall vs precision balance
+        if not required_words_list:
+            # Attempt 1 (Job Title + Location):
+            # Put the job title in 'q' to maximize recall, and set 't' to job title as well.
+            q_words = request.title
+            t_words = request.title
+        else:
+            # Attempt 2+ (Job Title + Skills + Optional Location):
+            # Put skills in 'q', and put title in 't'. Keep 'd' empty to avoid over-restriction.
+            q_words = " ".join(
+                skill
+                for skill in required_words_list
+                if skill.strip()
+            )
+            t_words = request.title
 
         return PostJobFreeSearchRequest(
-            title_words=request.title,
-            required_words=" ".join(
-                skill
-                for skill in request.skills
-                if skill.strip()
-            ),
-            resume_text_words=request.title,
+            title_words=t_words,
+            required_words=q_words,
+            resume_text_words="",  # Dropping 'd' (resume text words) to prevent over-restriction
             excluded_words="",
+            location=location_param,
         )
 
     async def source_candidates(
@@ -89,7 +117,7 @@ class PostJobFreeSourcingService:
         best_resumes_found = 0
         no_improvement_count = 0
 
-        # To track executed queries: tuple(title, tuple(sorted_skills))
+        # To track executed queries: tuple(title, tuple(sorted_skills), location)
         seen_queries = set()
         # To track processed resume URLs across attempts
         processed_resume_urls = set()
@@ -142,15 +170,45 @@ class PostJobFreeSourcingService:
                 )
                 break
 
-            # Check query deduplication using normalized representation
-            normalized_query = (
-                optimized_req.title.strip().lower(),
-                tuple(sorted(skill.strip().lower() for skill in optimized_req.skills))
+            # Resolve strategy info for observability
+            attempt_idx = len(attempts_history)
+            strategy = (
+                self._optimizer._strategies[attempt_idx]
+                if attempt_idx < len(self._optimizer._strategies)
+                else self._optimizer._strategies[-1]
             )
+            strategy_name = strategy.__class__.__name__
+
+            # Generate the provider request
+            search_request = self.generate_postjobfree_search_request(
+                optimized_req,
+                original_request=request,
+                current_attempt=current_attempt,
+            )
+
+            # Determine normalized query signature for deduplication
+            normalized_query = (
+                search_request.title_words.strip().lower(),
+                tuple(sorted(word.strip().lower() for word in search_request.required_words.split())),
+                search_request.location.strip().lower() if search_request.location else None,
+            )
+
+            # Determine human-readable location used representation
+            location_used = (
+                search_request.location
+                if search_request.location
+                else (
+                    "Remote-Keywords"
+                    if optimized_req.is_remote and settings.APPEND_REMOTE_KEYWORD
+                    else "Global"
+                )
+            )
+
             if normalized_query in seen_queries:
                 print(
                     f"  [Attempt {current_attempt}] Skipped duplicate query: "
-                    f"Title='{optimized_req.title}', Skills={optimized_req.skills}"
+                    f"Title='{search_request.title_words}', Skills='{search_request.required_words}', "
+                    f"Location='{location_used}'"
                 )
                 attempt_stat = SearchAttempt(
                     attempt_number=current_attempt,
@@ -162,16 +220,14 @@ class PostJobFreeSourcingService:
                     candidates_remaining=candidates_remaining,
                     reason=f"Skipped duplicate query. (Attempt details: {reason})",
                     query_url="",
+                    location_used=location_used,
+                    strategy_name=strategy_name,
                 )
                 attempts_history.append(attempt_stat)
                 continue
 
             seen_queries.add(normalized_query)
-
-            # Generate the provider request
-            search_request = self.generate_postjobfree_search_request(
-                optimized_req,
-            )
+            scraped_resumes = []
 
             params = {
                 "q": search_request.required_words,
@@ -180,15 +236,31 @@ class PostJobFreeSourcingService:
                 "d": search_request.resume_text_words,
                 "r": 10,
             }
+            if search_request.location:
+                params["l"] = search_request.location
+
             url = f"https://www.postjobfree.com/resumes?{urllib.parse.urlencode(params)}"
 
             print("\n" + "-" * 50)
             print(f"STARTING SEARCH ATTEMPT {current_attempt}")
-            print(f"  Title Used: '{optimized_req.title}'")
-            print(f"  Skills Used: {optimized_req.skills}")
-            print(f"  Query URL: {url}")
+            print(f"  Strategy Name: {strategy_name}")
+            print(f"  Title: '{search_request.title_words}'")
+            print(f"  Keywords: '{search_request.required_words}'")
+            print(f"  Location: '{location_used}'")
+            print(f"  Final Generated URL: {url}")
             print(f"  Reasoning: {reason}")
             print("-" * 50)
+
+            logger.info(
+                "Sourcing Attempt %d: strategy=%s, title='%s', keywords='%s', location='%s', url='%s'",
+                current_attempt,
+                strategy_name,
+                search_request.title_words,
+                search_request.required_words,
+                location_used,
+                url,
+            )
+
 
             # Search PostJobFree
             try:
@@ -352,6 +424,11 @@ class PostJobFreeSourcingService:
                             await self._candidate_service.commit()
                             print("Candidate persisted successfully.\n")
                             candidates_persisted_this_attempt += 1
+                            scraped_resumes.append({
+                                "name": extraction_result.payload.full_name,
+                                "location": extraction_result.payload.location,
+                                "url": result.resume_url
+                            })
                         except Exception as exc:
                             stage = "Candidate persistence"
                             error_code = "EXTRACTION_UNKNOWN"
@@ -444,22 +521,40 @@ class PostJobFreeSourcingService:
                 candidates_remaining=candidates_remaining,
                 reason=reason,
                 query_url=url,
+                location_used=location_used,
+                strategy_name=strategy_name,
             )
             attempts_history.append(attempt_stat)
 
-            # Log search attempt details clearly
-            print("\n==================================================")
-            print("SEARCH ATTEMPT SUMMARY:")
-            print(f"  Attempt Number: {current_attempt}")
-            print(f"  Generated Query URL: {url}")
-            print(f"  Title Used: '{optimized_req.title}'")
-            print(f"  Skills Used: {optimized_req.skills}")
-            print(f"  Reason for query adjustments: {reason}")
-            print(f"  Resumes Found: {resumes_found}")
-            print(f"  Candidates Persisted: {candidates_persisted_this_attempt}")
-            print(f"  New Unique Candidates Persisted: {new_candidates_persisted}")
-            print(f"  Candidates Remaining: {candidates_remaining}")
-            print("==================================================\n")
+            # Log search attempt details clearly using debug_log helper
+            from src.utils.debug_logger import debug_log
+            debug_log("\n==================================================")
+            debug_log("SEARCH ATTEMPT SUMMARY:")
+            debug_log(f"  Attempt Number: {current_attempt}")
+            debug_log(f"  Strategy Name: {strategy_name}")
+            debug_log(f"  Search String: '{search_request.required_words}'")
+            debug_log(f"  PostJobFree Parameters:")
+            debug_log(f"    q: '{params.get('q')}'")
+            debug_log(f"    t: '{params.get('t')}'")
+            debug_log(f"    d: '{params.get('d')}'")
+            debug_log(f"    l: '{params.get('l', '')}'")
+            debug_log(f"  Final Generated URL: {url}")
+            debug_log(f"  Returned Resumes:")
+            if not scraped_resumes:
+                debug_log("    None")
+            else:
+                for r in scraped_resumes:
+                    debug_log(f"    - Name: {r['name']}, Location: {r['location']}, URL: {r['url']}")
+            debug_log("==================================================\n")
+
+            logger.info(
+                "Sourcing Attempt %d Completed: strategy=%s, location=%s, resumes_found=%d, new_candidates_persisted=%d",
+                current_attempt,
+                strategy_name,
+                location_used,
+                resumes_found,
+                new_candidates_persisted,
+            )
 
             if no_improvement_count >= settings.MAX_CONSECUTIVE_NO_IMPROVEMENT:
                 print(
@@ -467,6 +562,7 @@ class PostJobFreeSourcingService:
                     f"{no_improvement_count} consecutive no-improvement attempts."
                 )
                 break
+
 
         # Log final loop status and stop reason
         stop_reason = (

@@ -19,3 +19,8 @@ class CandidateSearchRequest(BaseModel):
     exclude_candidate_ids: list[UUID] = Field(
         default_factory=list,
     )
+
+    location: str | None = None
+    is_remote: bool = False
+    is_hybrid: bool = False
+

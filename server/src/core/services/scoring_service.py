@@ -325,6 +325,7 @@ class ScoringService:
                             "yoe_in_range": yoe_in_range,
                             "matched_mandatory_skills": score_item.matched_mandatory_skills,
                             "missing_mandatory_skills": score_item.missing_mandatory_skills,
+                            "candidate_skills": [s.skill_name for s in cand_obj.skills] if cand_obj else [],
                             "skills_score": score_item.skills_score,
                             "experience_score": score_item.experience_score,
                             "recency_score": score_item.recency_score,

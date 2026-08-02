@@ -1,0 +1,254 @@
+
+Extracted Job Description:
+  Title: Product Designer / Senior UX/UI Designer
+  Location: Chennai, India
+  Experience: min=2, max=4
+  Skills: ['Information Architecture', 'User Journeys', 'Wireframing', 'Interaction Design', 'Responsive Layouts', 'Typography', 'Figma', 'Adobe Creative Suite', 'HTML', 'CSS']
+  Employment Type: None
+  Hiring Manager: None
+  Job Purpose: To take ownership of end-to-end digital product design for scalable web and mobile platforms, bridging user needs and business goals to create intuitive and low-friction user experiences.
+  Department: Product & Design
+  Education Requirement: Bachelor’s degree in Engineering or related discipline
+
+Candidate Search Query sent to sourcing service:
+  Title: UX/UI Designer
+  Skills: ['Information Architecture', 'User Journeys', 'Wireframing', 'Interaction Design', 'Responsive Layouts', 'Typography', 'Figma', 'Adobe Creative Suite', 'HTML', 'CSS']
+  Location: Chennai India
+  Experience: 2
+  Search Parameters: required_candidates=10, max_source_resumes=20
+
+
+==================================================
+SEARCH ATTEMPT SUMMARY:
+  Attempt Number: 1
+  Strategy Name: RepresentativeSkillsStrategy
+  Search String: 'UX/UI Designer'
+  PostJobFree Parameters:
+    q: 'UX/UI Designer'
+    t: ''
+    d: ''
+    l: 'Chennai India'
+  Final Generated URL: https://www.postjobfree.com/resumes?q=UX%2FUI+Designer&n=&t=&d=&r=10&l=Chennai+India
+  Returned Resumes:
+    - Name: DINESH P, Location: None, URL: https://www.postjobfree.com/resume/aeik2o/full-stack-developer-react-chennai-tamil
+    - Name: NITHYAKUMAR N, Location: Chennai, India, URL: https://www.postjobfree.com/resume/aeg6lu/ux-ui-designer-product-n-chennai-tamil
+==================================================
+
+
+==================================================
+SEARCH ATTEMPT SUMMARY:
+  Attempt Number: 2
+  Strategy Name: RepresentativeSkillsStrategy
+  Search String: 'Figma Interaction Design Wireframing'
+  PostJobFree Parameters:
+    q: 'Figma Interaction Design Wireframing'
+    t: 'UX/UI Designer'
+    d: ''
+    l: ''
+  Final Generated URL: https://www.postjobfree.com/resumes?q=Figma+Interaction+Design+Wireframing&n=&t=UX%2FUI+Designer&d=&r=10
+  Returned Resumes:
+    None
+==================================================
+
+
+==================================================
+SEARCH ATTEMPT SUMMARY:
+  Attempt Number: 3
+  Strategy Name: GeneralizedTitleStrategy
+  Search String: 'Figma Interaction Design Wireframing'
+  PostJobFree Parameters:
+    q: 'Figma Interaction Design Wireframing'
+    t: 'UX Designer'
+    d: ''
+    l: ''
+  Final Generated URL: https://www.postjobfree.com/resumes?q=Figma+Interaction+Design+Wireframing&n=&t=UX+Designer&d=&r=10
+  Returned Resumes:
+    None
+==================================================
+
+
+Candidate Search Query sent to sourcing service:
+  Title: Software Engineer
+  Skills: ['Python', 'PostgreSQL', 'FastAPI', 'Kubernetes']
+  Location: San Francisco CA
+  Experience: 5
+  Search Parameters: required_candidates=10, max_source_resumes=20
+
+
+==================================================
+SEARCH ATTEMPT SUMMARY:
+  Attempt Number: 1
+  Strategy Name: RepresentativeSkillsStrategy
+  Search String: 'Software Engineer'
+  PostJobFree Parameters:
+    q: 'Software Engineer'
+    t: ''
+    d: ''
+    l: 'San Francisco CA'
+  Final Generated URL: https://www.postjobfree.com/resumes?q=Software+Engineer&n=&t=&d=&r=10&l=San+Francisco+CA
+  Returned Resumes:
+    - Name: OBIORA CHIKWELU, Location: California, United States, URL: https://www.postjobfree.com/resume/aeizsk/cloud-devops-engineer-san-francisco-ca
+    - Name: HEEMA MANIAR, Location: San Francisco Bay Area, URL: https://www.postjobfree.com/resume/aeix9d/lead-data-analyst-ai-bi-danville-ca
+==================================================
+
+
+==================================================
+SEARCH ATTEMPT SUMMARY:
+  Attempt Number: 2
+  Strategy Name: RepresentativeSkillsStrategy
+  Search String: 'Python PostgreSQL FastAPI'
+  PostJobFree Parameters:
+    q: 'Python PostgreSQL FastAPI'
+    t: 'Software Engineer'
+    d: ''
+    l: ''
+  Final Generated URL: https://www.postjobfree.com/resumes?q=Python+PostgreSQL+FastAPI&n=&t=Software+Engineer&d=&r=10
+  Returned Resumes:
+    None
+==================================================
+
+
+==================================================
+SEARCH ATTEMPT SUMMARY:
+  Attempt Number: 3
+  Strategy Name: SingleCoreSkillStrategy
+  Search String: 'Python'
+  PostJobFree Parameters:
+    q: 'Python'
+    t: 'Software Engineer'
+    d: ''
+    l: ''
+  Final Generated URL: https://www.postjobfree.com/resumes?q=Python&n=&t=Software+Engineer&d=&r=10
+  Returned Resumes:
+    None
+==================================================
+
+Extracted Job Description:
+  Title: Software Developer
+  Location: Chennai, Tamil Nadu, India
+  Experience: min=None, max=None
+  Skills: ['Java', 'Python', 'C#', 'JavaScript', 'Relational databases (SQL)', 'Non-relational databases (PostgreSQL, MongoDB)', 'Git']
+  Employment Type: Full-Time
+  Hiring Manager: None
+  Job Purpose: To design, build, and maintain efficient software systems that meet business requirements and user needs, collaborating with cross-functional teams to ensure high-quality products.
+  Department: Information Technology
+  Education Requirement: Bachelor’s degree in Computer Science, Engineering, or a related field
+
+Candidate Search Query sent to sourcing service:
+  Title: Software Developer
+  Skills: ['Java', 'Python', 'C#', 'JavaScript', 'SQL', 'PostgreSQL', 'MongoDB', 'Git']
+  Location: Chennai Tamil Nadu India
+  Experience: 2
+  Search Parameters: required_candidates=20, max_source_resumes=20
+
+
+==================================================
+SEARCH ATTEMPT SUMMARY:
+  Attempt Number: 1
+  Strategy Name: RepresentativeSkillsStrategy
+  Search String: 'Software Developer'
+  PostJobFree Parameters:
+    q: 'Software Developer'
+    t: ''
+    d: ''
+    l: 'Chennai Tamil Nadu India'
+  Final Generated URL: https://www.postjobfree.com/resumes?q=Software+Developer&n=&t=&d=&r=10&l=Chennai+Tamil+Nadu+India
+  Returned Resumes:
+    - Name: NANTHINI S, Location: Chennai, India, URL: https://www.postjobfree.com/resume/aei08x/full-stack-php-developer-chennai-tamil
+    - Name: Lakshmanaraj Sabapathy, Location: Tuticorin, India, URL: https://www.postjobfree.com/resume/aei0a9/technical-talent-avadi-tamil-nadu
+    - Name: ESAKKIMUTHU MARIYAPPAN, Location: None, URL: https://www.postjobfree.com/resume/aeiyu6/senior-oracle-sql-pl-chennai-tamil
+    - Name: SHANMUGAVEL, Location: Chennai, India, URL: https://www.postjobfree.com/resume/aeivty/java-backend-microservices-chennai-tamil
+    - Name: KUMAR D, Location: Madurai, Tamil Nadu, URL: https://www.postjobfree.com/resume/aeiue1/frontend-developer-react-chennai-tamil
+    - Name: BHARATHKUMAR G, Location: Oddanchatram, Tamilnadu, URL: https://www.postjobfree.com/resume/aeiuv9/front-end-developer-ai-chennai-tamil
+    - Name: Vignesh S, Location: Coimbatore, URL: https://www.postjobfree.com/resume/aeiujk/full-stack-developer-php-chennai-tamil
+    - Name: Malayan G, Location: Chennai, URL: https://www.postjobfree.com/resume/aeiujf/technical-project-manager-chennai-tamil
+    - Name: Not explicitly mentioned, Location: Chennai, URL: https://www.postjobfree.com/resume/aeiucs/senior-technical-lead-web-chennai-tamil
+    - Name: Periyasamy, Location: 3/49a, NewStreet, Thiruvannathapuram, Kizhanatham(Po), 627353, URL: https://www.postjobfree.com/resume/aeit7h/laravel-full-stack-chennai-tamil
+==================================================
+
+
+==================================================
+SEARCH ATTEMPT SUMMARY:
+  Attempt Number: 2
+  Strategy Name: RepresentativeSkillsStrategy
+  Search String: 'Java Python SQL'
+  PostJobFree Parameters:
+    q: 'Java Python SQL'
+    t: 'Software Developer'
+    d: ''
+    l: ''
+  Final Generated URL: https://www.postjobfree.com/resumes?q=Java+Python+SQL&n=&t=Software+Developer&d=&r=10
+  Returned Resumes:
+    - Name: Joseph Feliciano Nieves, Location: Atlanta, GA, URL: https://www.postjobfree.com/resume/aeirq0/software-engineer-cloud-agile-atlanta-ga
+    - Name: Joshua Au-Yeung, Location: Toronto, Ontario, Canada, URL: https://www.postjobfree.com/resume/aeirkp/full-stack-software-toronto-on-canada
+    - Name: Not explicitly mentioned, Location: Richmond Hill ON, Canada, URL: https://www.postjobfree.com/resume/aeiq48/senior-software-30-oop-toronto-on-canada
+    - Name: Minghua Lei, Location: Boston, MA, URL: https://www.postjobfree.com/resume/aeiq1y/java-developer-full-boston-ma-02133
+    - Name: Alexie Taylor, Location: San Antonio, TX, URL: https://www.postjobfree.com/resume/aeiotv/entry-level-it-support-san-antonio-tx
+    - Name: AKSHITH REDDY PUTTA, Location: Siddipet, INDIA, URL: https://www.postjobfree.com/resume/aeikv9/computer-science-student-hyderabad-india
+==================================================
+
+Extracted Job Description:
+  Title: Software Developer
+  Location: Chennai, Tamil Nadu, India
+  Experience: min=None, max=None
+  Skills: ['Java', 'Python', 'C#', 'JavaScript', 'Relational databases (SQL)', 'Non-relational databases (PostgreSQL, MongoDB)', 'Git']
+  Employment Type: Full-Time
+  Hiring Manager: None
+  Job Purpose: To design, build, and maintain efficient software systems that meet business requirements and user needs, collaborating with cross-functional teams to ensure high-quality products.
+  Department: Information Technology
+  Education Requirement: Bachelor’s degree in Computer Science, Engineering, or a related field
+
+Candidate Search Query sent to sourcing service:
+  Title: Software Developer
+  Skills: ['Java', 'Python', 'C#', 'JavaScript', 'SQL', 'PostgreSQL', 'MongoDB', 'Git']
+  Location: Chennai Tamil Nadu India
+  Experience: 2
+  Search Parameters: required_candidates=20, max_source_resumes=20
+
+
+==================================================
+SEARCH ATTEMPT SUMMARY:
+  Attempt Number: 1
+  Strategy Name: RepresentativeSkillsStrategy
+  Search String: 'Software Developer'
+  PostJobFree Parameters:
+    q: 'Software Developer'
+    t: 'Software Developer'
+    d: ''
+    l: 'Chennai Tamil Nadu India'
+  Final Generated URL: https://www.postjobfree.com/resumes?q=Software+Developer&n=&t=Software+Developer&d=&r=10&l=Chennai+Tamil+Nadu+India
+  Returned Resumes:
+    - Name: KARTHIKA R, Location: Chennai, URL: https://www.postjobfree.com/resume/aeilci/bca-graduate-software-chennai-tamil
+    - Name: RAMAKRISHNAN K, Location: None, URL: https://www.postjobfree.com/resume/aegkne/entry-level-it-software-chennai-tamil
+    - Name: G. Kumaravel, Location: ***/** ****, *************** ****** , Peripertipposi, Omalur – 636503, URL: https://www.postjobfree.com/resume/aef2ln/software-developer-with-us-thiruvanmiyur
+    - Name: AHSIS BRUK SEELT J, Location: Chennai, India, URL: https://www.postjobfree.com/resume/aee7cv/mainframe-developer-chennai-tamil
+    - Name: SHARMILA MUTHUSAMY, Location: Namakkal, Tamil Nadu, URL: https://www.postjobfree.com/resume/aedtha/software-developer-science-chennai-tamil
+    - Name: Venkadesh B, Location: Chennai-600039, URL: https://www.postjobfree.com/resume/aecnk4/python-developer-software-chennai-tamil
+    - Name: Jayamani S, Location: 4B RVL Colony CBE, URL: https://www.postjobfree.com/resume/aecggb/data-entry-software-chennai-tamil
+    - Name: Ankit Bhardwaj, Location: Chennai, URL: https://www.postjobfree.com/resume/aecfe7/software-developer-systems-chennai-tamil
+    - Name: RANJITH KUMAR, Location: Avadi, Chennai, URL: https://www.postjobfree.com/resume/aeb3ea/software-developer-spring-chennai-tamil
+==================================================
+
+
+==================================================
+SEARCH ATTEMPT SUMMARY:
+  Attempt Number: 2
+  Strategy Name: RepresentativeSkillsStrategy
+  Search String: 'Java Python SQL'
+  PostJobFree Parameters:
+    q: 'Java Python SQL'
+    t: 'Software Developer'
+    d: ''
+    l: 'Chennai Tamil Nadu India'
+  Final Generated URL: https://www.postjobfree.com/resumes?q=Java+Python+SQL&n=&t=Software+Developer&d=&r=10&l=Chennai+Tamil+Nadu+India
+  Returned Resumes:
+    - Name: Raj kumar R, Location: None, URL: https://www.postjobfree.com/resume/ad7eht/software-engineer-chennai-tamil
+    - Name: NURAIN RASHEED, Location: None, URL: https://www.postjobfree.com/resume/adqroi/software-developer-android-chennai-tamil
+    - Name: Maria Anna Kalangiyam C, Location: None, URL: https://www.postjobfree.com/resume/adoklh/web-project-software-chennai-tamil
+    - Name: Keerthana Kumanan, Location: Kattakkudi (Po), Mannargudi (Tk), Thiruvarur (Dt), Pin Code: 614013, URL: https://www.postjobfree.com/resume/adoiv2/junior-software-developer-chennai-tamil
+    - Name: J.Santhosh Balaji, Location: Thanjavur-613005, URL: https://www.postjobfree.com/resume/adm3tx/software-developer-chennai-tamil
+    - Name: Sakthi Velayutham, Location: ** C/ * A, Kallakurichi, India, IN, 606202, URL: https://www.postjobfree.com/resume/adll1j/software-developer-chennai-tamil
+    - Name: SAIRAM, Location: None, URL: https://www.postjobfree.com/resume/adkw3u/software-developer-python-chennai-tamil
+    - Name: SURYA.T, Location: Kolakkanatham(po), Perambalur(dt)-621106, URL: https://www.postjobfree.com/resume/adis3b/software-developer-web-chennai-tamil
+==================================================
+

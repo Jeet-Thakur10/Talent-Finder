@@ -280,7 +280,7 @@ CORE PHILOSOPHY
 ---------------
 - Truthfulness Over Artificial Match: Prefer precision over recall. Tell the recruiter the truth.
 - Do NOT classify borderline or weak candidates as RELEVANT simply because they have some overlapping skills.
-- When uncertain or when noticeable gaps exist, classify the candidate as PARTIALLY_RELEVANT rather than RELEVANT.
+- When uncertain or when noticeable gaps exist, classify the candidate as PARTIALLY_RELEVANT rather than RELEVANT. However, minor tooling variations (e.g. Photoshop/Illustrator/Adobe XD vs Adobe Creative Suite), naming variations (e.g. Responsive Design vs Responsive Layouts), and standard/common capabilities for their role (e.g. Wireframing for a Senior UX/UI Designer) are NOT gaps and must NOT cause uncertainty. Candidates with these variations must be RELEVANT if all other criteria match.
 - Copy candidate_id exactly from input. Do NOT alter candidate_id strings.
 
 HARD CONSTRAINTS & CRITERIA
@@ -294,7 +294,11 @@ HARD CONSTRAINTS & CRITERIA
    - Unrelated professions (e.g., "CEO", "Founder", "Consultant", "Solutions Architect", "Product Manager", "Business Analyst", "Sales Engineer") must NOT be RELEVANT, even if they have historical skill overlap.
 
 3. MANDATORY SKILLS:
-   - Assess mandatory skill coverage. Major gaps in essential mandatory skills drop the candidate to PARTIALLY_RELEVANT or IRRELEVANT.
+   - Assess mandatory skill coverage. Compare the missing mandatory skills (missing_mandatory_skills) against the candidate's actual complete skills list (candidate_skills).
+   - If a missing mandatory skill is a suite or general category (e.g. Adobe Creative Suite) and the candidate possesses the relevant component tools (e.g. Photoshop, Illustrator, Adobe XD), consider whether this reasonably satisfies the requirement from a recruiter's perspective.
+   - If there are common naming variations (e.g. Responsive Layouts vs Responsive Design), evaluate them as potential equivalents rather than treating them as separate missing skills.
+   - Only consider a mandatory skill to be a major gap if there is genuinely no reasonable evidence that the candidate possesses that capability.
+   - If a candidate strongly matches in experience range, location, and role/profession, and has only minor missing skills (e.g., common capabilities like Wireframing for a Senior UX/UI Designer, or naming/tooling variations), they should be classified as RELEVANT. Do not classify them as PARTIALLY_RELEVANT for minor/inferred skill gaps if there is obvious overall domain and role alignment.
 
 4. LOCATION FLEXIBILITY:
    - Exact city match -> Excellent.
@@ -308,8 +312,8 @@ HARD CONSTRAINTS & CRITERIA
 
 CLASSIFICATION LEVELS
 ---------------------
-- RELEVANT: Candidate genuinely satisfies experience range, profession equivalency, mandatory skills, and location expectations with strong recency.
-- PARTIALLY_RELEVANT: Candidate has solid technical skills or partial overlap, but has experience range mismatch, minor location distance, or mild title deviation.
+- RELEVANT: Candidate genuinely satisfies experience range, profession equivalency, mandatory skills (accounting for equivalents, suites/component tools, and naming variations as described in the Mandatory Skills guidelines above), and location expectations with strong recency.
+- PARTIALLY_RELEVANT: Candidate has solid technical skills or partial overlap, but has experience range mismatch, minor location distance, or mild title deviation. Do NOT classify a candidate as PARTIALLY_RELEVANT solely due to minor tooling/naming variations or standard role-specific capabilities (e.g. Wireframing for UI/UX Designers) if they are a strong role, experience, and location match.
 - IRRELEVANT: Clear profession mismatch (e.g. CEO/Manager applying for Developer role), major skill gaps, or complete role misalignment.
 
 STRUCTURED REASON OUTPUT
