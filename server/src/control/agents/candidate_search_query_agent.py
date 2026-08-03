@@ -15,6 +15,7 @@ from src.schemas.candidate_search_schema import (
 )
 from src.schemas.job_description_schema import JobDescriptionResponse
 from src.schemas.scoring_schema import JobDescriptionScoringInput
+from src.utils.location_helper import normalize_job_location
 
 
 class CandidateSearchQueryAgent:
@@ -45,6 +46,11 @@ class CandidateSearchQueryAgent:
         max_source_resumes: int,
     ) -> CandidateSearchRequest:
         try:
+            # Extract and normalize location information deterministically
+            clean_location, is_remote, is_hybrid = normalize_job_location(
+                job_description.location
+            )
+
             # Extract skills list
             skill_names = []
             if job_description.skills:
@@ -80,6 +86,9 @@ class CandidateSearchQueryAgent:
                     min_experience=job_description.min_experience,
                     min_candidates=min_candidates,
                     max_source_resumes=max_source_resumes,
+                    location=clean_location,
+                    is_remote=is_remote,
+                    is_hybrid=is_hybrid,
                 )
 
             # Validate the returned dictionary into CandidateSearchQueryOutput model
@@ -93,12 +102,20 @@ class CandidateSearchQueryAgent:
                 min_experience=query_output.min_experience,
                 min_candidates=min_candidates,
                 max_source_resumes=max_source_resumes,
+                location=clean_location,
+                is_remote=is_remote,
+                is_hybrid=is_hybrid,
             )
 
         except Exception:
             print("\n --- CANDIDATE SEARCH QUERY GENERATION CRASHED --- ")
             traceback.print_exc()
             print("--------------------------------------------------\n")
+
+            # Extract location for fallback on crash
+            clean_location, is_remote, is_hybrid = normalize_job_location(
+                job_description.location
+            )
 
             # Return default/fallback request on failure
             fallback_skills = []
@@ -111,4 +128,8 @@ class CandidateSearchQueryAgent:
                 min_experience=job_description.min_experience,
                 min_candidates=min_candidates,
                 max_source_resumes=max_source_resumes,
+                location=clean_location,
+                is_remote=is_remote,
+                is_hybrid=is_hybrid,
             )
+

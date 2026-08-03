@@ -58,6 +58,17 @@ export interface JobDescriptionPayload {
   raw_job_description?: string;
 }
 
+export type RelevanceStatus = "RELEVANT" | "PARTIALLY_RELEVANT" | "IRRELEVANT";
+
+export interface CandidateRelevanceReason {
+  experience: string;
+  role: string;
+  skills: string;
+  location: string;
+  recency: string;
+  summary: string;
+}
+
 export interface PipelineCandidateResult {
   candidate_id: string;
   full_name: string;
@@ -71,6 +82,8 @@ export interface PipelineCandidateResult {
   matched_mandatory_skills: string[];
   matched_optional_skills: string[];
   missing_mandatory_skills: string[];
+  relevance_status?: RelevanceStatus;
+  relevance_reason?: CandidateRelevanceReason | Record<string, unknown> | null;
   stage: string;
   recruiter_notes: string | null;
   hiring_manager_notes: string | null;
@@ -94,6 +107,9 @@ export interface PipelineExecutionResponse {
   matched_candidate_count: number;
   top_k: number;
   candidates: PipelineCandidateResult[];
+  has_relevant_candidates?: boolean;
+  relevant_candidate_count?: number;
+  partially_relevant_candidate_count?: number;
 }
 
 export interface CandidateSkill {
@@ -173,6 +189,8 @@ export interface CandidateScoreBreakdown {
   matched_mandatory_skills?: string[];
   matched_optional_skills?: string[];
   missing_mandatory_skills?: string[];
+  relevance_status?: RelevanceStatus;
+  relevance_reason?: CandidateRelevanceReason | Record<string, unknown> | null;
 }
 
 export interface CandidateEvaluationBoard {
@@ -209,6 +227,9 @@ export interface PipelineTaskStatus {
   selected_candidate_count: number | null;
   job_description_title?: string;
   top_k?: number | null;
+  has_relevant_candidates?: boolean | null;
+  relevant_candidate_count?: number | null;
+  partially_relevant_candidate_count?: number | null;
   is_shortlist_incomplete?: boolean | null;
   warning_reason?: string | null;
   warning_message?: string | null;

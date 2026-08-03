@@ -48,20 +48,25 @@ class PostJobFreeClient:
         self,
         request: PostJobFreeSearchRequest,
     ) -> str:
+        params: dict[str, str | int] = {
+            "q": request.required_words,
+            "n": request.excluded_words,
+            "t": request.title_words,
+            "d": request.resume_text_words,
+            "r": 10,
+        }
+        if request.location:
+            params["l"] = request.location
+
         response = await self._client.get(
             "https://www.postjobfree.com/resumes",
-            params={
-                "q": request.required_words,
-                "n": request.excluded_words,
-                "t": request.title_words,
-                "d": request.resume_text_words,
-                "r": 10,
-            },
+            params=params,
         )
 
         response.raise_for_status()
 
         return response.text
+
 
     async def close(self) -> None:
         await self._client.aclose()

@@ -16,16 +16,20 @@ class SearchQueryOptimizer:
         self._agent = agent
         self._plan: SearchOptimizationPlan | None = None
         self._strategies = [
-            RepresentativeSkillsStrategy(),
+            RepresentativeSkillsStrategy(keep_location=True),
+            RepresentativeSkillsStrategy(keep_location=False),
             GeneralizedTitleStrategy(),
             SingleCoreSkillStrategy(),
             TitleOnlyStrategy(),
         ]
 
+
     async def initialize(self, original_request: CandidateSearchRequest) -> None:
         """Generate the optimization plan once at the beginning
         of the sourcing session."""
         self._plan = await self._agent.optimize(original_request)
+
+
 
     def get_plan(self) -> SearchOptimizationPlan | None:
         """Retrieve the generated optimization plan."""

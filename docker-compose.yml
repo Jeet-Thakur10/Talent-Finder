@@ -24,6 +24,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: jeetu
       POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -61,6 +63,7 @@ services:
     volumes:
       # Mount the existing local .env so pydantic-settings finds it at /app/.env
       - ./sourcing/.env:/app/.env:ro
+      - ./logs:/app/logs
     environment:
       # Override localhost references with Docker service hostnames
       DATABASE_URL: postgresql+asyncpg://postgres:jeetu@postgres:5432/sourcing
@@ -88,6 +91,7 @@ services:
     volumes:
       # Mount the existing local .env so pydantic-settings finds it at /app/.env
       - ./server/.env:/app/.env:ro
+      - ./logs:/app/logs
     environment:
       # Override localhost references with Docker service hostnames
       DATABASE_URL: postgresql+asyncpg://postgres:jeetu@postgres:5432/usecase
@@ -131,6 +135,7 @@ services:
     volumes:
       # Same .env mount as server — worker imports from the same settings module
       - ./server/.env:/app/.env:ro
+      - ./logs:/app/logs
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:jeetu@postgres:5432/usecase
       REDIS_URL: redis://redis:6379/0

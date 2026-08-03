@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, UniqueConstraint
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.clients.postgres import Base
@@ -79,6 +79,16 @@ class CandidateJobScore(Base):
     explanation: Mapped[dict[str, object]] = mapped_column(
         JSON,
         nullable=False,
+    )
+    relevance_status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="RELEVANT",
+        server_default="RELEVANT",
+    )
+    relevance_reason: Mapped[dict[str, object] | None] = mapped_column(
+        JSON,
+        nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

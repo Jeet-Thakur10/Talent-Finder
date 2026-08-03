@@ -6,3 +6,5 @@ class PostJobFreeSearchRequest(BaseModel):
     required_words: str = ""
     resume_text_words: str = ""
     excluded_words: str = ""
+    location: str = ""
+

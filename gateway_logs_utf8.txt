@@ -1,0 +1,362 @@
+2026-08-03 08:50:32,477 [INFO] src.config.settings - Loaded settings from environment variables
+2026-08-03 08:50:32,477 [INFO] src.config.settings - SERVER_BASE_URL: http://server:8000
+[CONFIG GATEWAY] Loaded settings from environment variables
+[CONFIG GATEWAY] SERVER_BASE_URL: http://server:8000
+[CONFIG GATEWAY] SOURCING_BASE_URL: http://sourcing:8001
+2026-08-03 08:50:32,477 [INFO] src.config.settings - SOURCING_BASE_URL: http://sourcing:8001
+INFO:     Started server process [7]
+INFO:     Waiting for application startup.
+2026-08-03 08:50:32,611 [INFO] src.api.rest.dependencies - Gateway shared HTTPX client initialized with BlockAllCookies policy.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:48004 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45692 - "GET /health HTTP/1.1" 200 OK
+2026-08-03 08:50:56,316 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] POST /auth/logout -> Target: http://server:8000/auth/logout
+2026-08-03 08:50:56,316 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0NzM2M30.j2kbEsoxaieUkwDqldW-PZYVdvyFkOgJtNzO_v0uz8c; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzODQ2M30.v0kgzmDtJQL-OrAhjCvsZrLTbnuoV9JO0RDzh3gYooI
+2026-08-03 08:50:56,316 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:50:56,316 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:50:56,316 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0NzM2M30.j2kbEsoxaieUkwDqldW-PZYVdvyFkOgJtNzO_v0uz8c; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzODQ2M30.v0kgzmDtJQL-OrAhjCvsZrLTbnuoV9JO0RDzh3gYooI
+2026-08-03 08:50:56,316 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:50:56,325 [INFO] httpx - HTTP Request: POST http://server:8000/auth/logout "HTTP/1.1 200 OK"
+2026-08-03 08:50:56,325 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:50:56,325 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: access_token=""; expires=Mon, 03 Aug 2026 08:50:56 GMT; HttpOnly; Max-Age=0; Path=/; SameSite=lax, refresh_token=""; expires=Mon, 03 Aug 2026 08:50:56 GMT; HttpOnly; Max-Age=0; Path=/; SameSite=lax
+2026-08-03 08:50:56,325 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:50:56,325 [INFO] src.core.services.gateway_service - POST /auth/logout -> server (200) in 9.26ms
+INFO:     172.18.0.1:47514 - "POST /auth/logout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37846 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32948 - "GET /health HTTP/1.1" 200 OK
+INFO:     172.18.0.1:56328 - "OPTIONS /auth/login HTTP/1.1" 200 OK
+2026-08-03 08:51:12,007 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] POST /auth/login -> Target: http://server:8000/auth/login
+2026-08-03 08:51:12,007 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: None
+2026-08-03 08:51:12,007 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:12,007 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:12,008 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: None
+2026-08-03 08:51:12,008 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:12,235 [INFO] httpx - HTTP Request: POST http://server:8000/auth/login "HTTP/1.1 200 OK"
+2026-08-03 08:51:12,235 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:12,235 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; HttpOnly; Max-Age=1800; Path=/; SameSite=lax, refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44; HttpOnly; Max-Age=2592000; Path=/; SameSite=lax
+2026-08-03 08:51:12,235 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:12,235 [INFO] src.core.services.gateway_service - POST /auth/login -> server (200) in 227.70ms
+INFO:     172.18.0.1:56338 - "POST /auth/login HTTP/1.1" 200 OK
+2026-08-03 08:51:12,271 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /job-descriptions -> Target: http://server:8000/job-descriptions
+2026-08-03 08:51:12,271 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,271 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:12,271 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:12,271 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,271 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:12,278 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /lookups/employment-types -> Target: http://server:8000/lookups/employment-types
+2026-08-03 08:51:12,278 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,278 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:12,278 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:12,279 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,279 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:12,282 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /lookups/hiring-managers -> Target: http://server:8000/lookups/hiring-managers
+2026-08-03 08:51:12,282 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,282 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:12,282 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:12,283 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,283 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:12,284 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /lookups/job-description-statuses -> Target: http://server:8000/lookups/job-description-statuses
+2026-08-03 08:51:12,284 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,284 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:12,284 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:12,285 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,285 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:12,288 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /scoring/tasks -> Target: http://server:8000/scoring/tasks
+2026-08-03 08:51:12,288 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,288 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:12,288 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:12,288 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,288 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:12,290 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /notifications/unread-count -> Target: http://server:8000/notifications/unread-count
+2026-08-03 08:51:12,291 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,291 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:12,291 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:12,291 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:12,291 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:12,722 [INFO] httpx - HTTP Request: GET http://server:8000/job-descriptions "HTTP/1.1 200 OK"
+2026-08-03 08:51:12,722 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:12,722 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:12,722 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:12,722 [INFO] src.core.services.gateway_service - GET /job-descriptions -> server (200) in 450.58ms
+INFO:     172.18.0.1:56338 - "GET /job-descriptions HTTP/1.1" 200 OK
+2026-08-03 08:51:12,802 [INFO] httpx - HTTP Request: GET http://server:8000/lookups/employment-types "HTTP/1.1 200 OK"
+2026-08-03 08:51:12,802 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:12,802 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:12,802 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:12,802 [INFO] src.core.services.gateway_service - GET /lookups/employment-types -> server (200) in 523.73ms
+INFO:     172.18.0.1:56344 - "GET /lookups/employment-types HTTP/1.1" 200 OK
+2026-08-03 08:51:12,803 [INFO] httpx - HTTP Request: GET http://server:8000/lookups/hiring-managers "HTTP/1.1 200 OK"
+2026-08-03 08:51:12,803 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:12,803 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:12,803 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:12,803 [INFO] src.core.services.gateway_service - GET /lookups/hiring-managers -> server (200) in 520.73ms
+2026-08-03 08:51:12,804 [INFO] httpx - HTTP Request: GET http://server:8000/lookups/job-description-statuses "HTTP/1.1 200 OK"
+2026-08-03 08:51:12,804 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:12,804 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:12,804 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:12,804 [INFO] src.core.services.gateway_service - GET /lookups/job-description-statuses -> server (200) in 519.26ms
+INFO:     172.18.0.1:56358 - "GET /lookups/hiring-managers HTTP/1.1" 200 OK
+INFO:     172.18.0.1:56360 - "GET /lookups/job-description-statuses HTTP/1.1" 200 OK
+2026-08-03 08:51:12,806 [INFO] httpx - HTTP Request: GET http://server:8000/notifications/unread-count "HTTP/1.1 200 OK"
+2026-08-03 08:51:12,807 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:12,807 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:12,807 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:12,807 [INFO] src.core.services.gateway_service - GET /notifications/unread-count -> server (200) in 515.98ms
+INFO:     172.18.0.1:56372 - "GET /notifications/unread-count HTTP/1.1" 200 OK
+2026-08-03 08:51:12,814 [INFO] httpx - HTTP Request: GET http://server:8000/scoring/tasks "HTTP/1.1 200 OK"
+2026-08-03 08:51:12,814 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:12,814 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:12,814 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:12,814 [INFO] src.core.services.gateway_service - GET /scoring/tasks -> server (200) in 526.23ms
+INFO:     172.18.0.1:56370 - "GET /scoring/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52710 - "GET /health HTTP/1.1" 200 OK
+2026-08-03 08:51:25,746 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /auth/me -> Target: http://server:8000/auth/me
+2026-08-03 08:51:25,746 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,746 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:25,746 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:25,746 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,746 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:25,756 [INFO] httpx - HTTP Request: GET http://server:8000/auth/me "HTTP/1.1 200 OK"
+2026-08-03 08:51:25,756 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:25,756 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:25,756 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:25,756 [INFO] src.core.services.gateway_service - GET /auth/me -> server (200) in 9.61ms
+INFO:     172.18.0.1:58970 - "GET /auth/me HTTP/1.1" 200 OK
+2026-08-03 08:51:25,791 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /job-descriptions -> Target: http://server:8000/job-descriptions
+2026-08-03 08:51:25,791 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,791 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:25,791 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:25,791 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,791 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:25,793 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /lookups/employment-types -> Target: http://server:8000/lookups/employment-types
+2026-08-03 08:51:25,793 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,793 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:25,793 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:25,794 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,794 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:25,797 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /lookups/hiring-managers -> Target: http://server:8000/lookups/hiring-managers
+2026-08-03 08:51:25,797 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,797 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:25,797 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:25,797 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,797 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:25,798 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /lookups/job-description-statuses -> Target: http://server:8000/lookups/job-description-statuses
+2026-08-03 08:51:25,798 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,798 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:25,798 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:25,798 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,798 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:25,799 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /scoring/tasks -> Target: http://server:8000/scoring/tasks
+2026-08-03 08:51:25,799 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,799 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:25,799 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:25,799 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,799 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:25,802 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /notifications/unread-count -> Target: http://server:8000/notifications/unread-count
+2026-08-03 08:51:25,802 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,802 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:25,803 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:25,803 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:25,803 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:25,805 [INFO] httpx - HTTP Request: GET http://server:8000/job-descriptions "HTTP/1.1 200 OK"
+2026-08-03 08:51:25,805 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:25,806 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:25,806 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:25,806 [INFO] src.core.services.gateway_service - GET /job-descriptions -> server (200) in 14.44ms
+INFO:     172.18.0.1:58970 - "GET /job-descriptions HTTP/1.1" 200 OK
+2026-08-03 08:51:25,819 [INFO] httpx - HTTP Request: GET http://server:8000/lookups/employment-types "HTTP/1.1 200 OK"
+2026-08-03 08:51:25,820 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:25,820 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:25,820 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:25,820 [INFO] src.core.services.gateway_service - GET /lookups/employment-types -> server (200) in 26.01ms
+INFO:     172.18.0.1:58974 - "GET /lookups/employment-types HTTP/1.1" 200 OK
+2026-08-03 08:51:25,821 [INFO] httpx - HTTP Request: GET http://server:8000/lookups/job-description-statuses "HTTP/1.1 200 OK"
+2026-08-03 08:51:25,821 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:25,821 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:25,821 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:25,821 [INFO] src.core.services.gateway_service - GET /lookups/job-description-statuses -> server (200) in 22.64ms
+INFO:     172.18.0.1:58992 - "GET /lookups/job-description-statuses HTTP/1.1" 200 OK
+2026-08-03 08:51:25,824 [INFO] httpx - HTTP Request: GET http://server:8000/lookups/hiring-managers "HTTP/1.1 200 OK"
+2026-08-03 08:51:25,824 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:25,824 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:25,824 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:25,824 [INFO] src.core.services.gateway_service - GET /lookups/hiring-managers -> server (200) in 26.58ms
+INFO:     172.18.0.1:58988 - "GET /lookups/hiring-managers HTTP/1.1" 200 OK
+2026-08-03 08:51:25,827 [INFO] httpx - HTTP Request: GET http://server:8000/notifications/unread-count "HTTP/1.1 200 OK"
+2026-08-03 08:51:25,827 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:25,827 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:25,827 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:25,827 [INFO] src.core.services.gateway_service - GET /notifications/unread-count -> server (200) in 24.59ms
+INFO:     172.18.0.1:59012 - "GET /notifications/unread-count HTTP/1.1" 200 OK
+2026-08-03 08:51:25,831 [INFO] httpx - HTTP Request: GET http://server:8000/scoring/tasks "HTTP/1.1 200 OK"
+2026-08-03 08:51:25,831 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:25,831 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:25,831 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:25,831 [INFO] src.core.services.gateway_service - GET /scoring/tasks -> server (200) in 32.45ms
+INFO:     172.18.0.1:58998 - "GET /scoring/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47804 - "GET /health HTTP/1.1" 200 OK
+2026-08-03 08:51:31,707 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /auth/me -> Target: http://server:8000/auth/me
+2026-08-03 08:51:31,707 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODI3NjYwOH0.5K5Lu13X4WM8iKuhZ5ldroHlvRE4vIo5aj_BFON9XWI
+2026-08-03 08:51:31,707 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:31,707 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:31,707 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODI3NjYwOH0.5K5Lu13X4WM8iKuhZ5ldroHlvRE4vIo5aj_BFON9XWI
+2026-08-03 08:51:31,707 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:31,714 [INFO] httpx - HTTP Request: GET http://server:8000/auth/me "HTTP/1.1 401 Unauthorized"
+2026-08-03 08:51:31,714 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 401
+2026-08-03 08:51:31,714 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:31,714 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:31,714 [INFO] src.core.services.gateway_service - GET /auth/me -> server (401) in 7.14ms
+INFO:     172.18.0.1:59014 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:39776 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40608 - "GET /health HTTP/1.1" 200 OK
+2026-08-03 08:51:51,003 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /auth/me -> Target: http://server:8000/auth/me
+2026-08-03 08:51:51,003 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODI3NjYwOH0.5K5Lu13X4WM8iKuhZ5ldroHlvRE4vIo5aj_BFON9XWI
+2026-08-03 08:51:51,003 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:51,003 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:51,004 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODI3NjYwOH0.5K5Lu13X4WM8iKuhZ5ldroHlvRE4vIo5aj_BFON9XWI
+2026-08-03 08:51:51,004 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:51,012 [INFO] httpx - HTTP Request: GET http://server:8000/auth/me "HTTP/1.1 401 Unauthorized"
+2026-08-03 08:51:51,013 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 401
+2026-08-03 08:51:51,013 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:51,013 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:51,013 [INFO] src.core.services.gateway_service - GET /auth/me -> server (401) in 9.31ms
+INFO:     172.18.0.1:55412 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+2026-08-03 08:51:55,692 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /auth/me -> Target: http://server:8000/auth/me
+2026-08-03 08:51:55,693 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODI3NjYwOH0.5K5Lu13X4WM8iKuhZ5ldroHlvRE4vIo5aj_BFON9XWI
+2026-08-03 08:51:55,693 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:55,693 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:55,693 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODI3NjYwOH0.5K5Lu13X4WM8iKuhZ5ldroHlvRE4vIo5aj_BFON9XWI
+2026-08-03 08:51:55,693 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:55,697 [INFO] httpx - HTTP Request: GET http://server:8000/auth/me "HTTP/1.1 401 Unauthorized"
+2026-08-03 08:51:55,697 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 401
+2026-08-03 08:51:55,697 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:51:55,697 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:55,697 [INFO] src.core.services.gateway_service - GET /auth/me -> server (401) in 3.99ms
+INFO:     172.18.0.1:55412 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+2026-08-03 08:51:56,922 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] POST /auth/logout -> Target: http://server:8000/auth/logout
+2026-08-03 08:51:56,923 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:56,923 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:51:56,923 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:51:56,923 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+2026-08-03 08:51:56,923 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:51:56,929 [INFO] httpx - HTTP Request: POST http://server:8000/auth/logout "HTTP/1.1 200 OK"
+2026-08-03 08:51:56,929 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:51:56,930 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: access_token=""; expires=Mon, 03 Aug 2026 08:51:56 GMT; HttpOnly; Max-Age=0; Path=/; SameSite=lax, refresh_token=""; expires=Mon, 03 Aug 2026 08:51:56 GMT; HttpOnly; Max-Age=0; Path=/; SameSite=lax
+2026-08-03 08:51:56,930 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:51:56,930 [INFO] src.core.services.gateway_service - POST /auth/logout -> server (200) in 6.61ms
+INFO:     172.18.0.1:41794 - "POST /auth/logout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40516 - "GET /health HTTP/1.1" 200 OK
+2026-08-03 08:52:00,552 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /auth/me -> Target: http://server:8000/auth/me
+2026-08-03 08:52:00,552 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: None
+2026-08-03 08:52:00,552 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:52:00,552 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:52:00,552 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: None
+2026-08-03 08:52:00,552 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:52:00,555 [INFO] httpx - HTTP Request: GET http://server:8000/auth/me "HTTP/1.1 401 Unauthorized"
+2026-08-03 08:52:00,555 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 401
+2026-08-03 08:52:00,555 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:52:00,555 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:52:00,555 [INFO] src.core.services.gateway_service - GET /auth/me -> server (401) in 3.46ms
+INFO:     172.18.0.1:41794 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:47368 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55248 - "GET /health HTTP/1.1" 200 OK
+2026-08-03 08:52:22,491 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] POST /auth/login -> Target: http://server:8000/auth/login
+2026-08-03 08:52:22,491 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: None
+2026-08-03 08:52:22,491 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:52:22,492 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:52:22,492 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: None
+2026-08-03 08:52:22,492 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:52:22,690 [INFO] httpx - HTTP Request: POST http://server:8000/auth/login "HTTP/1.1 200 OK"
+2026-08-03 08:52:22,690 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:52:22,690 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; HttpOnly; Max-Age=1800; Path=/; SameSite=lax, refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA; HttpOnly; Max-Age=2592000; Path=/; SameSite=lax
+2026-08-03 08:52:22,690 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:52:22,690 [INFO] src.core.services.gateway_service - POST /auth/login -> server (200) in 198.75ms
+INFO:     172.18.0.1:48656 - "POST /auth/login HTTP/1.1" 200 OK
+2026-08-03 08:52:22,753 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /job-descriptions -> Target: http://server:8000/job-descriptions
+2026-08-03 08:52:22,753 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,753 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:52:22,754 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:52:22,754 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,754 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:52:22,757 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /lookups/employment-types -> Target: http://server:8000/lookups/employment-types
+2026-08-03 08:52:22,757 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,757 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:52:22,757 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:52:22,758 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,758 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:52:22,761 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /lookups/hiring-managers -> Target: http://server:8000/lookups/hiring-managers
+2026-08-03 08:52:22,761 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,761 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:52:22,761 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:52:22,762 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,762 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:52:22,763 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /lookups/job-description-statuses -> Target: http://server:8000/lookups/job-description-statuses
+2026-08-03 08:52:22,763 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,764 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:52:22,764 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:52:22,764 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,764 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:52:22,769 [INFO] httpx - HTTP Request: GET http://server:8000/job-descriptions "HTTP/1.1 200 OK"
+2026-08-03 08:52:22,769 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:52:22,769 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:52:22,769 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:52:22,769 [INFO] src.core.services.gateway_service - GET /job-descriptions -> server (200) in 15.66ms
+INFO:     172.18.0.1:48656 - "GET /job-descriptions HTTP/1.1" 200 OK
+2026-08-03 08:52:22,770 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /scoring/tasks -> Target: http://server:8000/scoring/tasks
+2026-08-03 08:52:22,770 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,770 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:52:22,770 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:52:22,770 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,770 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:52:22,771 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /notifications/unread-count -> Target: http://server:8000/notifications/unread-count
+2026-08-03 08:52:22,771 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,771 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:52:22,771 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:52:22,771 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+2026-08-03 08:52:22,771 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:52:22,774 [INFO] httpx - HTTP Request: GET http://server:8000/lookups/employment-types "HTTP/1.1 200 OK"
+2026-08-03 08:52:22,774 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:52:22,774 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:52:22,774 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:52:22,774 [INFO] src.core.services.gateway_service - GET /lookups/employment-types -> server (200) in 16.58ms
+INFO:     172.18.0.1:48658 - "GET /lookups/employment-types HTTP/1.1" 200 OK
+2026-08-03 08:52:22,781 [INFO] httpx - HTTP Request: GET http://server:8000/lookups/hiring-managers "HTTP/1.1 200 OK"
+2026-08-03 08:52:22,781 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:52:22,781 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:52:22,781 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:52:22,781 [INFO] src.core.services.gateway_service - GET /lookups/hiring-managers -> server (200) in 19.63ms
+INFO:     172.18.0.1:48660 - "GET /lookups/hiring-managers HTTP/1.1" 200 OK
+2026-08-03 08:52:22,782 [INFO] httpx - HTTP Request: GET http://server:8000/lookups/job-description-statuses "HTTP/1.1 200 OK"
+2026-08-03 08:52:22,782 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:52:22,782 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:52:22,782 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:52:22,782 [INFO] src.core.services.gateway_service - GET /lookups/job-description-statuses -> server (200) in 18.32ms
+INFO:     172.18.0.1:48676 - "GET /lookups/job-description-statuses HTTP/1.1" 200 OK
+2026-08-03 08:52:22,784 [INFO] httpx - HTTP Request: GET http://server:8000/notifications/unread-count "HTTP/1.1 200 OK"
+2026-08-03 08:52:22,784 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:52:22,784 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:52:22,785 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:52:22,785 [INFO] src.core.services.gateway_service - GET /notifications/unread-count -> server (200) in 13.29ms
+INFO:     172.18.0.1:48680 - "GET /notifications/unread-count HTTP/1.1" 200 OK
+2026-08-03 08:52:22,789 [INFO] httpx - HTTP Request: GET http://server:8000/scoring/tasks "HTTP/1.1 200 OK"
+2026-08-03 08:52:22,789 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 200
+2026-08-03 08:52:22,789 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:52:22,789 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:52:22,789 [INFO] src.core.services.gateway_service - GET /scoring/tasks -> server (200) in 18.47ms
+INFO:     172.18.0.1:48678 - "GET /scoring/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56134 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33668 - "GET /health HTTP/1.1" 200 OK
+2026-08-03 08:52:44,636 [INFO] src.core.services.gateway_service - [TRACE GATEWAY] GET /auth/me -> Target: http://server:8000/auth/me
+2026-08-03 08:52:44,636 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Cookie: None
+2026-08-03 08:52:44,636 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Incoming Auth: None
+2026-08-03 08:52:44,636 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (before build): {}
+2026-08-03 08:52:44,636 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Cookie: None
+2026-08-03 08:52:44,636 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Forwarded Auth: None
+2026-08-03 08:52:44,642 [INFO] httpx - HTTP Request: GET http://server:8000/auth/me "HTTP/1.1 401 Unauthorized"
+2026-08-03 08:52:44,642 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Status: 401
+2026-08-03 08:52:44,642 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Response Set-Cookie: None
+2026-08-03 08:52:44,642 [INFO] src.core.services.gateway_service - [TRACE GATEWAY]   Client Cookie Jar (after response): {}
+2026-08-03 08:52:44,642 [INFO] src.core.services.gateway_service - GET /auth/me -> server (401) in 5.69ms
+INFO:     172.18.0.1:39484 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:40436 - "GET /health HTTP/1.1" 200 OK

@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from typing import Any, cast
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.rest.routes.auth_route import router as auth_router
@@ -38,9 +38,6 @@ from src.utils.user_seeder import UserSeeder
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     async with async_session_local() as db:
         await seed_master_data(db)
         await UserSeeder.seed(db)
@@ -92,6 +89,16 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_cache_control_headers(request: Request, call_next):
+    response = await call_next(request)
+    if not request.url.path.startswith(("/docs", "/redoc", "/openapi.json")):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
 
 
 app.include_router(auth_router)

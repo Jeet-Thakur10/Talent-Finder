@@ -1,6 +1,7 @@
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from http.cookiejar import CookieJar, DefaultCookiePolicy
 
 import httpx
 from fastapi import FastAPI
@@ -8,6 +9,13 @@ from fastapi import FastAPI
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
+
+class BlockAllCookies(DefaultCookiePolicy):
+    """Stateless cookie policy that rejects all cookies to prevent gateway session storage."""
+    def set_ok(self, cookie, request) -> bool:
+        return False
+    def return_ok(self, cookie, request) -> bool:
+        return False
 
 class GatewayState:
     http_client: httpx.AsyncClient
@@ -22,8 +30,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     state.http_client = httpx.AsyncClient(
         timeout=settings.UPSTREAM_TIMEOUT_SECONDS,
         limits=limits,
+        cookies=CookieJar(policy=BlockAllCookies()),
     )
-    logger.info("Gateway shared HTTPX client initialized.")
+    logger.info("Gateway shared HTTPX client initialized with BlockAllCookies policy.")
     yield
     # Cleanup on shutdown
     await state.http_client.aclose()

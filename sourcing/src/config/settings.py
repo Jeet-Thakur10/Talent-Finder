@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     MAX_SOURCING_ATTEMPTS: int = 4
     MAX_CONSECUTIVE_NO_IMPROVEMENT: int = 2
     SOURCING_LOOP_TIMEOUT_SECONDS: float = 260.0
+    APPEND_REMOTE_KEYWORD: bool = False
+
 
     # LangSmith tracing for local development
     LANGSMITH_TRACING: bool = False

@@ -449,6 +449,18 @@ class JobDescriptionService:
 
         extracted = self.extraction_agent.extract(data.raw_job_description)
 
+        from src.utils.debug_logger import debug_log
+        debug_log("Extracted Job Description:")
+        debug_log(f"  Title: {extracted.title}")
+        debug_log(f"  Location: {extracted.location}")
+        debug_log(f"  Experience: min={extracted.min_experience}, max={extracted.max_experience}")
+        debug_log(f"  Skills: {[skill.skill_name for skill in extracted.skills] if extracted.skills else []}")
+        debug_log(f"  Employment Type: {extracted.employment_type}")
+        debug_log(f"  Hiring Manager: {extracted.hiring_manager}")
+        debug_log(f"  Job Purpose: {extracted.job_purpose}")
+        debug_log(f"  Department: {extracted.department}")
+        debug_log(f"  Education Requirement: {extracted.education_requirement}")
+
         # 1. Resolve employment type
         employment_types = await self.job_description_repository.get_employment_types()
         matched_type = None
