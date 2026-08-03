@@ -1,18 +1,28 @@
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useRecruiterJobCandidates } from "../hooks/useRecruiterJobCandidates";
 import { useLatestJobTask } from "../hooks/useLatestJobTask";
 import { useShortlistSharing } from "../hooks/useShortlistSharing";
 import { ShortlistShareDialog } from "./ShortlistShareDialog";
+import { RECRUITER_STAGES } from "../utils/recruiterTerms";
+import { useSmoothProgress } from "../hooks/useSmoothProgress";
 
 
 export function JobDescriptionCandidatesPage() {
   const { jobDescriptionId } = useParams<{ jobDescriptionId: string }>();
   const navigate = useNavigate();
 
+  const [showPartiallyMatching, setShowPartiallyMatching] = useState(false);
+  const [isZeroMatchDismissed, setIsZeroMatchDismissed] = useState(false);
+
   const {
     jobDescription,
     candidates,
+    relevantCandidates,
+    hasRelevantCandidates,
+    relevantCandidatesCount,
+    partiallyRelevantCandidatesCount,
     statuses,
     hiringManagers,
     isLoading,
@@ -21,6 +31,7 @@ export function JobDescriptionCandidatesPage() {
   } = useRecruiterJobCandidates(jobDescriptionId);
 
   const { latestTask, refetch: refetchTask } = useLatestJobTask(jobDescriptionId);
+  const smoothPercent = useSmoothProgress(latestTask?.current_stage, latestTask?.status);
 
   const {
     selectedIds,
@@ -153,38 +164,169 @@ export function JobDescriptionCandidatesPage() {
             </div>
           )}
 
-          {/* 3. Candidate Review Board */}
-          {latestTask && (latestTask.status.toUpperCase() === "PENDING" || latestTask.status.toUpperCase() === "RUNNING") ? (
-            /* Running/In-Progress State */
-            <div className="workspace-empty-state mt-2 space-y-6">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-blue-200 bg-blue-50 shadow-inner">
-                <svg className="h-8 w-8 text-blue-650 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" />
-                </svg>
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-lg font-bold text-slate-900">Candidate Search In Progress</h3>
-                <p className="text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
-                  We are currently finding and evaluating candidates for this job description.
+          {/* Zero-Match Modal (Scenario 2) */}
+          {!hasRelevantCandidates && !isZeroMatchDismissed && candidates.length > 0 && !isLoading && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-fade-in">
+              <div className="surface-card w-full max-w-lg space-y-5 rounded-2xl p-6 shadow-2xl border border-slate-200">
+                <div className="flex items-center gap-3 text-amber-600">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 border border-amber-200 shrink-0">
+                    <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">No Close Matches Found</h3>
+                    <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Candidate Verification Audit</span>
+                  </div>
+                </div>
+
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  We could not find candidates that closely match your Job Description requirements. We did find <strong>{candidates.length} partially matching candidates</strong>.
                 </p>
-              </div>
-              <div className="pt-4 border-t border-slate-100 flex gap-3 justify-center">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/recruiter/job-descriptions/${jobDescriptionId}`)}
-                  className="workspace-primary-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer focus:outline-none shadow-md shadow-slate-900/10"
-                >
-                  Return to Job Description
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSyncAll}
-                  className="workspace-ghost-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer hover:bg-slate-50/50 focus:outline-none"
-                >
-                  Refresh Status
-                </button>
+
+                <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3.5 leading-relaxed">
+                  Would you like to view those suggested candidates anyway, or return to refine your search criteria?
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/recruiter/job-descriptions/${jobDescriptionId}`)}
+                    className="workspace-ghost-button !py-2.5 !px-4 text-xs font-semibold hover:bg-slate-100"
+                  >
+                    Back to Job Description
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsZeroMatchDismissed(true);
+                      setShowPartiallyMatching(true);
+                    }}
+                    className="workspace-primary-button !py-2.5 !px-5 text-xs font-bold shadow-md"
+                  >
+                    View Suggested Candidates ({candidates.length})
+                  </button>
+                </div>
               </div>
             </div>
+          )}
+
+          {/* 3. Candidate Review Board */}
+          {latestTask && (latestTask.status.toUpperCase() === "PENDING" || latestTask.status.toUpperCase() === "RUNNING") ? (
+            (() => {
+              const stageUpper = latestTask.current_stage.toUpperCase();
+              const currentStageConfig = RECRUITER_STAGES[stageUpper] || { label: "Evaluating Candidate Matches", percent: 50 };
+              const percent = smoothPercent;
+              const currentRecruiterLabel = currentStageConfig.label;
+
+              return (
+                /* Running/In-Progress State */
+                <div className="workspace-empty-state mt-2 space-y-6">
+                  <style>{`
+                    @keyframes progress-bar-stripes {
+                      0% { background-position: 1rem 0; }
+                      100% { background-position: 0 0; }
+                    }
+                    .animate-stripes {
+                      background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+                      background-size: 1rem 1rem;
+                      animation: progress-bar-stripes 1s linear infinite;
+                    }
+                  `}</style>
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-blue-200 bg-blue-50 shadow-inner">
+                    <svg className="h-8 w-8 text-blue-650 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" />
+                    </svg>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-bold text-slate-900">Candidate Search In Progress</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
+                      We are currently finding and evaluating candidates for this job description.
+                    </p>
+                  </div>
+
+                  {/* Progress Panel */}
+                  <div className="w-full max-w-md mx-auto bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-5 text-left">
+                    
+                    {/* Header & Percentage */}
+                    <div className="flex justify-between items-baseline">
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Campaign Progress</h4>
+                        <p className="text-sm font-semibold text-slate-700 mt-1">{currentRecruiterLabel}</p>
+                      </div>
+                      <span className="text-2xl font-black text-blue-600 font-sans tracking-tight">{percent}%</span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden relative">
+                      <div 
+                        className="h-full bg-blue-600 rounded-full transition-all duration-500 ease-out relative animate-stripes"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+
+                    {/* Stages List */}
+                    <div className="space-y-3 pt-2">
+                      {[
+                        { id: "req", label: "Understanding Job Requirements", status: stageUpper === "QUEUED" ? "active" : "completed" },
+                        { id: "src", label: "Searching Candidate Sources", status: stageUpper === "QUEUED" ? "pending" : (stageUpper === "ACQUIRING" || stageUpper === "SOURCING" ? "active" : "completed") },
+                        { id: "eval", label: "Evaluating Candidate Matches", status: (stageUpper === "QUEUED" || stageUpper === "ACQUIRING" || stageUpper === "SOURCING") ? "pending" : (stageUpper === "COMPLETED" ? "completed" : "active") },
+                        { id: "short", label: "Preparing Candidate Shortlist", status: stageUpper === "COMPLETED" ? "completed" : "pending" },
+                      ].map((step) => {
+                        let icon = null;
+                        let textClass = "text-slate-400";
+                        if (step.status === "completed") {
+                          icon = (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-50 border border-emerald-200 shrink-0">
+                              <span className="text-[10px] font-bold text-emerald-600">✓</span>
+                            </div>
+                          );
+                          textClass = "text-slate-700 font-medium";
+                        } else if (step.status === "active") {
+                          icon = (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 border border-blue-200 shrink-0">
+                              <div className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-ping" />
+                            </div>
+                          );
+                          textClass = "text-slate-900 font-bold";
+                        } else {
+                          icon = (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-50 border border-slate-150 shrink-0">
+                              <span className="text-[8px] text-slate-355">○</span>
+                            </div>
+                          );
+                          textClass = "text-slate-400";
+                        }
+
+                        return (
+                          <div key={step.id} className="flex items-center gap-3 text-xs">
+                            {icon}
+                            <span className={textClass}>{step.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100 flex gap-3 justify-center">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/recruiter/job-descriptions/${jobDescriptionId}`)}
+                      className="workspace-primary-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer focus:outline-none shadow-md shadow-slate-900/10"
+                    >
+                      Return to Job Description
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSyncAll}
+                      className="workspace-ghost-button !rounded-xl !py-2.5 !px-5 text-sm cursor-pointer hover:bg-slate-50/50 focus:outline-none"
+                    >
+                      Refresh Status
+                    </button>
+                  </div>
+                </div>
+              );
+            })()
           ) : candidates.length === 0 ? (
             /* Empty State */
             <div className="workspace-empty-state mt-2">
@@ -209,9 +351,42 @@ export function JobDescriptionCandidatesPage() {
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Option C Hybrid Banner */}
+              {hasRelevantCandidates && partiallyRelevantCandidatesCount > 0 && (
+                <div className="surface-card !py-3 !px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-emerald-200 bg-emerald-50/40 rounded-2xl mb-4">
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
+                    <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span>Showing <strong>{relevantCandidatesCount} Genuinely Relevant</strong> {relevantCandidatesCount === 1 ? 'Candidate' : 'Candidates'}</span>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-slate-500">{partiallyRelevantCandidatesCount} partially matching suggestions available</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPartiallyMatching(!showPartiallyMatching)}
+                    className="workspace-ghost-button !px-3.5 !py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100/60 border border-emerald-200/80 rounded-xl"
+                  >
+                    {showPartiallyMatching ? "Hide Partially Matching Suggestions" : `Show ${partiallyRelevantCandidatesCount} Partially Matching Suggestions`}
+                  </button>
+                </div>
+              )}
+
+              {/* Zero Relevant Candidates Warning Banner */}
+              {!hasRelevantCandidates && candidates.length > 0 && isZeroMatchDismissed && (
+                <div className="workspace-alert !max-w-full flex items-center justify-between gap-3 mb-4 !bg-amber-50/80 !border-amber-200">
+                  <div className="flex items-center gap-2.5 text-xs font-semibold text-amber-950">
+                    <svg className="w-4 h-4 text-amber-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Displaying {candidates.length} Partially Matching Candidates — No exact matches were found for your requirements.</span>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
                 <div>
-                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Ranked Applicants ({candidates.length})</h2>
+                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
+                    Ranked Applicants ({(hasRelevantCandidates && !showPartiallyMatching ? relevantCandidates : candidates).length})
+                  </h2>
                   <p className="text-[11px] text-slate-500">Sorted by Overall Score descending. Use checkboxes to select profiles for Hiring Manager handoff.</p>
                 </div>
                 {selectedIds.size > 0 && (
@@ -226,11 +401,16 @@ export function JobDescriptionCandidatesPage() {
 
               {/* Candidates Grid List */}
               <div className="grid grid-cols-1 gap-4">
-                {candidates.map((c) => {
+                {(hasRelevantCandidates && !showPartiallyMatching ? relevantCandidates : candidates).map((c) => {
                   const match = getMatchCategory(c.final_score);
                   const experienceYrs = Math.round(c.total_experience_months / 12);
                   const displayScore = c.final_score !== null ? Math.round(c.final_score) : null;
                   const isChecked = selectedIds.has(c.candidate_id);
+                  const isRelevant = (c.relevance_status || "RELEVANT") === "RELEVANT";
+                  const relevanceReasonSummary =
+                    typeof c.relevance_reason === "object" && c.relevance_reason
+                      ? (c.relevance_reason.summary as string)
+                      : null;
 
                   return (
                     <div
@@ -268,13 +448,38 @@ export function JobDescriptionCandidatesPage() {
                         </div>
 
                         <div className="space-y-2 min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-2.5">
                             <h3 className="text-base font-bold text-slate-900 leading-none">
                               {c.full_name}
                             </h3>
+                            
+                            {/* Relevance Badge */}
+                            {isRelevant ? (
+                              <span
+                                className="status-badge shrink-0 gap-1 bg-emerald-50 text-[9px] uppercase tracking-[0.14em] text-emerald-750 border-emerald-200 font-bold"
+                                title={relevanceReasonSummary || "Genuinely Relevant Match"}
+                              >
+                                <svg className="w-2.5 h-2.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Relevant
+                              </span>
+                            ) : (
+                              <span
+                                className="status-badge shrink-0 gap-1 bg-amber-50 text-[9px] uppercase tracking-[0.14em] text-amber-850 border-amber-250 font-bold"
+                                title={relevanceReasonSummary || "Partially Matching Candidate"}
+                              >
+                                <svg className="w-2.5 h-2.5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Partially Relevant
+                              </span>
+                            )}
+
                             <span className={`status-badge text-[10px] uppercase tracking-[0.14em] ${match.badge}`}>
                               {match.label}
                             </span>
+
                             {c.shared_with_hiring_manager && (
                               <span className="status-badge shrink-0 gap-1 bg-indigo-50 text-[9px] uppercase tracking-[0.14em] text-indigo-700 border-indigo-150">
                                 <svg className="w-2.5 h-2.5 text-indigo-650" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

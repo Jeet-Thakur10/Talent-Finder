@@ -1,0 +1,324 @@
+[CONFIG] Loaded .env from: /app/.env
+[CONFIG] DATABASE_URL: postgresql+asyncpg://postgres:****@postgres:5432/usecase
+[CONFIG] Database Name: usecase
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+[CONFIG] Loaded .env from: /app/.env
+[CONFIG] DATABASE_URL: postgresql+asyncpg://postgres:****@postgres:5432/usecase
+[CONFIG] Database Name: usecase
+INFO:     Started server process [10]
+INFO:     Waiting for application startup.
+2026-08-03 08:50:30,672 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2026-08-03 08:50:30,672 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-03 08:50:30,673 INFO sqlalchemy.engine.Engine select current_schema()
+2026-08-03 08:50:30,673 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-03 08:50:30,674 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2026-08-03 08:50:30,674 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-03 08:50:30,674 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:50:30,675 INFO sqlalchemy.engine.Engine 
+        ALTER TABLE job_descriptions
+        ADD COLUMN IF NOT EXISTS hiring_manager_id UUID REFERENCES users(id)
+    
+2026-08-03 08:50:30,675 INFO sqlalchemy.engine.Engine [generated in 0.00010s] ()
+2026-08-03 08:50:30,692 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:50:30,693 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:50:30,714 INFO sqlalchemy.engine.Engine SELECT employment_types.id, employment_types.code, employment_types.name 
+FROM employment_types 
+WHERE employment_types.code = $1::VARCHAR
+2026-08-03 08:50:30,714 INFO sqlalchemy.engine.Engine [generated in 0.00012s] ('FULL_TIME',)
+2026-08-03 08:50:30,717 INFO sqlalchemy.engine.Engine SELECT employment_types.id, employment_types.code, employment_types.name 
+FROM employment_types 
+WHERE employment_types.code = $1::VARCHAR
+2026-08-03 08:50:30,717 INFO sqlalchemy.engine.Engine [cached since 0.002909s ago] ('PART_TIME',)
+2026-08-03 08:50:30,717 INFO sqlalchemy.engine.Engine SELECT employment_types.id, employment_types.code, employment_types.name 
+FROM employment_types 
+WHERE employment_types.code = $1::VARCHAR
+2026-08-03 08:50:30,717 INFO sqlalchemy.engine.Engine [cached since 0.0035s ago] ('CONTRACT',)
+2026-08-03 08:50:30,718 INFO sqlalchemy.engine.Engine SELECT employment_types.id, employment_types.code, employment_types.name 
+FROM employment_types 
+WHERE employment_types.code = $1::VARCHAR
+2026-08-03 08:50:30,718 INFO sqlalchemy.engine.Engine [cached since 0.004035s ago] ('INTERNSHIP',)
+2026-08-03 08:50:30,718 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:50:30,719 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:50:30,719 INFO sqlalchemy.engine.Engine SELECT job_description_statuses.id, job_description_statuses.code, job_description_statuses.name 
+FROM job_description_statuses 
+WHERE job_description_statuses.code = $1::VARCHAR
+2026-08-03 08:50:30,719 INFO sqlalchemy.engine.Engine [generated in 0.00008s] ('DRAFT',)
+2026-08-03 08:50:30,720 INFO sqlalchemy.engine.Engine SELECT job_description_statuses.id, job_description_statuses.code, job_description_statuses.name 
+FROM job_description_statuses 
+WHERE job_description_statuses.code = $1::VARCHAR
+2026-08-03 08:50:30,720 INFO sqlalchemy.engine.Engine [cached since 0.00126s ago] ('ACTIVE',)
+2026-08-03 08:50:30,721 INFO sqlalchemy.engine.Engine SELECT job_description_statuses.id, job_description_statuses.code, job_description_statuses.name 
+FROM job_description_statuses 
+WHERE job_description_statuses.code = $1::VARCHAR
+2026-08-03 08:50:30,721 INFO sqlalchemy.engine.Engine [cached since 0.001806s ago] ('CLOSED',)
+2026-08-03 08:50:30,721 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:50:30,721 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:50:30,722 INFO sqlalchemy.engine.Engine SELECT users.id, users.name, users.email, users.password_hash, users.role, users.created_at, users.last_login 
+FROM users 
+WHERE users.email = $1::VARCHAR
+2026-08-03 08:50:30,722 INFO sqlalchemy.engine.Engine [generated in 0.00008s] ('11a08cnn@gmail.com',)
+2026-08-03 08:50:30,723 INFO sqlalchemy.engine.Engine SELECT users.id, users.name, users.email, users.password_hash, users.role, users.created_at, users.last_login 
+FROM users 
+WHERE users.email = $1::VARCHAR
+2026-08-03 08:50:30,723 INFO sqlalchemy.engine.Engine [cached since 0.001178s ago] ('jeetthakurofficialz@gmail.com',)
+2026-08-03 08:50:30,724 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49750 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57570 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37802 - "GET /docs HTTP/1.1" 200 OK
+INFO:     172.18.0.7:38292 - "POST /auth/logout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55630 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47442 - "GET /docs HTTP/1.1" 200 OK
+2026-08-03 08:51:12,032 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:12,032 INFO sqlalchemy.engine.Engine SELECT users.id, users.name, users.email, users.password_hash, users.role, users.created_at, users.last_login 
+FROM users 
+WHERE users.email = $1::VARCHAR
+2026-08-03 08:51:12,032 INFO sqlalchemy.engine.Engine [cached since 41.31s ago] ('11a08cnn@gmail.com',)
+INFO:     172.18.0.7:53338 - "POST /auth/login HTTP/1.1" 200 OK
+2026-08-03 08:51:12,235 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+[TRACE SERVER] Received Cookie header: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM
+[TRACE SERVER] Successfully decoded JWT payload: {'sub': '736c9175-e968-4862-90c8-52d928c93719', 'role': 'recruiter', 'type': 'access', 'exp': 1785747972}
+[TRACE SERVER] Authenticated User ID after validation: 736c9175-e968-4862-90c8-52d928c93719 (role: recruiter)
+2026-08-03 08:51:12,699 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:12,701 INFO sqlalchemy.engine.Engine SELECT job_descriptions.id, job_descriptions.recruiter_id, job_descriptions.title, job_descriptions.department, job_descriptions.job_purpose, job_descriptions.responsibilities, job_descriptions.min_experience, job_descriptions.max_experience, job_descriptions.location, job_descriptions.employment_type_id, job_descriptions.education_requirement, job_descriptions.preferred_qualifications, job_descriptions.status_id, job_descriptions.hiring_manager_id, job_descriptions.raw_job_description, job_descriptions.created_at, job_descriptions.updated_at 
+FROM job_descriptions 
+WHERE job_descriptions.recruiter_id = $1::UUID
+2026-08-03 08:51:12,701 INFO sqlalchemy.engine.Engine [generated in 0.00029s] (UUID('736c9175-e968-4862-90c8-52d928c93719'),)
+[TRACE SERVER] Received Cookie header: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM
+[TRACE SERVER] Successfully decoded JWT payload: {'sub': '736c9175-e968-4862-90c8-52d928c93719', 'role': 'recruiter', 'type': 'access', 'exp': 1785747972}
+[TRACE SERVER] Authenticated User ID after validation: 736c9175-e968-4862-90c8-52d928c93719 (role: recruiter)
+[TRACE SERVER] Received Cookie header: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM
+[TRACE SERVER] Successfully decoded JWT payload: {'sub': '736c9175-e968-4862-90c8-52d928c93719', 'role': 'recruiter', 'type': 'access', 'exp': 1785747972}
+[TRACE SERVER] Authenticated User ID after validation: 736c9175-e968-4862-90c8-52d928c93719 (role: recruiter)
+2026-08-03 08:51:12,719 INFO sqlalchemy.engine.Engine SELECT jd_skills.jd_id AS jd_skills_jd_id, jd_skills.id AS jd_skills_id, jd_skills.skill_name AS jd_skills_skill_name, jd_skills.is_mandatory AS jd_skills_is_mandatory 
+FROM jd_skills 
+WHERE jd_skills.jd_id IN ($1::UUID)
+2026-08-03 08:51:12,719 INFO sqlalchemy.engine.Engine [generated in 0.00021s] (UUID('a1b8dcfd-1eae-4c7d-93e4-8a9f5447c9a1'),)
+INFO:     172.18.0.7:53338 - "GET /job-descriptions HTTP/1.1" 200 OK
+2026-08-03 08:51:12,722 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:51:12,778 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:12,779 INFO sqlalchemy.engine.Engine SELECT users.id, users.name, users.email, users.password_hash, users.role, users.created_at, users.last_login 
+FROM users 
+WHERE users.role = $1::VARCHAR
+2026-08-03 08:51:12,779 INFO sqlalchemy.engine.Engine [generated in 0.00020s] ('hiring_manager',)
+2026-08-03 08:51:12,780 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:12,780 INFO sqlalchemy.engine.Engine SELECT employment_types.id, employment_types.code, employment_types.name 
+FROM employment_types
+2026-08-03 08:51:12,781 INFO sqlalchemy.engine.Engine [generated in 0.00012s] ()
+2026-08-03 08:51:12,781 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:12,781 INFO sqlalchemy.engine.Engine SELECT job_description_statuses.id, job_description_statuses.code, job_description_statuses.name 
+FROM job_description_statuses
+2026-08-03 08:51:12,782 INFO sqlalchemy.engine.Engine [generated in 0.00017s] ()
+2026-08-03 08:51:12,795 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:12,796 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM notifications 
+WHERE notifications.user_id = $1::UUID AND notifications.is_read IS false
+2026-08-03 08:51:12,797 INFO sqlalchemy.engine.Engine [generated in 0.00013s] (UUID('736c9175-e968-4862-90c8-52d928c93719'),)
+2026-08-03 08:51:12,797 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:12,799 INFO sqlalchemy.engine.Engine SELECT scoring_tasks.id, scoring_tasks.celery_task_id, scoring_tasks.recruiter_id, scoring_tasks.job_description_id, scoring_tasks.status, scoring_tasks.current_stage, scoring_tasks.schema_version, scoring_tasks.cancel_requested, scoring_tasks.matched_candidate_count, scoring_tasks.eligible_candidate_count, scoring_tasks.selected_candidate_count, scoring_tasks.created_at, scoring_tasks.started_at, scoring_tasks.completed_at, scoring_tasks.error_message, scoring_tasks.error_code, scoring_tasks.final_response_payload 
+FROM scoring_tasks 
+WHERE scoring_tasks.status = $1::VARCHAR AND scoring_tasks.created_at < $2::TIMESTAMP WITH TIME ZONE OR scoring_tasks.status = $3::VARCHAR AND (scoring_tasks.started_at < $4::TIMESTAMP WITH TIME ZONE OR scoring_tasks.started_at IS NULL AND scoring_tasks.created_at < $5::TIMESTAMP WITH TIME ZONE)
+2026-08-03 08:51:12,799 INFO sqlalchemy.engine.Engine [generated in 0.00014s] ('PENDING', datetime.datetime(2026, 8, 3, 8, 36, 12, 713633, tzinfo=datetime.timezone.utc), 'RUNNING', datetime.datetime(2026, 8, 3, 8, 36, 12, 713633, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 8, 3, 8, 36, 12, 713633, tzinfo=datetime.timezone.utc))
+INFO:     172.18.0.7:53344 - "GET /lookups/employment-types HTTP/1.1" 200 OK
+INFO:     172.18.0.7:53346 - "GET /lookups/hiring-managers HTTP/1.1" 200 OK
+INFO:     172.18.0.7:53362 - "GET /lookups/job-description-statuses HTTP/1.1" 200 OK
+2026-08-03 08:51:12,803 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:51:12,803 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:51:12,803 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+INFO:     172.18.0.7:53378 - "GET /notifications/unread-count HTTP/1.1" 200 OK
+2026-08-03 08:51:12,804 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:51:12,809 INFO sqlalchemy.engine.Engine SELECT scoring_tasks.id, scoring_tasks.celery_task_id, scoring_tasks.recruiter_id, scoring_tasks.job_description_id, scoring_tasks.status, scoring_tasks.current_stage, scoring_tasks.schema_version, scoring_tasks.cancel_requested, scoring_tasks.matched_candidate_count, scoring_tasks.eligible_candidate_count, scoring_tasks.selected_candidate_count, scoring_tasks.created_at, scoring_tasks.started_at, scoring_tasks.completed_at, scoring_tasks.error_message, scoring_tasks.error_code, scoring_tasks.final_response_payload, job_descriptions_1.id AS id_1, job_descriptions_1.recruiter_id AS recruiter_id_1, job_descriptions_1.title, job_descriptions_1.department, job_descriptions_1.job_purpose, job_descriptions_1.responsibilities, job_descriptions_1.min_experience, job_descriptions_1.max_experience, job_descriptions_1.location, job_descriptions_1.employment_type_id, job_descriptions_1.education_requirement, job_descriptions_1.preferred_qualifications, job_descriptions_1.status_id, job_descriptions_1.hiring_manager_id, job_descriptions_1.raw_job_description, job_descriptions_1.created_at AS created_at_1, job_descriptions_1.updated_at 
+FROM scoring_tasks LEFT OUTER JOIN job_descriptions AS job_descriptions_1 ON job_descriptions_1.id = scoring_tasks.job_description_id 
+WHERE scoring_tasks.recruiter_id = $1::UUID ORDER BY scoring_tasks.created_at DESC
+2026-08-03 08:51:12,809 INFO sqlalchemy.engine.Engine [generated in 0.00023s] (UUID('736c9175-e968-4862-90c8-52d928c93719'),)
+INFO:     172.18.0.7:53366 - "GET /scoring/tasks HTTP/1.1" 200 OK
+2026-08-03 08:51:12,814 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+INFO:     127.0.0.1:46694 - "GET /docs HTTP/1.1" 200 OK
+[TRACE SERVER] Received Cookie header: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM
+[TRACE SERVER] Successfully decoded JWT payload: {'sub': '736c9175-e968-4862-90c8-52d928c93719', 'role': 'recruiter', 'type': 'access', 'exp': 1785747972}
+[TRACE SERVER] Authenticated User ID after validation: 736c9175-e968-4862-90c8-52d928c93719 (role: recruiter)
+2026-08-03 08:51:25,752 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:25,753 INFO sqlalchemy.engine.Engine SELECT users.id, users.name, users.email, users.password_hash, users.role, users.created_at, users.last_login 
+FROM users 
+WHERE users.id = $1::UUID
+2026-08-03 08:51:25,753 INFO sqlalchemy.engine.Engine [generated in 0.00018s] (UUID('736c9175-e968-4862-90c8-52d928c93719'),)
+INFO:     172.18.0.7:48112 - "GET /auth/me HTTP/1.1" 200 OK
+2026-08-03 08:51:25,755 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+[TRACE SERVER] Received Cookie header: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM
+[TRACE SERVER] Successfully decoded JWT payload: {'sub': '736c9175-e968-4862-90c8-52d928c93719', 'role': 'recruiter', 'type': 'access', 'exp': 1785747972}
+[TRACE SERVER] Authenticated User ID after validation: 736c9175-e968-4862-90c8-52d928c93719 (role: recruiter)
+2026-08-03 08:51:25,796 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:25,796 INFO sqlalchemy.engine.Engine SELECT job_descriptions.id, job_descriptions.recruiter_id, job_descriptions.title, job_descriptions.department, job_descriptions.job_purpose, job_descriptions.responsibilities, job_descriptions.min_experience, job_descriptions.max_experience, job_descriptions.location, job_descriptions.employment_type_id, job_descriptions.education_requirement, job_descriptions.preferred_qualifications, job_descriptions.status_id, job_descriptions.hiring_manager_id, job_descriptions.raw_job_description, job_descriptions.created_at, job_descriptions.updated_at 
+FROM job_descriptions 
+WHERE job_descriptions.recruiter_id = $1::UUID
+2026-08-03 08:51:25,797 INFO sqlalchemy.engine.Engine [cached since 13.1s ago] (UUID('736c9175-e968-4862-90c8-52d928c93719'),)
+2026-08-03 08:51:25,800 INFO sqlalchemy.engine.Engine SELECT jd_skills.jd_id AS jd_skills_jd_id, jd_skills.id AS jd_skills_id, jd_skills.skill_name AS jd_skills_skill_name, jd_skills.is_mandatory AS jd_skills_is_mandatory 
+FROM jd_skills 
+WHERE jd_skills.jd_id IN ($1::UUID)
+2026-08-03 08:51:25,800 INFO sqlalchemy.engine.Engine [cached since 13.08s ago] (UUID('a1b8dcfd-1eae-4c7d-93e4-8a9f5447c9a1'),)
+INFO:     172.18.0.7:48112 - "GET /job-descriptions HTTP/1.1" 200 OK
+2026-08-03 08:51:25,804 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:51:25,806 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:25,806 INFO sqlalchemy.engine.Engine SELECT employment_types.id, employment_types.code, employment_types.name 
+FROM employment_types
+2026-08-03 08:51:25,806 INFO sqlalchemy.engine.Engine [cached since 13.03s ago] ()
+2026-08-03 08:51:25,810 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:25,810 INFO sqlalchemy.engine.Engine SELECT job_description_statuses.id, job_description_statuses.code, job_description_statuses.name 
+FROM job_description_statuses
+2026-08-03 08:51:25,810 INFO sqlalchemy.engine.Engine [cached since 13.03s ago] ()
+2026-08-03 08:51:25,812 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:25,812 INFO sqlalchemy.engine.Engine SELECT users.id, users.name, users.email, users.password_hash, users.role, users.created_at, users.last_login 
+FROM users 
+WHERE users.role = $1::VARCHAR
+2026-08-03 08:51:25,812 INFO sqlalchemy.engine.Engine [cached since 13.03s ago] ('hiring_manager',)
+[TRACE SERVER] Received Cookie header: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM
+[TRACE SERVER] Successfully decoded JWT payload: {'sub': '736c9175-e968-4862-90c8-52d928c93719', 'role': 'recruiter', 'type': 'access', 'exp': 1785747972}
+[TRACE SERVER] Authenticated User ID after validation: 736c9175-e968-4862-90c8-52d928c93719 (role: recruiter)
+2026-08-03 08:51:25,816 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:25,816 INFO sqlalchemy.engine.Engine SELECT scoring_tasks.id, scoring_tasks.celery_task_id, scoring_tasks.recruiter_id, scoring_tasks.job_description_id, scoring_tasks.status, scoring_tasks.current_stage, scoring_tasks.schema_version, scoring_tasks.cancel_requested, scoring_tasks.matched_candidate_count, scoring_tasks.eligible_candidate_count, scoring_tasks.selected_candidate_count, scoring_tasks.created_at, scoring_tasks.started_at, scoring_tasks.completed_at, scoring_tasks.error_message, scoring_tasks.error_code, scoring_tasks.final_response_payload 
+FROM scoring_tasks 
+WHERE scoring_tasks.status = $1::VARCHAR AND scoring_tasks.created_at < $2::TIMESTAMP WITH TIME ZONE OR scoring_tasks.status = $3::VARCHAR AND (scoring_tasks.started_at < $4::TIMESTAMP WITH TIME ZONE OR scoring_tasks.started_at IS NULL AND scoring_tasks.created_at < $5::TIMESTAMP WITH TIME ZONE)
+2026-08-03 08:51:25,816 INFO sqlalchemy.engine.Engine [cached since 13.02s ago] ('PENDING', datetime.datetime(2026, 8, 3, 8, 36, 25, 815496, tzinfo=datetime.timezone.utc), 'RUNNING', datetime.datetime(2026, 8, 3, 8, 36, 25, 815496, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 8, 3, 8, 36, 25, 815496, tzinfo=datetime.timezone.utc))
+[TRACE SERVER] Received Cookie header: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTA3Mn0.gWtssW5FRGip5yNLQ8rlsqyA1k7WwZ0YZk_GOpSCl44
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0Nzk3Mn0.WLwZbR4JbVfjAXCrvz9oGcLf_vsaPVrcF8nGMktUpMM
+[TRACE SERVER] Successfully decoded JWT payload: {'sub': '736c9175-e968-4862-90c8-52d928c93719', 'role': 'recruiter', 'type': 'access', 'exp': 1785747972}
+[TRACE SERVER] Authenticated User ID after validation: 736c9175-e968-4862-90c8-52d928c93719 (role: recruiter)
+2026-08-03 08:51:25,817 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:51:25,818 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM notifications 
+WHERE notifications.user_id = $1::UUID AND notifications.is_read IS false
+2026-08-03 08:51:25,818 INFO sqlalchemy.engine.Engine [cached since 13.02s ago] (UUID('736c9175-e968-4862-90c8-52d928c93719'),)
+INFO:     172.18.0.7:48114 - "GET /lookups/employment-types HTTP/1.1" 200 OK
+INFO:     172.18.0.7:48124 - "GET /lookups/job-description-statuses HTTP/1.1" 200 OK
+2026-08-03 08:51:25,820 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:51:25,820 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+INFO:     172.18.0.7:48136 - "GET /lookups/hiring-managers HTTP/1.1" 200 OK
+2026-08-03 08:51:25,825 INFO sqlalchemy.engine.Engine SELECT scoring_tasks.id, scoring_tasks.celery_task_id, scoring_tasks.recruiter_id, scoring_tasks.job_description_id, scoring_tasks.status, scoring_tasks.current_stage, scoring_tasks.schema_version, scoring_tasks.cancel_requested, scoring_tasks.matched_candidate_count, scoring_tasks.eligible_candidate_count, scoring_tasks.selected_candidate_count, scoring_tasks.created_at, scoring_tasks.started_at, scoring_tasks.completed_at, scoring_tasks.error_message, scoring_tasks.error_code, scoring_tasks.final_response_payload, job_descriptions_1.id AS id_1, job_descriptions_1.recruiter_id AS recruiter_id_1, job_descriptions_1.title, job_descriptions_1.department, job_descriptions_1.job_purpose, job_descriptions_1.responsibilities, job_descriptions_1.min_experience, job_descriptions_1.max_experience, job_descriptions_1.location, job_descriptions_1.employment_type_id, job_descriptions_1.education_requirement, job_descriptions_1.preferred_qualifications, job_descriptions_1.status_id, job_descriptions_1.hiring_manager_id, job_descriptions_1.raw_job_description, job_descriptions_1.created_at AS created_at_1, job_descriptions_1.updated_at 
+FROM scoring_tasks LEFT OUTER JOIN job_descriptions AS job_descriptions_1 ON job_descriptions_1.id = scoring_tasks.job_description_id 
+WHERE scoring_tasks.recruiter_id = $1::UUID ORDER BY scoring_tasks.created_at DESC
+2026-08-03 08:51:25,825 INFO sqlalchemy.engine.Engine [cached since 13.02s ago] (UUID('736c9175-e968-4862-90c8-52d928c93719'),)
+INFO:     172.18.0.7:48156 - "GET /notifications/unread-count HTTP/1.1" 200 OK
+2026-08-03 08:51:25,826 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:51:25,827 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+INFO:     172.18.0.7:48144 - "GET /scoring/tasks HTTP/1.1" 200 OK
+2026-08-03 08:51:25,831 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+INFO:     127.0.0.1:47390 - "GET /docs HTTP/1.1" 200 OK
+[TRACE SERVER] Received Cookie header: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODI3NjYwOH0.5K5Lu13X4WM8iKuhZ5ldroHlvRE4vIo5aj_BFON9XWI
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: None
+[TRACE SERVER] Access token is missing, raising InvalidToken
+INFO:     172.18.0.7:48164 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:50908 - "GET /docs HTTP/1.1" 200 OK
+[TRACE SERVER] Received Cookie header: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODI3NjYwOH0.5K5Lu13X4WM8iKuhZ5ldroHlvRE4vIo5aj_BFON9XWI
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: None
+[TRACE SERVER] Access token is missing, raising InvalidToken
+INFO:     172.18.0.7:39034 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:45706 - "GET /docs HTTP/1.1" 200 OK
+[TRACE SERVER] Received Cookie header: refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODI3NjYwOH0.5K5Lu13X4WM8iKuhZ5ldroHlvRE4vIo5aj_BFON9XWI
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: None
+[TRACE SERVER] Access token is missing, raising InvalidToken
+INFO:     172.18.0.7:39034 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+INFO:     172.18.0.7:39034 - "POST /auth/logout HTTP/1.1" 200 OK
+[TRACE SERVER] Received Cookie header: None
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: None
+[TRACE SERVER] Access token is missing, raising InvalidToken
+INFO:     172.18.0.7:39034 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:40990 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54660 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38222 - "GET /docs HTTP/1.1" 200 OK
+2026-08-03 08:52:22,499 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:52:22,500 INFO sqlalchemy.engine.Engine SELECT users.id, users.name, users.email, users.password_hash, users.role, users.created_at, users.last_login 
+FROM users 
+WHERE users.email = $1::VARCHAR
+2026-08-03 08:52:22,501 INFO sqlalchemy.engine.Engine [cached since 111.8s ago] ('11a08cnn@gmail.com',)
+INFO:     172.18.0.7:43176 - "POST /auth/login HTTP/1.1" 200 OK
+2026-08-03 08:52:22,690 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+[TRACE SERVER] Received Cookie header: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ
+[TRACE SERVER] Successfully decoded JWT payload: {'sub': '736c9175-e968-4862-90c8-52d928c93719', 'role': 'recruiter', 'type': 'access', 'exp': 1785748042}
+[TRACE SERVER] Authenticated User ID after validation: 736c9175-e968-4862-90c8-52d928c93719 (role: recruiter)
+2026-08-03 08:52:22,760 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:52:22,760 INFO sqlalchemy.engine.Engine SELECT job_descriptions.id, job_descriptions.recruiter_id, job_descriptions.title, job_descriptions.department, job_descriptions.job_purpose, job_descriptions.responsibilities, job_descriptions.min_experience, job_descriptions.max_experience, job_descriptions.location, job_descriptions.employment_type_id, job_descriptions.education_requirement, job_descriptions.preferred_qualifications, job_descriptions.status_id, job_descriptions.hiring_manager_id, job_descriptions.raw_job_description, job_descriptions.created_at, job_descriptions.updated_at 
+FROM job_descriptions 
+WHERE job_descriptions.recruiter_id = $1::UUID
+2026-08-03 08:52:22,760 INFO sqlalchemy.engine.Engine [cached since 70.06s ago] (UUID('736c9175-e968-4862-90c8-52d928c93719'),)
+2026-08-03 08:52:22,764 INFO sqlalchemy.engine.Engine SELECT jd_skills.jd_id AS jd_skills_jd_id, jd_skills.id AS jd_skills_id, jd_skills.skill_name AS jd_skills_skill_name, jd_skills.is_mandatory AS jd_skills_is_mandatory 
+FROM jd_skills 
+WHERE jd_skills.jd_id IN ($1::UUID)
+2026-08-03 08:52:22,765 INFO sqlalchemy.engine.Engine [cached since 70.05s ago] (UUID('a1b8dcfd-1eae-4c7d-93e4-8a9f5447c9a1'),)
+INFO:     172.18.0.7:43176 - "GET /job-descriptions HTTP/1.1" 200 OK
+2026-08-03 08:52:22,769 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:52:22,769 INFO sqlalchemy.engine.Engine SELECT employment_types.id, employment_types.code, employment_types.name 
+FROM employment_types
+2026-08-03 08:52:22,769 INFO sqlalchemy.engine.Engine [cached since 69.99s ago] ()
+2026-08-03 08:52:22,770 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:52:22,772 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:52:22,772 INFO sqlalchemy.engine.Engine SELECT users.id, users.name, users.email, users.password_hash, users.role, users.created_at, users.last_login 
+FROM users 
+WHERE users.role = $1::VARCHAR
+2026-08-03 08:52:22,772 INFO sqlalchemy.engine.Engine [cached since 70s ago] ('hiring_manager',)
+INFO:     172.18.0.7:43190 - "GET /lookups/employment-types HTTP/1.1" 200 OK
+2026-08-03 08:52:22,775 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:52:22,775 INFO sqlalchemy.engine.Engine SELECT job_description_statuses.id, job_description_statuses.code, job_description_statuses.name 
+FROM job_description_statuses
+2026-08-03 08:52:22,775 INFO sqlalchemy.engine.Engine [cached since 70s ago] ()
+2026-08-03 08:52:22,775 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+[TRACE SERVER] Received Cookie header: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ
+[TRACE SERVER] Successfully decoded JWT payload: {'sub': '736c9175-e968-4862-90c8-52d928c93719', 'role': 'recruiter', 'type': 'access', 'exp': 1785748042}
+[TRACE SERVER] Authenticated User ID after validation: 736c9175-e968-4862-90c8-52d928c93719 (role: recruiter)
+2026-08-03 08:52:22,777 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:52:22,778 INFO sqlalchemy.engine.Engine SELECT scoring_tasks.id, scoring_tasks.celery_task_id, scoring_tasks.recruiter_id, scoring_tasks.job_description_id, scoring_tasks.status, scoring_tasks.current_stage, scoring_tasks.schema_version, scoring_tasks.cancel_requested, scoring_tasks.matched_candidate_count, scoring_tasks.eligible_candidate_count, scoring_tasks.selected_candidate_count, scoring_tasks.created_at, scoring_tasks.started_at, scoring_tasks.completed_at, scoring_tasks.error_message, scoring_tasks.error_code, scoring_tasks.final_response_payload 
+FROM scoring_tasks 
+WHERE scoring_tasks.status = $1::VARCHAR AND scoring_tasks.created_at < $2::TIMESTAMP WITH TIME ZONE OR scoring_tasks.status = $3::VARCHAR AND (scoring_tasks.started_at < $4::TIMESTAMP WITH TIME ZONE OR scoring_tasks.started_at IS NULL AND scoring_tasks.created_at < $5::TIMESTAMP WITH TIME ZONE)
+2026-08-03 08:52:22,778 INFO sqlalchemy.engine.Engine [cached since 69.98s ago] ('PENDING', datetime.datetime(2026, 8, 3, 8, 37, 22, 777105, tzinfo=datetime.timezone.utc), 'RUNNING', datetime.datetime(2026, 8, 3, 8, 37, 22, 777105, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 8, 3, 8, 37, 22, 777105, tzinfo=datetime.timezone.utc))
+[TRACE SERVER] Received Cookie header: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ; refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4ODMzOTE0Mn0.7o_IuA-mbZmFPIalGBvs6Xi_NO0_r0ACmV0Ri6kaMQA
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MzZjOTE3NS1lOTY4LTQ4NjItOTBjOC01MmQ5MjhjOTM3MTkiLCJyb2xlIjoicmVjcnVpdGVyIiwidHlwZSI6ImFjY2VzcyIsImV4cCI6MTc4NTc0ODA0Mn0.6z94ho8K4V4N12pdcTRcdFm_I46biimUvOSWGRiPgWQ
+[TRACE SERVER] Successfully decoded JWT payload: {'sub': '736c9175-e968-4862-90c8-52d928c93719', 'role': 'recruiter', 'type': 'access', 'exp': 1785748042}
+[TRACE SERVER] Authenticated User ID after validation: 736c9175-e968-4862-90c8-52d928c93719 (role: recruiter)
+2026-08-03 08:52:22,779 INFO sqlalchemy.engine.Engine BEGIN (implicit; DBAPI should not BEGIN due to autocommit mode)
+2026-08-03 08:52:22,779 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM notifications 
+WHERE notifications.user_id = $1::UUID AND notifications.is_read IS false
+2026-08-03 08:52:22,779 INFO sqlalchemy.engine.Engine [cached since 69.99s ago] (UUID('736c9175-e968-4862-90c8-52d928c93719'),)
+INFO:     172.18.0.7:43194 - "GET /lookups/hiring-managers HTTP/1.1" 200 OK
+INFO:     172.18.0.7:43200 - "GET /lookups/job-description-statuses HTTP/1.1" 200 OK
+2026-08-03 08:52:22,781 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:52:22,782 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+2026-08-03 08:52:22,783 INFO sqlalchemy.engine.Engine SELECT scoring_tasks.id, scoring_tasks.celery_task_id, scoring_tasks.recruiter_id, scoring_tasks.job_description_id, scoring_tasks.status, scoring_tasks.current_stage, scoring_tasks.schema_version, scoring_tasks.cancel_requested, scoring_tasks.matched_candidate_count, scoring_tasks.eligible_candidate_count, scoring_tasks.selected_candidate_count, scoring_tasks.created_at, scoring_tasks.started_at, scoring_tasks.completed_at, scoring_tasks.error_message, scoring_tasks.error_code, scoring_tasks.final_response_payload, job_descriptions_1.id AS id_1, job_descriptions_1.recruiter_id AS recruiter_id_1, job_descriptions_1.title, job_descriptions_1.department, job_descriptions_1.job_purpose, job_descriptions_1.responsibilities, job_descriptions_1.min_experience, job_descriptions_1.max_experience, job_descriptions_1.location, job_descriptions_1.employment_type_id, job_descriptions_1.education_requirement, job_descriptions_1.preferred_qualifications, job_descriptions_1.status_id, job_descriptions_1.hiring_manager_id, job_descriptions_1.raw_job_description, job_descriptions_1.created_at AS created_at_1, job_descriptions_1.updated_at 
+FROM scoring_tasks LEFT OUTER JOIN job_descriptions AS job_descriptions_1 ON job_descriptions_1.id = scoring_tasks.job_description_id 
+WHERE scoring_tasks.recruiter_id = $1::UUID ORDER BY scoring_tasks.created_at DESC
+2026-08-03 08:52:22,783 INFO sqlalchemy.engine.Engine [cached since 69.98s ago] (UUID('736c9175-e968-4862-90c8-52d928c93719'),)
+INFO:     172.18.0.7:43216 - "GET /notifications/unread-count HTTP/1.1" 200 OK
+2026-08-03 08:52:22,784 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+INFO:     172.18.0.7:43214 - "GET /scoring/tasks HTTP/1.1" 200 OK
+2026-08-03 08:52:22,789 INFO sqlalchemy.engine.Engine COMMIT using DBAPI connection.commit(), has no effect due to autocommit mode
+INFO:     127.0.0.1:36974 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48662 - "GET /docs HTTP/1.1" 200 OK
+[TRACE SERVER] Received Cookie header: None
+[TRACE SERVER] Received Authorization header: None
+[TRACE SERVER] Extracted access_token from Cookie parameter: None
+[TRACE SERVER] Access token is missing, raising InvalidToken
+INFO:     172.18.0.7:44004 - "GET /auth/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:34094 - "GET /docs HTTP/1.1" 200 OK

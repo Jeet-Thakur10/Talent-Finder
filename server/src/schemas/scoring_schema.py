@@ -1,8 +1,24 @@
 from datetime import date, datetime
+from enum import Enum
 from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
+class RelevanceStatus(str, Enum):
+    RELEVANT = "RELEVANT"
+    PARTIALLY_RELEVANT = "PARTIALLY_RELEVANT"
+    IRRELEVANT = "IRRELEVANT"
+
+
+class CandidateRelevanceReason(BaseModel):
+    experience: str = ""
+    role: str = ""
+    skills: str = ""
+    location: str = ""
+    recency: str = ""
+    summary: str = ""
 
 # --- Hiring Manager Shortlist Sharing Schemas ---
 from src.data.models.postgres.pipeline import HiringManagerDecision
@@ -191,6 +207,8 @@ class CandidateScoreOutput(BaseModel):
     missing_mandatory_skills: list[str]
 
     explanation: CandidateScoreExplanation
+    relevance_status: RelevanceStatus = RelevanceStatus.RELEVANT
+    relevance_reason: CandidateRelevanceReason | dict[str, object] | None = None
 
 
 class CandidateBatchScoreOutput(BaseModel):
@@ -293,6 +311,8 @@ class CandidateScoreBreakdownResponse(BaseModel):
     matched_mandatory_skills: list[str] = Field(default_factory=list)
     matched_optional_skills: list[str] = Field(default_factory=list)
     missing_mandatory_skills: list[str] = Field(default_factory=list)
+    relevance_status: RelevanceStatus = RelevanceStatus.RELEVANT
+    relevance_reason: CandidateRelevanceReason | dict[str, object] | None = None
 
 
 class CandidateEvaluationBoardResponse(BaseModel):
@@ -319,6 +339,8 @@ class CandidateScoreResponse(BaseModel):
     matched_optional_skills: list[str]
     missing_mandatory_skills: list[str]
     explanation: CandidateScoreExplanation | dict[str, object]
+    relevance_status: RelevanceStatus = RelevanceStatus.RELEVANT
+    relevance_reason: CandidateRelevanceReason | dict[str, object] | None = None
     updated_at: datetime
 
 
@@ -361,6 +383,8 @@ class PipelineCandidateResult(BaseModel):
     matched_mandatory_skills: list[str] = Field(default_factory=list)
     matched_optional_skills: list[str] = Field(default_factory=list)
     missing_mandatory_skills: list[str] = Field(default_factory=list)
+    relevance_status: RelevanceStatus = RelevanceStatus.RELEVANT
+    relevance_reason: CandidateRelevanceReason | dict[str, object] | None = None
     stage: str = "PRE_SCORED"
     recruiter_notes: str | None = None
     hiring_manager_notes: str | None = None
@@ -383,6 +407,9 @@ class PipelineExecutionResponse(BaseModel):
     candidates: list[PipelineCandidateResult] = Field(
         default_factory=list,
     )
+    has_relevant_candidates: bool = True
+    relevant_candidate_count: int | None = None
+    partially_relevant_candidate_count: int | None = None
     is_shortlist_incomplete: bool = False
     warning_reason: str | None = None
     warning_message: str | None = None
@@ -407,6 +434,9 @@ class PipelineTaskStatusResponse(BaseModel):
     selected_candidate_count: int | None = None
     job_description_title: str | None = None
     top_k: int | None = None
+    has_relevant_candidates: bool | None = None
+    relevant_candidate_count: int | None = None
+    partially_relevant_candidate_count: int | None = None
     is_shortlist_incomplete: bool | None = None
     warning_reason: str | None = None
     warning_message: str | None = None

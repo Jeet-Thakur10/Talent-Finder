@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRecruiterJobDescriptionWizard } from "../hooks/useRecruiterJobDescriptionWizard";
+import { RECRUITER_LABELS } from "../utils/recruiterTerms";
 
 interface JobDescriptionCreatePageProps {
   isEdit?: boolean;
@@ -626,10 +627,10 @@ export function JobDescriptionCreatePage({
             <div>
               <h2 className="text-base font-bold text-slate-900 mb-1">Verify Campaign Setup</h2>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Ensure everything is correct. Choose to save as a draft to continue later, or proceed directly to scoring configuration.
+                Ensure everything is correct. Choose to save as a draft to continue later, or proceed directly to candidate match settings.
               </p>
             </div>
-
+ 
             {/* Visual Overview */}
             <div className="p-5 border border-slate-200 rounded-xl bg-slate-50/30 text-sm space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -666,7 +667,7 @@ export function JobDescriptionCreatePage({
                 </div>
               </div>
             </div>
-
+ 
             <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 justify-between items-center w-full">
               <button
                 type="button"
@@ -706,7 +707,7 @@ export function JobDescriptionCreatePage({
                     title={isCampaignClosed ? "This campaign has been completed." : undefined}
                     className={`workspace-primary-button w-full sm:w-auto !py-2.5 !px-5 !rounded-xl text-sm font-semibold focus:outline-none shadow-md shadow-slate-900/10 ${isCampaignClosed ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    Continue to Scoring
+                    {RECRUITER_LABELS.CONTINUE_TO_CANDIDATE_SEARCH}
                   </button>
                 </div>
               )}

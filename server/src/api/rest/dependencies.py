@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
@@ -79,6 +80,9 @@ def _parse_uuid_claim(value: str | None, claim_name: str) -> UUID | None:
         raise InvalidToken(
             details=f"Token contains an invalid '{claim_name}' claim"
         ) from exc
+
+
+logger = logging.getLogger(__name__)
 
 
 async def get_authenticated_user_context(

@@ -1,0 +1,62 @@
+
+Candidate Search Query sent to sourcing service:
+  Title: Backend Engineer
+  Skills: ['Python', 'PostgreSQL']
+  Location: None
+  Experience: 3
+  Search Parameters: required_candidates=70, max_source_resumes=20
+
+
+Candidate Search Query sent to sourcing service:
+  Title: Backend Engineer
+  Skills: ['Python', 'PostgreSQL']
+  Location: None
+  Experience: 3
+  Search Parameters: required_candidates=100, max_source_resumes=20
+
+Extracted Job Description:
+  Title: Senior Software Engineer
+  Location: San Francisco, CA (Hybrid)
+  Experience: min=5, max=10
+  Skills: ['Python', 'PostgreSQL', 'FastAPI', 'Kubernetes']
+  Employment Type: Full-time
+  Hiring Manager: Sarah Connor
+  Job Purpose: We are looking for a Senior Software Engineer to build and scale our core data processing pipelines. You will lead design and implementation of highly available systems.
+  Department: Core Infrastructure
+  Education Requirement: Bachelor's degree in Computer Science or equivalent experience
+
+Candidate Search Query sent to sourcing service:
+  Title: Backend Engineer
+  Skills: ['Python', 'PostgreSQL']
+  Location: None
+  Experience: 3
+  Search Parameters: required_candidates=70, max_source_resumes=20
+
+
+Candidate Search Query sent to sourcing service:
+  Title: Backend Engineer
+  Skills: ['Python', 'PostgreSQL']
+  Location: None
+  Experience: 3
+  Search Parameters: required_candidates=100, max_source_resumes=20
+
+Extracted Job Description:
+  Title: Senior Software Engineer
+  Location: San Francisco, CA (Hybrid)
+  Experience: min=5, max=10
+  Skills: ['Python', 'PostgreSQL', 'FastAPI', 'Kubernetes']
+  Employment Type: Full-time
+  Hiring Manager: Sarah Connor
+  Job Purpose: We are looking for a Senior Software Engineer to build and scale our core data processing pipelines. You will lead design and implementation of highly available systems.
+  Department: Core Infrastructure
+  Education Requirement: Bachelor's degree in Computer Science or equivalent experience
+Extracted Job Description:
+  Title: Engineer
+  Location: Remote
+  Experience: min=None, max=None
+  Skills: []
+  Employment Type: None
+  Hiring Manager: None
+  Job Purpose: Purpose
+  Department: IT
+  Education Requirement: None

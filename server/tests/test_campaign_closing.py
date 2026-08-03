@@ -234,3 +234,133 @@ async def test_schedule_interview_skips_email_if_redacted_or_invalid():
     assert email_skipped is True
     mock_send.assert_not_called()
 
+
+def make_mock_jd(jd_id, recruiter_id, status_code="CLOSED"):
+    from datetime import datetime, UTC
+    now = datetime.now(UTC)
+    mock_status = MagicMock()
+    mock_status.code = status_code
+    mock_jd = MagicMock()
+    mock_jd.id = jd_id
+    mock_jd.recruiter_id = recruiter_id
+    mock_jd.title = "Software Engineer"
+    mock_jd.department = "Engineering"
+    mock_jd.job_purpose = "Purpose"
+    mock_jd.responsibilities = "Responsibilities"
+    mock_jd.min_experience = 3
+    mock_jd.max_experience = 5
+    mock_jd.location = "Remote"
+    mock_jd.education_requirement = "BS"
+    mock_jd.preferred_qualifications = "MS"
+    mock_jd.employment_type_id = uuid4()
+    mock_jd.status_id = uuid4()
+    mock_jd.created_at = now
+    mock_jd.updated_at = now
+    mock_jd.status = mock_status
+    mock_jd.skills = []
+    return mock_jd
+
+
+@pytest.mark.asyncio
+async def test_get_authorized_job_description_allows_closed_when_requested():
+    db_mock = MagicMock()
+    service = ScoringService(db_mock)
+
+    jd_id = uuid4()
+    recruiter_id = uuid4()
+    current_user = AuthenticatedUserContext(user_id=recruiter_id, role=UserRole.recruiter)
+    mock_jd = make_mock_jd(jd_id, recruiter_id, "CLOSED")
+
+    service.repository.get_recruiter_id_by_job_description_id = AsyncMock(return_value=recruiter_id)
+    service.repository.get_job_description_by_id = AsyncMock(return_value=mock_jd)
+
+    # When allow_closed=False (default), it raises JobDescriptionClosed
+    with pytest.raises(JobDescriptionClosed):
+        await service._get_authorized_job_description(jd_id, current_user, allow_closed=False)
+
+    # When allow_closed=True, it succeeds
+    res = await service._get_authorized_job_description(jd_id, current_user, allow_closed=True)
+    assert res.id == jd_id
+
+
+@pytest.mark.asyncio
+async def test_get_authorized_job_description_enforces_ownership_even_if_allow_closed_true():
+    db_mock = MagicMock()
+    service = ScoringService(db_mock)
+
+    jd_id = uuid4()
+    owner_recruiter_id = uuid4()
+    other_user_id = uuid4()
+    other_user = AuthenticatedUserContext(user_id=other_user_id, role=UserRole.recruiter)
+
+    service.repository.get_recruiter_id_by_job_description_id = AsyncMock(return_value=owner_recruiter_id)
+
+    from src.core.exceptions.job_description_exception import RecruiterAccessRequired
+    with pytest.raises(RecruiterAccessRequired):
+        await service._get_authorized_job_description(jd_id, other_user, allow_closed=True)
+
+
+@pytest.mark.asyncio
+async def test_scenario_a_closed_campaign_read_only_access():
+    db_mock = MagicMock()
+    service = ScoringService(db_mock)
+
+    jd_id = uuid4()
+    recruiter_id = uuid4()
+    current_user = AuthenticatedUserContext(user_id=recruiter_id, role=UserRole.recruiter)
+    mock_jd = make_mock_jd(jd_id, recruiter_id, "CLOSED")
+
+    service.repository.get_recruiter_id_by_job_description_id = AsyncMock(return_value=recruiter_id)
+    service.repository.get_job_description_by_id = AsyncMock(return_value=mock_jd)
+    service.repository.get_candidate_scores_for_job_description = AsyncMock(return_value=[])
+    service.repository.bulk_get_pipeline_entries_for_job = AsyncMock(return_value=[])
+
+    # list_ranked_candidates_for_job_description should succeed when CLOSED
+    candidates = await service.list_ranked_candidates_for_job_description(jd_id, current_user)
+    assert candidates == []
+
+    # Mutating operation like share_shortlist should fail when CLOSED
+    with pytest.raises(JobDescriptionClosed):
+        await service.share_shortlist(jd_id, current_user, [uuid4()], {})
+
+
+@pytest.mark.asyncio
+async def test_scenario_b_and_c_reopen_and_edit_jd():
+    from datetime import datetime, UTC
+    db_mock = MagicMock()
+    db_mock.commit = AsyncMock()
+    service = ScoringService(db_mock)
+
+    jd_id = uuid4()
+    hm_id = uuid4()
+    recruiter_id = uuid4()
+    hm_user = AuthenticatedUserContext(user_id=hm_id, role=UserRole.hiring_manager)
+    recruiter_user = AuthenticatedUserContext(user_id=recruiter_id, role=UserRole.recruiter)
+
+    mock_status = MagicMock()
+    mock_status.code = "CLOSED"
+
+    creation_time = datetime.now(UTC)
+    mock_jd = MagicMock()
+    mock_jd.id = jd_id
+    mock_jd.hiring_manager_id = hm_id
+    mock_jd.recruiter_id = recruiter_id
+    mock_jd.status = mock_status
+    mock_jd.updated_at = creation_time
+
+    service.repository.get_job_description_by_id = AsyncMock(return_value=mock_jd)
+    service.repository.get_status_by_code = AsyncMock(return_value=uuid4())
+    
+    # Custom update_job_description_status that DOES NOT touch updated_at
+    async def mock_update_status(j_id, s_id):
+        mock_status.code = "ACTIVE"
+    service.repository.update_job_description_status = AsyncMock(side_effect=mock_update_status)
+
+    # Reopen campaign
+    await service.reopen_campaign(jd_id, hm_user)
+
+    # Verify updated_at was preserved across reopen
+    assert mock_jd.updated_at == creation_time
+    assert mock_status.code == "ACTIVE"
+
+

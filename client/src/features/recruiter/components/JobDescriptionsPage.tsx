@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useRecruiterJobDescriptions } from "../hooks/useRecruiterJobDescriptions";
 import { useRecruiterTasks } from "../hooks/useRecruiterTasks";
 import { AddRecruiterModal } from "./AddRecruiterModal";
+import { RECRUITER_LABELS } from "../utils/recruiterTerms";
 
 export function JobDescriptionsPage() {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ export function JobDescriptionsPage() {
     
     if (code === "RUNNING") {
       chipClass = "bg-blue-50 text-blue-700 border-blue-200";
-      label = "Scoring Running";
+      label = "Evaluating Candidates...";
     } else if (code === "SUCCESS") {
       chipClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
       label = "Completed";
@@ -158,7 +159,7 @@ export function JobDescriptionsPage() {
                   <th scope="col">Employment Type</th>
                   <th scope="col">Hiring Manager</th>
                   <th scope="col">Job Status</th>
-                  <th scope="col">Scoring Status</th>
+                  <th scope="col">{RECRUITER_LABELS.EVALUATION_STATUS}</th>
                   <th scope="col">Created Date</th>
                   <th scope="col">Last Updated</th>
                 </tr>

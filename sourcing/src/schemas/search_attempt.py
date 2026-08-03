@@ -11,6 +11,9 @@ class SearchAttempt(BaseModel):
     candidates_remaining: int
     reason: str
     query_url: str
+    location_used: str | None = None
+    strategy_name: str | None = None
+
 
 class SearchOptimizationPlan(BaseModel):
     inferred_role: str
