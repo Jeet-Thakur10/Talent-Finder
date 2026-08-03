@@ -50,3 +50,13 @@ Extracted Job Description:
   Job Purpose: We are looking for a Senior Software Engineer to build and scale our core data processing pipelines. You will lead design and implementation of highly available systems.
   Department: Core Infrastructure
   Education Requirement: Bachelor's degree in Computer Science or equivalent experience
+Extracted Job Description:
+  Title: Engineer
+  Location: Remote
+  Experience: min=None, max=None
+  Skills: []
+  Employment Type: None
+  Hiring Manager: None
+  Job Purpose: Purpose
+  Department: IT
+  Education Requirement: None
