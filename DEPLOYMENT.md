@@ -117,7 +117,9 @@ docker push us-east1-docker.pkg.dev/gwx-internship-2026-01/gwx-gar-intern-01/<IM
 ```
 
 ### Step D: Redeploy to Cloud Run
-Deploy only the affected services using revision updates, preserving existing configurations:
+Deploy only the affected services. If deploying services that require VPC connectivity (i.e. Server or Worker connecting to Redis), you MUST append the Direct VPC Egress flags: `--clear-vpc-connector --network=gwx-vpc-intern-01 --subnet=gwx-sne-intern-01 --vpc-egress=private-ranges-only`.
+
+General command template:
 ```powershell
 gcloud.cmd run deploy <SERVICE-NAME> --image=us-east1-docker.pkg.dev/gwx-internship-2026-01/gwx-gar-intern-01/<IMAGE-NAME>:latest --region=us-east1
 ```
@@ -145,19 +147,19 @@ gcloud.cmd run deploy jt-talent-finder-gateway --image=us-east1-docker.pkg.dev/g
 ```
 
 ### Deploying Server Only
-Use this command sequence if you changed API routes, database schemas, or schemas in the server application:
+Use this command sequence if you changed API routes, database schemas, or schemas in the server application (always include Direct VPC Egress flags to preserve Memorystore connectivity):
 ```powershell
 docker build -t us-east1-docker.pkg.dev/gwx-internship-2026-01/gwx-gar-intern-01/talent-finder-server:latest ./server
 docker push us-east1-docker.pkg.dev/gwx-internship-2026-01/gwx-gar-intern-01/talent-finder-server:latest
-gcloud.cmd run deploy jt-talent-finder-server --image=us-east1-docker.pkg.dev/gwx-internship-2026-01/gwx-gar-intern-01/talent-finder-server:latest --region=us-east1
+gcloud.cmd run deploy jt-talent-finder-server --image=us-east1-docker.pkg.dev/gwx-internship-2026-01/gwx-gar-intern-01/talent-finder-server:latest --region=us-east1 --clear-vpc-connector --network=gwx-vpc-intern-01 --subnet=gwx-sne-intern-01 --vpc-egress=private-ranges-only
 ```
 
 ### Deploying Worker Only
-Use this command sequence if you modified background worker tasks or Celery jobs:
+Use this command sequence if you modified background worker tasks or Celery jobs (always include Direct VPC Egress flags to preserve Memorystore connectivity):
 ```powershell
 docker build -f ./server/Dockerfile.worker -t us-east1-docker.pkg.dev/gwx-internship-2026-01/gwx-gar-intern-01/talent-finder-worker:latest ./server
 docker push us-east1-docker.pkg.dev/gwx-internship-2026-01/gwx-gar-intern-01/talent-finder-worker:latest
-gcloud.cmd run deploy jt-talent-finder-worker --image=us-east1-docker.pkg.dev/gwx-internship-2026-01/gwx-gar-intern-01/talent-finder-worker:latest --region=us-east1
+gcloud.cmd run deploy jt-talent-finder-worker --image=us-east1-docker.pkg.dev/gwx-internship-2026-01/gwx-gar-intern-01/talent-finder-worker:latest --region=us-east1 --clear-vpc-connector --network=gwx-vpc-intern-01 --subnet=gwx-sne-intern-01 --vpc-egress=private-ranges-only
 ```
 
 ### Deploying Sourcing Only
