@@ -1,0 +1,6 @@
+ERROR: (gcloud.logging.read) unrecognized arguments:
+  resource.type=cloud_run_revision (did you mean '--resource-names'?)
+  AND
+  resource.labels.revision_name=jt-talent-finder-server-00023-qgf\ --limit=300 
+  To search the help text of gcloud commands, run:
+  gcloud help -- SEARCH_TERMS
